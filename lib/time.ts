@@ -29,7 +29,7 @@ function zoneOffsetMs(instant: Date, timeZone: string): number {
 
 /**
  * Convert a fixture's ET wall-clock time to the browser's local time, e.g.
- * "15:00 BST" / "23:00 WAT" — the kickoff in the runtime's local timezone with
+ * "15:00 BST" / "23:00 WAT", the kickoff in the runtime's local timezone with
  * its short timezone name. Falls back to the raw time (sans " ET") if the
  * inputs can't be parsed.
  *

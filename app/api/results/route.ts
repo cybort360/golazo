@@ -11,7 +11,7 @@ export async function GET() {
     const champion = (await kv.get<string>("champion")) ?? null;
     return Response.json({ results, champion });
   } catch {
-    // KV not configured or unreachable — degrade gracefully.
+    // KV not configured or unreachable, so degrade gracefully.
     return Response.json({ results: [], champion: null });
   }
 }

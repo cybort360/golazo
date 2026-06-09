@@ -163,7 +163,7 @@ export default function PrizePoolPage() {
       {/* Trust note */}
       <p className="-mt-6 text-center text-xs text-slate-400">
         Every balance below is read directly from Solana. Nothing is
-        self-reported — verify any wallet on Solscan.
+        self-reported. Verify any wallet on Solscan.
       </p>
 
       {/* Fee split */}

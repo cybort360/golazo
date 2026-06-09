@@ -24,7 +24,7 @@ export function parseApiError(error: unknown): string {
     }
     // fetch() throws a TypeError when the request can't be made at all.
     if (error instanceof TypeError) {
-      return "Network error — please check your connection and try again.";
+      return "Network error. Please check your connection and try again.";
     }
     // AbortController-driven timeouts/cancellations.
     if (error.name === "AbortError") {
@@ -45,7 +45,7 @@ export function parseApiError(error: unknown): string {
       return serialized;
     }
   } catch {
-    // Circular or otherwise non-serializable — fall through.
+    // Circular or otherwise non-serializable, so fall through.
   }
 
   return "An unexpected error occurred.";

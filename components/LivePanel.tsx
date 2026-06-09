@@ -214,7 +214,7 @@ export default function LivePanel() {
 
   return (
     <aside className="flex snap-x snap-mandatory gap-3 self-start overflow-x-auto pb-2 no-scrollbar md:flex-col md:gap-6 md:overflow-x-visible md:snap-none md:rounded-2xl md:border md:border-slate-200 md:bg-white md:p-6 md:pb-7 md:shadow-card">
-      {/* Block 1 — Prize Pool */}
+      {/* Block 1: Prize Pool */}
       <Card
         title={
           <>
@@ -250,7 +250,7 @@ export default function LivePanel() {
         )}
       </Card>
 
-      {/* Block 2 — Today's Matches */}
+      {/* Block 2: Today's Matches */}
       <Card title="Today's Matches">
         {today.length === 0 ? (
           <div className="flex flex-col items-center gap-1.5 py-1.5 text-center">
@@ -315,7 +315,7 @@ export default function LivePanel() {
         )}
       </Card>
 
-      {/* Block 3 — Recent Results */}
+      {/* Block 3: Recent Results */}
       <Card title="Recent Results">
         {recent.length === 0 ? (
           <div className="flex flex-col items-center gap-1.5 py-1.5 text-center">
@@ -360,7 +360,7 @@ export default function LivePanel() {
         )}
       </Card>
 
-      {/* Block 4 — Future Fund */}
+      {/* Block 4: Future Fund */}
       <Card
         title={
           <>

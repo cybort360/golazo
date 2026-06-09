@@ -27,7 +27,7 @@ export default function CopyAddress({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      /* clipboard unavailable — ignore */
+      /* clipboard unavailable, ignore */
     }
   };
 

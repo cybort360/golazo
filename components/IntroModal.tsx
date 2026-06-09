@@ -24,12 +24,12 @@ const SLIDES: Slide[] = [
   {
     icon: "football",
     title: "Welcome to Golazo",
-    body: "Trade World Cup 2026 team tokens on Solana. 48 nations enter — only one is crowned champion.",
+    body: "Trade tokens for the teams you love across the biggest competitions in sport, all on Solana. From the World Cup to the Champions League to the basketball playoffs.",
   },
   {
     icon: "coins",
-    title: "Every nation has a token",
-    body: "Back your favorites and buy them on pump.fun. Live prices, volume and charts for all 48 teams.",
+    title: "Every team has a token",
+    body: "Back your favorites and buy them on pump.fun. Live prices, volume and charts for every team.",
   },
   {
     icon: "trophy",
@@ -38,8 +38,8 @@ const SLIDES: Slide[] = [
   },
   {
     icon: "chart",
-    title: "Follow every match",
-    body: "Live match banners, group standings and a full knockout bracket — updated automatically as results come in.",
+    title: "Follow every game",
+    body: "Live match banners, standings and brackets, updated automatically as results come in.",
   },
 ];
 
@@ -54,7 +54,7 @@ export default function IntroModal() {
 
   const isAdmin = pathname?.startsWith("/admin");
 
-  // First-visit check (client only) — never block the first paint.
+  // First-visit check (client only). Never block the first paint.
   useEffect(() => {
     if (isAdmin) return;
     try {

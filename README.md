@@ -1,8 +1,10 @@
 # Golazo ⚽
 
-Golazo is a Solana-based football token trading platform built around the 2026 FIFA World Cup. Each of the 48 qualified nations has its own pump.fun token (plus the `$GOLAZO` platform token), and a share of all trading fees flows into a transparent on-chain prize pool. After the final, holders of the champion nation's token receive a SOL airdrop from that pool.
+Golazo is a Solana-based token trading platform built around sport. Every team in a live competition gets its own pump.fun token (plus the `$GOLAZO` platform token), and a share of all trading fees flows into a transparent on-chain prize pool. When a competition is decided, holders of the winning team's token receive a SOL airdrop from that pool.
 
-The main site is read-only and wallet-free — anyone can browse live prices, standings, the bracket, and the prize pool without connecting a wallet. Trading happens on pump.fun / Axiom via outbound links.
+The first event is the 2026 FIFA World Cup, with competitions like the Champions League and the basketball playoffs to follow.
+
+The main site is read-only and wallet-free. Anyone can browse live prices, volume, charts, standings, brackets, and the prize pool without connecting a wallet. Trading happens on pump.fun / Axiom via outbound links.
 
 ## Tech stack
 
@@ -12,4 +14,4 @@ The main site is read-only and wallet-free — anyone can browse live prices, st
 - **DexScreener API** for token price data
 - **Public Solana RPC** for wallet balances
 - **Helius API** for the champion holder snapshot (server-side)
-- **Solana Wallet Adapter** — admin routes only
+- **Solana Wallet Adapter**, admin routes only

@@ -1,4 +1,4 @@
-// DexScreener API client — the single source of all price data for the site.
+// DexScreener API client. The single source of all price data for the site.
 // No wallet adapter, no Helius. Every function degrades gracefully and never throws.
 
 const BASE_URL = "https://api.dexscreener.com/latest/dex";

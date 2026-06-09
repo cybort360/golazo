@@ -78,7 +78,7 @@ function kickoffUtc(match: ScheduledMatch): Date {
   const day = dateMatch ? Number(dateMatch[3]) : 1;
 
   // Interpret the wall-clock components as UTC first, then shift by the real
-  // ET offset (sampled at that instant — stable except across a DST boundary).
+  // ET offset (sampled at that instant, stable except across a DST boundary).
   const wallAsUtc = Date.UTC(year, month - 1, day, Math.floor(minutes / 60), minutes % 60, 0);
   const offset = zoneOffsetMs(new Date(wallAsUtc), ET_TIME_ZONE);
   return new Date(wallAsUtc - offset);
@@ -118,7 +118,7 @@ export function getTodaysMatches(): ScheduledMatch[] {
  * recorded result yet, sorted by date + time ascending.
  *
  * Note: the spec's behavior references the results array, so `results` is
- * accepted as an optional argument (defaults to []) — getUpcomingMatches(n)
+ * accepted as an optional argument (defaults to []). getUpcomingMatches(n)
  * still works as written.
  */
 export function getUpcomingMatches(

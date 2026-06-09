@@ -20,7 +20,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Golazo — Football Token Trading on Solana",
+    default: "Golazo: Football Token Trading on Solana",
     template: "%s · Golazo",
   },
   description:
@@ -29,14 +29,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Golazo",
-    title: "Golazo — Football Token Trading on Solana",
+    title: "Golazo: Football Token Trading on Solana",
     description:
       "Trade World Cup team tokens on Solana. Champion holders split the prize pool.",
     url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Golazo — Football Token Trading on Solana",
+    title: "Golazo: Football Token Trading on Solana",
     description:
       "Trade World Cup team tokens on Solana. Champion holders split the prize pool.",
   },

@@ -409,9 +409,9 @@ export default function Home() {
         className="reveal grid grid-cols-1 gap-6 lg:grid-cols-[7fr_3fr]"
         style={{ animationDelay: "90ms" }}
       >
-        {/* Left — main content */}
+        {/* Left: main content */}
         <div className="flex min-w-0 flex-col gap-8">
-          {/* Section 1 — Today's Matches */}
+          {/* Section 1: Today's Matches */}
           {todays.length > 0 && (
             <section className="flex flex-col gap-3">
               <SectionHeading>Today&apos;s Matches</SectionHeading>
@@ -427,7 +427,7 @@ export default function Home() {
             </section>
           )}
 
-          {/* Section 2 — Top Movers */}
+          {/* Section 2: Top Movers */}
           <section className="flex flex-col gap-3">
             <SectionHeading>Top Movers</SectionHeading>
             {movers === null ? (
@@ -438,7 +438,7 @@ export default function Home() {
               </div>
             ) : movers.length === 0 ? (
               <p className="text-sm text-slate-400">
-                No tokens launched yet — check back after the pump.fun launch.
+                No tokens launched yet. Check back after the pump.fun launch.
               </p>
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -457,7 +457,7 @@ export default function Home() {
             )}
           </section>
 
-          {/* Section 3 — All Teams by Group */}
+          {/* Section 3: All Teams by Group */}
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <SectionHeading>All Teams</SectionHeading>
@@ -484,11 +484,11 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Section 4 — $GOLAZO Platform Token */}
+          {/* Section 4: $GOLAZO Platform Token */}
           <GolazoCard />
         </div>
 
-        {/* Right — live panel */}
+        {/* Right: live panel */}
         <LivePanel />
       </div>
     </div>

@@ -37,7 +37,7 @@ function loadOnce(): Promise<Snapshot> {
       return cache;
     })
     .catch(() => {
-      // Fetch failed — degrade to the static defaults (still mark resolved).
+      // Fetch failed, so degrade to the static defaults (still mark resolved).
       cache = FALLBACK;
       return cache;
     })

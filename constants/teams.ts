@@ -8,7 +8,7 @@ export interface Team {
   axiomUrl: string | null; // axiom.trade token page URL
 }
 
-// Official 2026 FIFA World Cup final draw (Washington, D.C. — December 5, 2025).
+// Official 2026 FIFA World Cup final draw (Washington, D.C., December 5, 2025).
 // 48 teams, 12 groups (A–L), 4 teams per group.
 export const TEAMS: Team[] = [
   // Group A

@@ -275,7 +275,7 @@ export default function TournamentBracket({
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Section 1 — Group Stage */}
+      {/* Section 1: Group Stage */}
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">
@@ -307,7 +307,7 @@ export default function TournamentBracket({
         </div>
       </section>
 
-      {/* Section 2 — Knockout Bracket */}
+      {/* Section 2: Knockout Bracket */}
       <section className="flex flex-col gap-3">
         <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">
           Knockout Bracket

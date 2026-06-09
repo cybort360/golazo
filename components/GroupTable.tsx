@@ -390,7 +390,7 @@ export default function GroupTable({
         />
       </button>
 
-      {/* Expanded — cards on mobile, table on desktop */}
+      {/* Expanded: cards on mobile, table on desktop */}
       {open && (
         <div className="border-t border-slate-100">
           <div className="md:hidden">

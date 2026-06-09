@@ -21,7 +21,7 @@ function clean(value: string | undefined): string | null {
 
 /**
  * Resolve a ticker's mint, merging any admin-set address (KV) over the static
- * default — same merge as /api/tokens. Degrades to the static value if KV is
+ * default, the same merge as /api/tokens. Degrades to the static value if KV is
  * unavailable.
  */
 async function resolveAddress(
@@ -34,7 +34,7 @@ async function resolveAddress(
     const o = overrides[ticker];
     if (o) return clean(o.address);
   } catch {
-    // KV unavailable — fall through to the static default.
+    // KV unavailable, so fall through to the static default.
   }
   return staticAddress;
 }

@@ -28,7 +28,7 @@ export async function GET() {
     overrides =
       (await kv.get<Record<string, TokenOverride>>("token_addresses")) ?? {};
   } catch {
-    // KV not configured or unreachable — degrade to static defaults.
+    // KV not configured or unreachable, so degrade to static defaults.
     overrides = {};
   }
 

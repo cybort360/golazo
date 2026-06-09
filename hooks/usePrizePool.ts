@@ -41,7 +41,7 @@ async function fetchSOLBalance(address: string): Promise<number | null> {
 
     const data = (await res.json()) as GetBalanceResponse;
     const lamports = data.result?.value;
-    // Note: guard the type explicitly — `value / 1e9 ?? null` would yield NaN
+    // Note: guard the type explicitly, because `value / 1e9 ?? null` would yield NaN
     // (not null) when value is undefined, since ?? only catches null/undefined.
     return typeof lamports === "number" ? lamports / LAMPORTS_PER_SOL : null;
   } catch {

@@ -143,7 +143,7 @@ export default function LeaderboardPage() {
         Standings
       </h1>
 
-      {/* Standings — stacked cards on mobile, table on desktop */}
+      {/* Standings: stacked cards on mobile, table on desktop */}
       <div className="flex flex-col gap-2 md:hidden">
         {rows.map((row, i) => {
           const price = prices.get(row.team.ticker);

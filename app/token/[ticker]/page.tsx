@@ -170,7 +170,7 @@ export default function TokenPage({
         )}
       </section>
 
-      {/* Trade — only render links that exist (no empty placeholders) */}
+      {/* Trade: only render links that exist (no empty placeholders) */}
       <section className="flex flex-col gap-2">
         <h2 className="label tracking-widest">Trade</h2>
         {pumpUrl || axiomUrl ? (

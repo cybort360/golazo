@@ -5,7 +5,7 @@ import { toLocalTime } from "@/lib/time";
 
 // Renders a fixture's kickoff time in the viewer's local timezone (e.g.
 // "15:00 BST"). Computed after mount so the value is client-only, with
-// suppressHydrationWarning so SSR/CSR never mismatch — until then it shows the
+// suppressHydrationWarning so SSR/CSR never mismatch. Until then it shows the
 // raw time without the " ET" suffix.
 export function LocalTime({
   date,

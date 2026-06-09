@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 // Catches errors thrown in the root layout itself. It must render its own
-// <html>/<body>, and can't rely on the app's CSS — styles are inlined.
+// <html>/<body>, and can't rely on the app's CSS, so styles are inlined.
 export default function GlobalError({
   error,
   reset,

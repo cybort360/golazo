@@ -1,4 +1,4 @@
-// Helius API client — ADMIN / SERVER ONLY.
+// Helius API client. ADMIN / SERVER ONLY.
 // Uses HELIUS_API_KEY (no NEXT_PUBLIC_ prefix). This must never be imported
 // into client components; it only runs in API routes / server actions.
 

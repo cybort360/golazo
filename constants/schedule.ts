@@ -8,7 +8,7 @@ export interface ScheduledMatch {
   venue: string; // city
 }
 
-// Official FIFA 2026 World Cup schedule — all 104 matches.
+// Official FIFA 2026 World Cup schedule. All 104 matches.
 // Matches 1–72: group stage. 73–88: Round of 32. 89–96: Round of 16.
 // 97–100: Quarterfinals. 101–102: Semifinals. 103: Third-place. 104: Final.
 // Kickoff times in US Eastern Time (ET).

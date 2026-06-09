@@ -4,7 +4,7 @@ import { ADMIN_COOKIE } from "@/lib/adminAuth";
 export const dynamic = "force-dynamic";
 
 // Simple in-memory rate limit: max 10 *failed* attempts per IP per 15-minute
-// window. Best-effort (per serverless instance) — enough to blunt brute force.
+// window. Best-effort (per serverless instance), enough to blunt brute force.
 // Successful logins don't count and clear the counter.
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_FAILURES = 10;
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
-  // Successful login — clear any failure record for this IP.
+  // Successful login. Clear any failure record for this IP.
   failures.delete(ip);
 
   const res = NextResponse.json({ ok: true });

@@ -102,7 +102,7 @@ const btnDanger = `${btn} bg-red-50 text-red-600 ring-1 ring-red-200 hover:bg-re
 const input =
   "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-green-500/40 placeholder:text-slate-400 focus:ring-2";
 
-// ── Section 1 — Featured Match ────────────────────────────────────────────────
+// ── Section 1: Featured Match ────────────────────────────────────────────────
 
 function FeaturedSection({
   ui,
@@ -172,7 +172,7 @@ function FeaturedSection({
   );
 }
 
-// ── Section 2 — Submit Match Result ───────────────────────────────────────────
+// ── Section 2: Submit Match Result ───────────────────────────────────────────
 
 interface Draft {
   outcome: "A" | "B" | "draw" | "";
@@ -314,7 +314,7 @@ function ResultsSection({
   );
 }
 
-// ── Section 3 — Token Addresses ───────────────────────────────────────────────
+// ── Section 3: Token Addresses ───────────────────────────────────────────────
 
 interface TokenEdit {
   address: string;
@@ -422,7 +422,7 @@ function TokenAddressSection({ ui }: { ui: AdminUI }) {
   );
 }
 
-// ── Section 4 — Champion + Prize Distribution ─────────────────────────────────
+// ── Section 4: Champion + Prize Distribution ─────────────────────────────────
 
 function ChampionSection({
   ui,
@@ -613,7 +613,7 @@ function ChampionSection({
   );
 }
 
-// ── Section 5 — Announcement Banner ───────────────────────────────────────────
+// ── Section 5: Announcement Banner ───────────────────────────────────────────
 
 function AnnouncementSection({
   ui,

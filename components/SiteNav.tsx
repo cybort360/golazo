@@ -23,7 +23,7 @@ function cx(...c: Array<string | false | null | undefined>): string {
 }
 
 // Segmented links pill. Rendered twice: absolutely-centered on desktop, and as
-// a full-width second row on mobile — so the links never squeeze the logo or
+// a full-width second row on mobile, so the links never squeeze the logo or
 // actions on narrow screens.
 function NavLinks({ pathname }: { pathname: string | null }) {
   const isActive = (href: string) =>
@@ -74,7 +74,7 @@ export default function SiteNav() {
   return (
     <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md">
       <div className="relative mx-auto max-w-6xl px-4 md:px-8">
-        {/* Top row — logo + actions */}
+        {/* Top row: logo + actions */}
         <div className="flex h-14 items-center justify-between gap-3 md:h-16">
           <Link
             href="/"
@@ -91,7 +91,7 @@ export default function SiteNav() {
             </span>
           </Link>
 
-          {/* Desktop — links absolutely centered over the row (no side squeeze) */}
+          {/* Desktop: links absolutely centered over the row (no side squeeze) */}
           <div className="pointer-events-none absolute inset-x-0 top-0 hidden h-16 items-center justify-center md:flex">
             <div className="pointer-events-auto">
               <NavLinks pathname={pathname} />
@@ -135,7 +135,7 @@ export default function SiteNav() {
           </div>
         </div>
 
-        {/* Mobile — links on their own centered row */}
+        {/* Mobile: links on their own centered row */}
         <div className="flex justify-center pb-2.5 md:hidden">
           <NavLinks pathname={pathname} />
         </div>

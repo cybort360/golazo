@@ -85,7 +85,7 @@ export default function ChampionPrediction({
         >
           <Icon name={correct ? "check" : "close"} size={16} />
           {correct
-            ? "You called it — nice."
+            ? "You called it!"
             : `Not this time. You picked ${pickedTeam.name}.`}
         </div>
       )}
@@ -115,7 +115,7 @@ export default function ChampionPrediction({
       ) : (
         // Stable placeholder before localStorage is read (avoids layout shift).
         <p className="text-sm text-slate-400">
-          Call your World Cup winner — saved on this device.
+          Call your World Cup winner. Saved on this device.
         </p>
       )}
     </section>
