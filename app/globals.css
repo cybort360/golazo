@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Golazo design tokens ──────────────────────────────────────────────────── */
+:root {
+  --background: #f8fafc; /* soft off-white, never pure white */
+  --card: #ffffff;
+  --card-border: #e2e8f0;
+  --primary: #16a34a; /* football pitch green */
+  --primary-light: #dcfce7;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --danger: #ef4444; /* eliminated */
+  --gold: #f59e0b; /* champion */
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  color: var(--text-primary);
+  background: var(--background);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@layer base {
+  /* Consistent keyboard-focus ring across the app. */
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  /* Premium SaaS card: white, hairline border, soft layered shadow. */
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-card transition-shadow duration-200;
+  }
+  .card-hover {
+    @apply hover:shadow-card-md;
+  }
+  /* Uppercase micro-label used for section titles and stat captions. */
+  .label {
+    @apply text-xs font-medium uppercase tracking-wider text-slate-400;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Mowed-grass pitch: alternating dark/light vertical stripes. */
+  .pitch-stripes {
+    background: repeating-linear-gradient(
+      90deg,
+      #15803d 0px,
+      #15803d 40px,
+      #16a34a 40px,
+      #16a34a 80px
+    );
+  }
+
+  /* Hide horizontal scrollbar on snap strips (mobile carousels). */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Staggered page-load entrance. Pair with inline animation-delay. */
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .reveal {
+    animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Live status pulse used by match badges. */
+  @keyframes soft-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
+    }
+  }
+  .animate-soft-pulse {
+    animation: soft-pulse 2s ease-in-out infinite;
+  }
+}
+
+/* Respect users who prefer reduced motion: keep final states, drop movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

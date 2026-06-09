@@ -1,0 +1,496 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import MatchBanner from "@/components/MatchBanner";
+import LivePanel from "@/components/LivePanel";
+import StatsCard from "@/components/StatsCard";
+import GroupTable from "@/components/GroupTable";
+import { Flag } from "@/components/Flag";
+import { Icon } from "@/components/Icon";
+import { LocalTime } from "@/components/LocalTime";
+import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
+import { TEAMS, type Team } from "@/constants/teams";
+import { useTokenAddresses } from "@/hooks/useTokenAddresses";
+import { getUpcomingMatches, getTodaysMatches, getMatchStatus } from "@/lib/schedule";
+import { GROUP_LETTERS } from "@/lib/standings";
+import { useMatchResults, type MatchResult } from "@/hooks/useMatchResults";
+import {
+  getMultipleTokenPrices,
+  getTokenPrice,
+  type TokenPrice,
+} from "@/lib/dexscreener";
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const TEAM_BY_TICKER = new Map(TEAMS.map((t) => [t.ticker, t]));
+
+function teamFor(ticker: string): Team | undefined {
+  return TEAM_BY_TICKER.get(ticker);
+}
+
+function formatPrice(value: string): string {
+  const n = Number.parseFloat(value);
+  if (!Number.isFinite(n)) return "—";
+  if (n >= 1)
+    return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (n >= 0.01) return `$${n.toFixed(4)}`;
+  if (n > 0) return `$${n.toFixed(8).replace(/0+$/, "")}`;
+  return "$0.00";
+}
+
+function compactUsd(n: number): string {
+  if (!Number.isFinite(n)) return "—";
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
+  if (abs >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (abs >= 1e3) return `$${(n / 1e3).toFixed(1)}k`;
+  return `$${n.toFixed(0)}`;
+}
+
+type Status = "upcoming" | "live" | "completed" | "draw";
+
+function todayMatchStatus(
+  match: ScheduledMatch,
+  results: MatchResult[],
+  now: number | null,
+): Status {
+  const r = results.find(
+    (rr) =>
+      (rr.winner === match.teamA && rr.loser === match.teamB) ||
+      (rr.winner === match.teamB && rr.loser === match.teamA),
+  );
+  if (r) return r.isDraw ? "draw" : "completed";
+  if (now === null) return "upcoming";
+  return getMatchStatus(match, results);
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
+      {children}
+    </h2>
+  );
+}
+
+function MiniTeam({ ticker }: { ticker: string }) {
+  const team = teamFor(ticker);
+  const body = (
+    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-700">
+      <Flag code={team?.flagCode ?? null} className="text-base" />
+      {ticker}
+    </span>
+  );
+  return team ? (
+    <Link
+      href={`/token/${ticker}`}
+      className="transition-opacity hover:opacity-70"
+    >
+      {body}
+    </Link>
+  ) : (
+    <span className="text-sm text-slate-400">{ticker}</span>
+  );
+}
+
+function TodayCardBadge({
+  status,
+  date,
+  time,
+}: {
+  status: Status;
+  date: string;
+  time: string;
+}) {
+  if (status === "live") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-600 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+        </span>
+        Live
+      </span>
+    );
+  }
+  if (status === "completed")
+    return (
+      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+        Full time
+      </span>
+    );
+  if (status === "draw")
+    return (
+      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-700">
+        Draw
+      </span>
+    );
+  return (
+    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium tabular-nums text-slate-500">
+      <LocalTime date={date} time={time} />
+    </span>
+  );
+}
+
+function TodayMatchCard({
+  match,
+  status,
+}: {
+  match: ScheduledMatch;
+  status: Status;
+}) {
+  return (
+    <div className="flex min-w-[230px] shrink-0 snap-start flex-col gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-card transition-shadow hover:shadow-card-md">
+      <div className="flex items-center gap-2">
+        <MiniTeam ticker={match.teamA} />
+        <span className="text-xs text-slate-300">vs</span>
+        <MiniTeam ticker={match.teamB} />
+      </div>
+      <div className="text-xs text-slate-400">
+        <LocalTime date={match.date} time={match.time} /> · {match.venue}
+      </div>
+      <div>
+        <TodayCardBadge status={status} date={match.date} time={match.time} />
+      </div>
+    </div>
+  );
+}
+
+function GolazoCard() {
+  // address / pumpUrl come from the live (admin-managed) data; everything else
+  // stays static.
+  const { golazo } = useTokenAddresses();
+  const address = golazo.address;
+  const [price, setPrice] = useState<TokenPrice | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!address) {
+      setPrice(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    let cancelled = false;
+    const load = async () => {
+      const p = await getTokenPrice(address);
+      if (!cancelled) {
+        setPrice(p);
+        setLoading(false);
+      }
+    };
+    void load();
+    const id = setInterval(() => void load(), 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [address]);
+
+  const launched = address !== null;
+
+  return (
+    <section className="relative overflow-hidden rounded-2xl border border-green-200 bg-green-50 p-5 shadow-card">
+      <div
+        className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(22,163,74,0.15), transparent 70%)",
+        }}
+      />
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-semibold uppercase tracking-widest text-green-600">
+            Platform Token
+          </span>
+          <div className="flex items-baseline gap-3">
+            <span className="text-2xl font-bold tracking-tight text-slate-900">
+              $GOLAZO
+            </span>
+            {launched ? (
+              loading && !price ? (
+                <span className="inline-block h-7 w-24 animate-pulse rounded bg-green-100" />
+              ) : (
+                <span className="text-2xl font-bold tabular-nums text-slate-900">
+                  {price ? formatPrice(price.priceUsd) : "—"}
+                </span>
+              )
+            ) : (
+              <span className="text-base font-medium text-slate-500">
+                Launching soon…
+              </span>
+            )}
+          </div>
+          <div className="text-xs text-slate-500">
+            MCap {price ? compactUsd(price.marketCap) : "—"}
+          </div>
+          <p className="mt-1 max-w-md text-sm text-slate-600">
+            Hold $GOLAZO to earn from every future tournament.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2 sm:items-end">
+          {golazo.pumpUrl ? (
+            <a
+              href={golazo.pumpUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-fit items-center gap-1.5 rounded-full bg-green-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5"
+            >
+              Buy $GOLAZO
+              <Icon name="right" size={15} strokeWidth={2.5} />
+            </a>
+          ) : (
+            <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-400 ring-1 ring-slate-200">
+              Buy $GOLAZO
+              <Icon name="right" size={15} strokeWidth={2.5} />
+            </span>
+          )}
+          {golazo.axiomUrl && (
+            <a
+              href={golazo.axiomUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50"
+            >
+              Trade on Axiom
+              <Icon name="right" size={15} strokeWidth={2.5} />
+            </a>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+interface Featured {
+  matchId: string | null;
+  announcement: string | null;
+}
+
+export default function Home() {
+  const { results, champion } = useMatchResults();
+  const { teams: liveTeams } = useTokenAddresses();
+
+  const [featured, setFeatured] = useState<Featured>({
+    matchId: null,
+    announcement: null,
+  });
+  const [dismissed, setDismissed] = useState(false);
+  const [now, setNow] = useState<number | null>(null);
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (letter: string) =>
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(letter)) next.delete(letter);
+      else next.add(letter);
+      return next;
+    });
+  const expandAll = () => setOpenGroups(new Set(GROUP_LETTERS));
+  const collapseAll = () => setOpenGroups(new Set());
+  const allOpen = openGroups.size === GROUP_LETTERS.length;
+
+  // Featured match / announcement from KV.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/featured")
+      .then((r) => (r.ok ? r.json() : { matchId: null, announcement: null }))
+      .then((d: Partial<Featured>) => {
+        if (cancelled) return;
+        setFeatured({
+          matchId: typeof d.matchId === "string" ? d.matchId : null,
+          announcement:
+            typeof d.announcement === "string" ? d.announcement : null,
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Mounted clock for hydration-safe match statuses.
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    tick();
+    const id = setInterval(tick, 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const featuredMatch = useMemo<ScheduledMatch | null>(() => {
+    if (featured.matchId) {
+      const pinned = SCHEDULE.find((m) => m.id === featured.matchId);
+      if (pinned) return pinned;
+    }
+    return getUpcomingMatches(1)[0] ?? null;
+  }, [featured.matchId]);
+
+  const featuredResult = useMemo<MatchResult | null>(
+    () =>
+      featuredMatch
+        ? (results.find((r) => r.matchId === featuredMatch.id) ?? null)
+        : null,
+    [featuredMatch, results],
+  );
+
+  const todays = getTodaysMatches();
+
+  // Top movers across all launched tokens (tokenAddress merged from admin data).
+  const launchedTeams = useMemo(
+    () => liveTeams.filter((t) => t.tokenAddress !== null),
+    [liveTeams],
+  );
+  const [movers, setMovers] = useState<
+    { team: Team; price: TokenPrice }[] | null
+  >(null);
+
+  useEffect(() => {
+    if (launchedTeams.length === 0) {
+      setMovers([]);
+      return;
+    }
+    let cancelled = false;
+    const addresses = launchedTeams
+      .map((t) => t.tokenAddress)
+      .filter((a): a is string => a !== null);
+
+    const load = async () => {
+      const priceMap = await getMultipleTokenPrices(addresses);
+      if (cancelled) return;
+      const ranked = launchedTeams
+        .map((team) => {
+          const price = team.tokenAddress
+            ? priceMap.get(team.tokenAddress)
+            : undefined;
+          return price ? { team, price } : null;
+        })
+        .filter((x): x is { team: Team; price: TokenPrice } => x !== null)
+        .sort((a, b) => b.price.priceChange24h - a.price.priceChange24h)
+        .slice(0, 3);
+      setMovers(ranked);
+    };
+
+    void load();
+    const id = setInterval(() => void load(), 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [launchedTeams]);
+
+  const showAnnouncement = featured.announcement !== null && !dismissed;
+
+  return (
+    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
+      {showAnnouncement && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900 shadow-card">
+          <span>{featured.announcement}</span>
+          <button
+            type="button"
+            onClick={() => setDismissed(true)}
+            aria-label="Dismiss announcement"
+            className="shrink-0 rounded-md p-1 text-amber-600 transition-colors hover:bg-amber-100 hover:text-amber-800"
+          >
+            <Icon name="close" size={16} />
+          </button>
+        </div>
+      )}
+
+      <div className="reveal">
+        <MatchBanner match={featuredMatch} result={featuredResult} />
+      </div>
+
+      <div
+        className="reveal grid grid-cols-1 gap-6 lg:grid-cols-[7fr_3fr]"
+        style={{ animationDelay: "90ms" }}
+      >
+        {/* Left — main content */}
+        <div className="flex min-w-0 flex-col gap-8">
+          {/* Section 1 — Today's Matches */}
+          {todays.length > 0 && (
+            <section className="flex flex-col gap-3">
+              <SectionHeading>Today&apos;s Matches</SectionHeading>
+              <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
+                {todays.map((match) => (
+                  <TodayMatchCard
+                    key={match.id}
+                    match={match}
+                    status={todayMatchStatus(match, results, now)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Section 2 — Top Movers */}
+          <section className="flex flex-col gap-3">
+            <SectionHeading>Top Movers</SectionHeading>
+            {movers === null ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {[0, 1, 2].map((i) => (
+                  <StatsCard key={i} title="Loading" value="—" isLoading />
+                ))}
+              </div>
+            ) : movers.length === 0 ? (
+              <p className="text-sm text-slate-400">
+                No tokens launched yet — check back after the pump.fun launch.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {movers.map(({ team, price }) => (
+                  <StatsCard
+                    key={team.ticker}
+                    title={team.name}
+                    value={formatPrice(price.priceUsd)}
+                    subtitle="24h change"
+                    trend={price.priceChange24h}
+                    icon={<Flag code={team.flagCode} className="text-base" />}
+                    href={`/token/${team.ticker}`}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Section 3 — All Teams by Group */}
+          <section className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <SectionHeading>All Teams</SectionHeading>
+              <button
+                type="button"
+                onClick={allOpen ? collapseAll : expandAll}
+                className="text-xs font-semibold uppercase tracking-wider text-green-600 transition-colors hover:text-green-700"
+              >
+                {allOpen ? "Collapse All" : "Expand All"}
+              </button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {GROUP_LETTERS.map((letter) => (
+                <GroupTable
+                  key={letter}
+                  group={letter}
+                  teams={liveTeams.filter((t) => t.group === letter)}
+                  results={results}
+                  champion={champion}
+                  open={openGroups.has(letter)}
+                  onToggle={() => toggleGroup(letter)}
+                />
+              ))}
+            </div>
+          </section>
+
+          {/* Section 4 — $GOLAZO Platform Token */}
+          <GolazoCard />
+        </div>
+
+        {/* Right — live panel */}
+        <LivePanel />
+      </div>
+    </div>
+  );
+}
