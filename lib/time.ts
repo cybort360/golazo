@@ -71,3 +71,32 @@ export function toLocalTime(date: string, timeET: string): string {
   const tz = get("timeZoneName");
   return tz ? `${hh}:${mm} ${tz}` : `${hh}:${mm}`;
 }
+
+function pad(n: number): string {
+  return n.toString().padStart(2, "0");
+}
+
+// Coarse countdown, to the minute: "2d 18h 35m" / "18h 35m".
+export function formatCountdown(ms: number): string {
+  if (ms <= 0) return "Kicking off";
+  const totalMinutes = Math.floor(ms / 60_000);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  return days > 0
+    ? `${days}d ${pad(hours)}h ${pad(minutes)}m`
+    : `${pad(hours)}h ${pad(minutes)}m`;
+}
+
+// Live countdown, to the second: "2d 18h 35m 04s" / "18h 35m 04s".
+export function formatCountdownPrecise(ms: number): string {
+  if (ms <= 0) return "Kicking off";
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86_400);
+  const hours = Math.floor((totalSeconds % 86_400) / 3_600);
+  const minutes = Math.floor((totalSeconds % 3_600) / 60);
+  const seconds = totalSeconds % 60;
+  return days > 0
+    ? `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`
+    : `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+}

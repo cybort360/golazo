@@ -3,9 +3,18 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePrizePool } from "@/hooks/usePrizePool";
+import { useWeeklyPrize } from "@/hooks/useWeeklyPrize";
+import { useMatchResults } from "@/hooks/useMatchResults";
+import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import { FEE_SPLIT, FUTURE_FUND_SPLIT } from "@/lib/fees";
 import { formatUsd, shortenAddress } from "@/lib/format";
+import { getKickoffMs } from "@/lib/schedule";
+import { formatCountdownPrecise } from "@/lib/time";
+import { SCHEDULE } from "@/constants/schedule";
+import { TEAMS, type Team } from "@/constants/teams";
 import { Icon } from "@/components/Icon";
+import { Flag } from "@/components/Flag";
+import { LocalTime } from "@/components/LocalTime";
 
 const RPC_URL =
   process.env.NEXT_PUBLIC_SOLANA_RPC_URL ??
@@ -17,11 +26,6 @@ const WALLETS = [
     label: "Prize Pool",
     address: process.env.NEXT_PUBLIC_PRIZE_POOL_WALLET ?? "",
     desc: "Paid to champion token holders",
-  },
-  {
-    label: "Team",
-    address: process.env.NEXT_PUBLIC_TEAM_WALLET ?? "",
-    desc: "Development & operations",
   },
   {
     label: "Buybacks",
@@ -43,12 +47,6 @@ const BUCKETS = [
     desc: "Distributed to champion token holders",
   },
   {
-    label: "Team",
-    pct: FEE_SPLIT.team,
-    color: "#60a5fa",
-    desc: "Development & operations",
-  },
-  {
     label: "Buybacks",
     pct: FEE_SPLIT.buyback,
     color: "#f59e0b",
@@ -64,7 +62,7 @@ const BUCKETS = [
 
 const STEPS = [
   "Every trade generates creator fees.",
-  "Fees split across 4 wallets automatically.",
+  "Fees split across 3 wallets automatically.",
   "After the final, champion holders receive a SOL airdrop.",
 ];
 
@@ -100,6 +98,232 @@ function ago(ms: number, now: number): string {
   if (s < 60) return `${s}s ago`;
   const m = Math.floor(s / 60);
   return `${m}m ago`;
+}
+
+function teamByTicker(ticker: string): Team | undefined {
+  return TEAMS.find((t) => t.ticker === ticker);
+}
+
+// A team name + a buy link, resolving live (admin-managed) pump.fun / Axiom URLs.
+function WeeklyBuy({
+  ticker,
+  liveTeams,
+}: {
+  ticker: string;
+  liveTeams: Team[];
+}) {
+  const team = teamByTicker(ticker);
+  if (!team) return null;
+  const live = liveTeams.find((t) => t.ticker === ticker);
+  const pumpUrl = live?.pumpUrl ?? team.pumpUrl;
+  const axiomUrl = live?.axiomUrl ?? team.axiomUrl;
+
+  return (
+    <div className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-3">
+      <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+        <Flag code={team.flagCode} className="text-base" />
+        {team.name}
+      </span>
+      {pumpUrl ? (
+        <a
+          href={pumpUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-full bg-green-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-green-700"
+        >
+          Hold ${ticker} to win
+        </a>
+      ) : (
+        <span className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-medium text-slate-400">
+          Not launched
+        </span>
+      )}
+      {axiomUrl && (
+        <a
+          href={axiomUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[11px] font-medium text-slate-400 hover:text-green-600"
+        >
+          Trade on Axiom
+        </a>
+      )}
+    </div>
+  );
+}
+
+function WeeklyPrizeSection({ now }: { now: number | null }) {
+  const { current, history } = useWeeklyPrize();
+  const { results } = useMatchResults();
+  const { teams: liveTeams } = useTokenAddresses();
+
+  if (!current && history.length === 0) return null;
+
+  const match = current
+    ? SCHEDULE.find((m) => m.id === current.matchId)
+    : undefined;
+  const result = current
+    ? results.find((r) => r.matchId === current.matchId)
+    : undefined;
+  const winnerTicker =
+    current?.winnerTeamId ??
+    (result && !result.isDraw ? result.winner : null);
+  const winnerTeam = winnerTicker ? teamByTicker(winnerTicker) : undefined;
+  const upcoming = current && !result;
+
+  return (
+    <section className="flex flex-col gap-4">
+      <h2 className="label tracking-widest">Weekly Prize</h2>
+
+      {current && match && (
+        <div className="flex flex-col gap-4 rounded-2xl border border-green-200 bg-gradient-to-b from-green-50 to-white p-5 shadow-card">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-green-700">
+              Week {current.week} · This Week&apos;s Prize Match
+            </span>
+            <span className="text-xl font-bold tabular-nums text-green-700">
+              {current.potSol} SOL
+            </span>
+          </div>
+
+          <div className="flex items-center justify-center gap-3 text-center">
+            <span className="inline-flex items-center gap-1.5 text-base font-bold text-slate-900">
+              <Flag code={teamByTicker(match.teamA)?.flagCode ?? null} className="text-xl" />
+              {match.teamA}
+            </span>
+            <span className="text-sm font-semibold text-slate-400">vs</span>
+            <span className="inline-flex items-center gap-1.5 text-base font-bold text-slate-900">
+              <Flag code={teamByTicker(match.teamB)?.flagCode ?? null} className="text-xl" />
+              {match.teamB}
+            </span>
+          </div>
+
+          <div className="text-center text-sm text-slate-500">
+            <LocalTime date={match.date} time={match.time} /> ·{" "}
+            {match.groupOrRound}
+          </div>
+
+          {upcoming ? (
+            <>
+              <div className="text-center">
+                <div className="label">Kickoff in</div>
+                <div
+                  suppressHydrationWarning
+                  className="text-2xl font-bold tabular-nums text-slate-900 md:text-3xl"
+                >
+                  {now !== null
+                    ? formatCountdownPrecise(getKickoffMs(match) - now)
+                    : "—"}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <WeeklyBuy ticker={match.teamA} liveTeams={liveTeams} />
+                <WeeklyBuy ticker={match.teamB} liveTeams={liveTeams} />
+              </div>
+              <p className="text-center text-xs text-slate-400">
+                Hold the winning team when the final whistle blows to share the
+                pot.
+              </p>
+            </>
+          ) : result && result.isDraw ? (
+            <div className="rounded-xl bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-600">
+              Draw. The pot rolls over to next week.
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-3 rounded-xl bg-green-50 px-4 py-4 text-center">
+              <span className="inline-flex items-center gap-1.5 text-base font-bold text-slate-900">
+                <Icon name="trophy" size={18} className="text-amber-500" />
+                {winnerTeam ? (
+                  <>
+                    <Flag code={winnerTeam.flagCode} className="text-lg" />
+                    {winnerTeam.name}
+                  </>
+                ) : (
+                  winnerTicker
+                )}{" "}
+                win
+              </span>
+              {current.status === "paid" && current.txHash ? (
+                <a
+                  href={`https://solscan.io/tx/${current.txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-green-600 hover:text-green-700"
+                >
+                  Paid, view on Solscan
+                  <Icon name="upRight" size={13} />
+                </a>
+              ) : (
+                <span className="text-sm text-slate-500">
+                  Winner announced, payout in progress.
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            Past Winners
+          </h3>
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-card">
+            <table className="w-full min-w-[480px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-400">
+                  <th className="px-4 py-3 font-medium">Week</th>
+                  <th className="px-4 py-3 font-medium">Match</th>
+                  <th className="px-4 py-3 font-medium">Winner</th>
+                  <th className="px-4 py-3 text-right font-medium">Pot</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...history]
+                  .sort((a, b) => b.week - a.week)
+                  .map((h) => {
+                    const m = SCHEDULE.find((s) => s.id === h.matchId);
+                    const wt = h.winnerTeamId
+                      ? teamByTicker(h.winnerTeamId)
+                      : undefined;
+                    return (
+                      <tr
+                        key={h.week}
+                        className="border-b border-slate-100 last:border-b-0"
+                      >
+                        <td className="px-4 py-3 tabular-nums text-slate-500">
+                          {h.week}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">
+                          {m ? `${m.teamA} v ${m.teamB}` : h.matchId}
+                        </td>
+                        <td className="px-4 py-3">
+                          {wt ? (
+                            <span className="inline-flex items-center gap-1.5 font-medium text-slate-900">
+                              <Flag code={wt.flagCode} className="text-sm" />
+                              {wt.name}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">Rolled over</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right tabular-nums text-slate-700">
+                          {h.potSol} SOL
+                        </td>
+                        <td className="px-4 py-3 capitalize text-slate-500">
+                          {h.status.replace("_", " ")}
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </section>
+  );
 }
 
 export default function PrizePoolPage() {
@@ -166,6 +390,9 @@ export default function PrizePoolPage() {
         self-reported. Verify any wallet on Solscan.
       </p>
 
+      {/* Weekly Prize */}
+      <WeeklyPrizeSection now={now} />
+
       {/* Fee split */}
       <section className="flex flex-col gap-4">
         <h2 className="label tracking-widest">Where Trading Fees Go</h2>
@@ -178,7 +405,7 @@ export default function PrizePoolPage() {
             />
           ))}
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {BUCKETS.map((b) => (
             <div
               key={b.label}

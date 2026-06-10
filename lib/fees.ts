@@ -5,9 +5,8 @@ const LAMPORTS_PER_SOL = 1_000_000_000;
 
 export const FEE_SPLIT = {
   prizePool: 0.35,
-  team: 0.25,
   buyback: 0.2,
-  futureFund: 0.2,
+  futureFund: 0.45,
 } as const;
 
 export const FUTURE_FUND_SPLIT = {
@@ -18,13 +17,11 @@ export const FUTURE_FUND_SPLIT = {
 
 export function calculateFeeSplit(totalFees: number): {
   prizePool: number;
-  team: number;
   buyback: number;
   futureFund: number;
 } {
   return {
     prizePool: totalFees * FEE_SPLIT.prizePool,
-    team: totalFees * FEE_SPLIT.team,
     buyback: totalFees * FEE_SPLIT.buyback,
     futureFund: totalFees * FEE_SPLIT.futureFund,
   };

@@ -11,6 +11,9 @@ const PERMITTED_KEYS = new Set([
   "champion",
   "match_results",
   "token_addresses",
+  "weekly_prize",
+  "weekly_prize_history",
+  "buyback_history",
 ]);
 
 export async function POST(request: Request) {

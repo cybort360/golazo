@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import MatchBanner from "@/components/MatchBanner";
+import BuybackFeed from "@/components/BuybackFeed";
 import LivePanel from "@/components/LivePanel";
 import StatsCard from "@/components/StatsCard";
 import GroupTable from "@/components/GroupTable";
@@ -155,6 +156,64 @@ function TodayMatchCard({
         <TodayCardBadge status={status} date={match.date} time={match.time} />
       </div>
     </div>
+  );
+}
+
+const WHY_CARDS: {
+  icon: "fire" | "coins" | "trophy" | "check";
+  tint: string;
+  title: string;
+  body: string;
+}[] = [
+  {
+    icon: "fire",
+    tint: "bg-orange-50 text-orange-500",
+    title: "We buy back your token",
+    body: "After every match, we use trading fees to buy and burn the winning team's token on the open market. Less supply. Same demand.",
+  },
+  {
+    icon: "coins",
+    tint: "bg-green-50 text-green-600",
+    title: "Weekly prizes in SOL",
+    body: "Every week we pick a Prize Match. Hold the winning team's token at kickoff and collect a share of that week's pot, paid directly to your wallet.",
+  },
+  {
+    icon: "trophy",
+    tint: "bg-amber-50 text-amber-500",
+    title: "Championship payout",
+    body: "When the Final ends, every holder of the champion's token shares the accumulated prize pool, proportional to what they hold.",
+  },
+  {
+    icon: "check",
+    tint: "bg-violet-50 text-violet-600",
+    title: "Verify it all on-chain",
+    body: "Every wallet, buyback and payout lives on Solana. Check it yourself on Solscan, nothing here is self-reported.",
+  },
+];
+
+function WhyGolazo() {
+  return (
+    <section className="flex flex-col gap-3">
+      <SectionHeading>Why Golazo</SectionHeading>
+      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0">
+        {WHY_CARDS.map((c) => (
+          <div
+            key={c.title}
+            className="flex min-w-[260px] shrink-0 snap-start flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-card sm:min-w-0"
+          >
+            <span
+              className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${c.tint}`}
+            >
+              <Icon name={c.icon} size={22} strokeWidth={1.8} />
+            </span>
+            <h3 className="text-base font-semibold tracking-tight text-slate-900">
+              {c.title}
+            </h3>
+            <p className="text-sm leading-relaxed text-slate-500">{c.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -405,6 +464,10 @@ export default function Home() {
         <MatchBanner match={featuredMatch} result={featuredResult} />
       </div>
 
+      <div className="reveal" style={{ animationDelay: "60ms" }}>
+        <BuybackFeed />
+      </div>
+
       <div
         className="reveal grid grid-cols-1 gap-6 lg:grid-cols-[7fr_3fr]"
         style={{ animationDelay: "90ms" }}
@@ -484,7 +547,10 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Section 4: $GOLAZO Platform Token */}
+          {/* Section 4: Why Golazo */}
+          <WhyGolazo />
+
+          {/* Section 5: $GOLAZO Platform Token */}
           <GolazoCard />
         </div>
 
