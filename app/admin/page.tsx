@@ -24,6 +24,7 @@ import {
 } from "@/lib/snapshot";
 import type { WeeklyPrize } from "@/lib/weeklyPrize";
 import type { BuybackEntry } from "@/lib/buyback";
+import { safeHttpUrl } from "@/lib/url";
 import { getKickoffMs } from "@/lib/schedule";
 import { formatCountdownPrecise } from "@/lib/time";
 import TeamSelect from "@/components/TeamSelect";
@@ -208,6 +209,11 @@ function LogBuybackForm({
       ui.showToast("error", "Enter tokens burned and the tx URL");
       return;
     }
+    const safeUrl = safeHttpUrl(txUrl);
+    if (!safeUrl) {
+      ui.showToast("error", "Enter a valid http(s) tx URL");
+      return;
+    }
     const teamName = TEAM_BY_TICKER.get(winnerTicker)?.name ?? winnerTicker;
     const entry: BuybackEntry = {
       matchId: match.id,
@@ -215,7 +221,7 @@ function LogBuybackForm({
       teamId: winnerTicker,
       teamName,
       tokensBurned: tokensBurned.trim(),
-      txUrl: txUrl.trim(),
+      txUrl: safeUrl,
       timestamp: Date.now(),
     };
     ui.requestConfirm(`Log buyback for ${winnerTicker}?`, async () => {

@@ -1,6 +1,7 @@
 import { kv } from "@vercel/kv";
 import { TEAMS, type Team } from "@/constants/teams";
 import { GOLAZO_TOKEN, type TokenInfo } from "@/constants/tokens";
+import { safeHttpUrl } from "@/lib/url";
 
 // Read from KV on every request; never prerender (KV may be unconfigured at
 // build time). Merges admin-managed token addresses over the static defaults so
@@ -22,6 +23,12 @@ function clean(value: string | undefined): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+/** Like clean(), but also drops anything that isn't a safe http(s) URL, so
+ *  admin-entered links can't smuggle javascript:/data: into an href. */
+function cleanUrl(value: string | undefined): string | null {
+  return safeHttpUrl(clean(value));
+}
+
 export async function GET() {
   let overrides: Record<string, TokenOverride> = {};
   try {
@@ -38,8 +45,8 @@ export async function GET() {
     return {
       ...team,
       tokenAddress: clean(o.address),
-      pumpUrl: clean(o.pumpUrl),
-      axiomUrl: clean(o.axiomUrl),
+      pumpUrl: cleanUrl(o.pumpUrl),
+      axiomUrl: cleanUrl(o.axiomUrl),
     };
   });
 
@@ -48,8 +55,8 @@ export async function GET() {
     ? {
         ...GOLAZO_TOKEN,
         address: clean(golazoOverride.address),
-        pumpUrl: clean(golazoOverride.pumpUrl),
-        axiomUrl: clean(golazoOverride.axiomUrl),
+        pumpUrl: cleanUrl(golazoOverride.pumpUrl),
+        axiomUrl: cleanUrl(golazoOverride.axiomUrl),
       }
     : GOLAZO_TOKEN;
 

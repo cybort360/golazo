@@ -10,6 +10,7 @@ import { FEE_SPLIT, FUTURE_FUND_SPLIT } from "@/lib/fees";
 import { formatUsd, shortenAddress } from "@/lib/format";
 import { getKickoffMs } from "@/lib/schedule";
 import { formatCountdownPrecise } from "@/lib/time";
+import { safeHttpUrl } from "@/lib/url";
 import { SCHEDULE } from "@/constants/schedule";
 import { TEAMS, type Team } from "@/constants/teams";
 import { Icon } from "@/components/Icon";
@@ -115,8 +116,8 @@ function WeeklyBuy({
   const team = teamByTicker(ticker);
   if (!team) return null;
   const live = liveTeams.find((t) => t.ticker === ticker);
-  const pumpUrl = live?.pumpUrl ?? team.pumpUrl;
-  const axiomUrl = live?.axiomUrl ?? team.axiomUrl;
+  const pumpUrl = safeHttpUrl(live?.pumpUrl ?? team.pumpUrl);
+  const axiomUrl = safeHttpUrl(live?.axiomUrl ?? team.axiomUrl);
 
   return (
     <div className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-3">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { TEAMS } from "@/constants/teams";
 import { useBuybackHistory } from "@/hooks/useBuybackHistory";
+import { safeHttpUrl } from "@/lib/url";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 
@@ -48,45 +49,62 @@ export default function BuybackFeed() {
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          {recent.map((b) => (
-            <a
-              key={`${b.matchId}-${b.timestamp}`}
-              href={b.txUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-card transition-shadow hover:shadow-card-md"
-            >
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-50">
-                <Icon name="fire" size={16} className="text-orange-500" />
-              </span>
+          {recent.map((b) => {
+            const safeHref = safeHttpUrl(b.txUrl);
+            const cardClass =
+              "group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-card transition-shadow hover:shadow-card-md";
+            const inner = (
+              <>
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-50">
+                  <Icon name="fire" size={16} className="text-orange-500" />
+                </span>
 
-              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
-                  <Flag
-                    code={FLAG_BY_TICKER.get(b.teamId) ?? null}
-                    className="shrink-0 text-base"
-                  />
-                  <span className="truncate">{b.teamName}</span>
-                  <span className="font-normal text-slate-400">burned</span>
-                  <span className="tabular-nums text-green-600">
-                    {b.tokensBurned}
-                  </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+                    <Flag
+                      code={FLAG_BY_TICKER.get(b.teamId) ?? null}
+                      className="shrink-0 text-base"
+                    />
+                    <span className="truncate">{b.teamName}</span>
+                    <span className="font-normal text-slate-400">burned</span>
+                    <span className="tabular-nums text-green-600">
+                      {b.tokensBurned}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    {b.matchLabel}
+                    <span className="text-slate-300"> · </span>
+                    <span suppressHydrationWarning>
+                      {now !== null ? formatTimeAgo(b.timestamp, now) : ""}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-xs text-slate-400">
-                  {b.matchLabel}
-                  <span className="text-slate-300"> · </span>
-                  <span suppressHydrationWarning>
-                    {now !== null ? formatTimeAgo(b.timestamp, now) : ""}
+
+                {safeHref && (
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-slate-400 transition-colors group-hover:text-green-600">
+                    <span className="hidden sm:inline">View on Solscan</span>
+                    <Icon name="upRight" size={13} />
                   </span>
-                </div>
+                )}
+              </>
+            );
+            const key = `${b.matchId}-${b.timestamp}`;
+            return safeHref ? (
+              <a
+                key={key}
+                href={safeHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cardClass}
+              >
+                {inner}
+              </a>
+            ) : (
+              <div key={key} className={cardClass}>
+                {inner}
               </div>
-
-              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-slate-400 transition-colors group-hover:text-green-600">
-                <span className="hidden sm:inline">View on Solscan</span>
-                <Icon name="upRight" size={13} />
-              </span>
-            </a>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>
