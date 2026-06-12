@@ -218,7 +218,7 @@ function WhyGolazo() {
 }
 
 function GolazoCard() {
-  // address / pumpUrl come from the live (admin-managed) data; everything else
+  // address / meteoraUrl come from the live (admin-managed) data; everything else
   // stays static.
   const { golazo } = useTokenAddresses();
   const address = golazo.address;
@@ -291,9 +291,9 @@ function GolazoCard() {
         </div>
 
         <div className="flex flex-col gap-2 sm:items-end">
-          {golazo.pumpUrl ? (
+          {golazo.meteoraUrl ? (
             <a
-              href={golazo.pumpUrl}
+              href={golazo.meteoraUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex w-fit items-center gap-1.5 rounded-full bg-green-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5"
@@ -509,7 +509,7 @@ export default function Home() {
               </div>
             ) : movers.length === 0 ? (
               <p className="text-sm text-slate-400">
-                No tokens launched yet. Check back after the pump.fun launch.
+                No tokens launched yet. Check back after the Meteora launch.
               </p>
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

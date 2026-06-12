@@ -48,7 +48,7 @@ async function rpc<T>(method: string, params: unknown): Promise<T | null> {
 
 async function getMintDecimals(mintAddress: string): Promise<number> {
   const result = await rpc<TokenSupplyResult>("getTokenSupply", [mintAddress]);
-  return result?.value?.decimals ?? 6; // pump.fun tokens use 6 decimals
+  return result?.value?.decimals ?? 6; // most SPL tokens use 6 decimals
 }
 
 /**

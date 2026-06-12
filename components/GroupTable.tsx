@@ -149,9 +149,9 @@ function GroupRow({
       </td>
       <td className="px-3 py-2.5 text-center">
         <div className="inline-flex flex-col items-center gap-1">
-          {team.pumpUrl ? (
+          {team.meteoraUrl ? (
             <a
-              href={team.pumpUrl}
+              href={team.meteoraUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center whitespace-nowrap rounded-full border border-green-600 px-3 py-1 text-xs font-semibold text-green-600 transition-colors hover:bg-green-50"
@@ -285,9 +285,9 @@ function GroupRowMobile({
       )}
 
       <div className="flex flex-wrap items-center gap-2">
-        {team.pumpUrl ? (
+        {team.meteoraUrl ? (
           <a
-            href={team.pumpUrl}
+            href={team.meteoraUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center whitespace-nowrap rounded-full border border-green-600 px-3 py-1 text-xs font-semibold text-green-600 transition-colors hover:bg-green-50"

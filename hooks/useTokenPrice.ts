@@ -29,7 +29,7 @@ const EMPTY: Omit<UseTokenPriceResult, "isLoading"> = {
 };
 
 export function useTokenPrice(ticker: string): UseTokenPriceResult {
-  // Resolve the pump.fun mint for this ticker (merged with any admin-set
+  // Resolve the token mint for this ticker (merged with any admin-set
   // addresses). null until the token launches.
   const { teams } = useTokenAddresses();
   const address =

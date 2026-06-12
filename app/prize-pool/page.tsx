@@ -105,7 +105,7 @@ function teamByTicker(ticker: string): Team | undefined {
   return TEAMS.find((t) => t.ticker === ticker);
 }
 
-// A team name + a buy link, resolving live (admin-managed) pump.fun / Axiom URLs.
+// A team name + a buy link, resolving live (admin-managed) Meteora / Axiom URLs.
 function WeeklyBuy({
   ticker,
   liveTeams,
@@ -116,7 +116,7 @@ function WeeklyBuy({
   const team = teamByTicker(ticker);
   if (!team) return null;
   const live = liveTeams.find((t) => t.ticker === ticker);
-  const pumpUrl = safeHttpUrl(live?.pumpUrl ?? team.pumpUrl);
+  const meteoraUrl = safeHttpUrl(live?.meteoraUrl ?? team.meteoraUrl);
   const axiomUrl = safeHttpUrl(live?.axiomUrl ?? team.axiomUrl);
 
   return (
@@ -125,9 +125,9 @@ function WeeklyBuy({
         <Flag code={team.flagCode} className="text-base" />
         {team.name}
       </span>
-      {pumpUrl ? (
+      {meteoraUrl ? (
         <a
-          href={pumpUrl}
+          href={meteoraUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="rounded-full bg-green-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-green-700"

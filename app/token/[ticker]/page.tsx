@@ -45,11 +45,11 @@ export default function TokenPage({
 
   if (!team) notFound();
 
-  // Only tokenAddress / pumpUrl / axiomUrl come from the live (admin-managed)
+  // Only tokenAddress / meteoraUrl / axiomUrl come from the live (admin-managed)
   // data; all other fields stay on the static constants.
   const live = liveTeams.find((t) => t.ticker === ticker);
   const tokenAddress = live?.tokenAddress ?? team.tokenAddress;
-  const pumpUrl = live?.pumpUrl ?? team.pumpUrl;
+  const meteoraUrl = live?.meteoraUrl ?? team.meteoraUrl;
   const axiomUrl = live?.axiomUrl ?? team.axiomUrl;
 
   const launched = tokenAddress !== null;
@@ -173,16 +173,16 @@ export default function TokenPage({
       {/* Trade: only render links that exist (no empty placeholders) */}
       <section className="flex flex-col gap-2">
         <h2 className="label tracking-widest">Trade</h2>
-        {pumpUrl || axiomUrl ? (
+        {meteoraUrl || axiomUrl ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {pumpUrl && (
+            {meteoraUrl && (
               <a
-                href={pumpUrl}
+                href={meteoraUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-1.5 rounded-2xl bg-green-600 px-5 py-4 text-base font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5"
               >
-                Buy on pump.fun
+                Trade on Meteora
                 <Icon name="right" size={16} strokeWidth={2.5} />
               </a>
             )}

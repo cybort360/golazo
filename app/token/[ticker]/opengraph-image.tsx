@@ -9,7 +9,7 @@ export const contentType = "image/png";
 // Shape stored under the `token_addresses` KV key by the admin panel.
 interface TokenOverride {
   address: string;
-  pumpUrl: string;
+  meteoraUrl: string;
 }
 
 /** Empty / whitespace-only strings mean "not set" → null. */

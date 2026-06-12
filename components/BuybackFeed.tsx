@@ -45,7 +45,7 @@ export default function BuybackFeed() {
 
       {recent.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center text-sm text-slate-400 shadow-card">
-          Buybacks start June 11, after every match.
+          Buybacks start after launch, following every match.
         </div>
       ) : (
         <div className="flex flex-col gap-2">

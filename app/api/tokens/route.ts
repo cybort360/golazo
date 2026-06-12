@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 // ticker (e.g. "BRA", "GOLAZO").
 interface TokenOverride {
   address: string;
-  pumpUrl: string;
+  meteoraUrl: string;
   axiomUrl: string;
 }
 
@@ -45,7 +45,7 @@ export async function GET() {
     return {
       ...team,
       tokenAddress: clean(o.address),
-      pumpUrl: cleanUrl(o.pumpUrl),
+      meteoraUrl: cleanUrl(o.meteoraUrl),
       axiomUrl: cleanUrl(o.axiomUrl),
     };
   });
@@ -55,7 +55,7 @@ export async function GET() {
     ? {
         ...GOLAZO_TOKEN,
         address: clean(golazoOverride.address),
-        pumpUrl: cleanUrl(golazoOverride.pumpUrl),
+        meteoraUrl: cleanUrl(golazoOverride.meteoraUrl),
         axiomUrl: cleanUrl(golazoOverride.axiomUrl),
       }
     : GOLAZO_TOKEN;

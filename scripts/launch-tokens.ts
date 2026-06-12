@@ -3,7 +3,7 @@
 
 import { TEAMS } from "../constants/teams";
 
-const PUMP_CREATE_URL = "https://pump.fun/create";
+const METEORA_CREATE_URL = "https://launch.meteora.ag";
 const BLANK = "________________";
 
 interface Entry {
@@ -20,7 +20,7 @@ function printEntry(index: number, e: Entry): void {
   console.log(`    Symbol: ${e.symbol}`);
   console.log(`    Description: ${e.description}`);
   console.log(`    Image: ${e.image}`);
-  console.log(`    pump.fun URL: ${PUMP_CREATE_URL}`);
+  console.log(`    Meteora URL: ${METEORA_CREATE_URL}`);
   console.log(`    After launch, paste address here: ${BLANK}`);
   console.log("");
 }
@@ -65,7 +65,7 @@ function main(): void {
   console.log("=======");
   console.log(`Total tokens to launch: ${total}`);
   console.log(
-    "Estimated SOL needed: ~0.5 SOL (0.02 SOL deploy fee × 49, plus small initial buys recommended)",
+    "Estimated SOL needed: pool creation cost × 49, plus seed liquidity per pool (see Meteora launch docs)",
   );
   console.log(
     "Recommended launch order: $GOLAZO first, then Group A, B, C...",

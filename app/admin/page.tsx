@@ -426,7 +426,7 @@ function ResultsSection({
 
 interface TokenEdit {
   address: string;
-  pumpUrl: string;
+  meteoraUrl: string;
   axiomUrl: string;
 }
 
@@ -437,7 +437,7 @@ function TokenAddressSection({ ui }: { ui: AdminUI }) {
         t.ticker,
         {
           address: t.address ?? "",
-          pumpUrl: t.pumpUrl ?? "",
+          meteoraUrl: t.meteoraUrl ?? "",
           axiomUrl: t.axiomUrl ?? "",
         },
       ]),
@@ -453,7 +453,7 @@ function TokenAddressSection({ ui }: { ui: AdminUI }) {
       for (const [ticker, edit] of Object.entries(edits)) {
         value[ticker] = {
           address: edit.address.trim(),
-          pumpUrl: edit.pumpUrl.trim(),
+          meteoraUrl: edit.meteoraUrl.trim(),
           axiomUrl: edit.axiomUrl.trim(),
         };
       }
@@ -473,7 +473,7 @@ function TokenAddressSection({ ui }: { ui: AdminUI }) {
             <tr className="text-[11px] uppercase tracking-wider text-slate-400">
               <th className="px-3 py-2 font-medium">Ticker</th>
               <th className="px-3 py-2 font-medium">Address</th>
-              <th className="px-3 py-2 font-medium">pump.fun URL</th>
+              <th className="px-3 py-2 font-medium">Meteora URL</th>
               <th className="px-3 py-2 font-medium">Axiom URL</th>
             </tr>
           </thead>
@@ -497,11 +497,11 @@ function TokenAddressSection({ ui }: { ui: AdminUI }) {
                   </td>
                   <td className="px-3 py-1.5">
                     <input
-                      value={e.pumpUrl}
+                      value={e.meteoraUrl}
                       onChange={(ev) =>
-                        patch(t.ticker, { pumpUrl: ev.target.value })
+                        patch(t.ticker, { meteoraUrl: ev.target.value })
                       }
-                      placeholder="https://pump.fun/…"
+                      placeholder="https://meteora.ag/…"
                       className={`${input} w-full`}
                     />
                   </td>

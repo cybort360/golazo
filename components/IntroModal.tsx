@@ -29,7 +29,7 @@ const SLIDES: Slide[] = [
   {
     icon: "coins",
     title: "Every team has a token",
-    body: "Back your favorites and buy them on pump.fun. Live prices, volume and charts for every team.",
+    body: "Back your favorites and trade them on Meteora. Live prices, volume and charts for every team.",
   },
   {
     icon: "trophy",
