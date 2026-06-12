@@ -11,7 +11,6 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
 import { TEAMS } from "@/constants/teams";
 import { ALL_TOKENS } from "@/constants/tokens";
-import { getTodaysMatches } from "@/lib/schedule";
 import { deriveTeamStatuses } from "@/lib/standings";
 import { useMatchResults, type MatchResult } from "@/hooks/useMatchResults";
 import { usePrizePool } from "@/hooks/usePrizePool";
@@ -280,7 +279,6 @@ function ResultsSection({
   results: MatchResult[];
   reload: () => void;
 }) {
-  const todays = getTodaysMatches();
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
 
   const draftFor = (id: string): Draft => drafts[id] ?? EMPTY_DRAFT;
@@ -293,6 +291,20 @@ function ResultsSection({
         (r.winner === m.teamA && r.loser === m.teamB) ||
         (r.winner === m.teamB && r.loser === m.teamA),
     );
+
+  // Matches the admin can act on right now, soonest kickoff first:
+  //  - every match scheduled today (so upcoming games are visible to record),
+  //  - any already-kicked-off match with no result yet (catch-up: late games
+  //    roll into the next UTC day and must stay recordable, never vanish),
+  //  - recently-played recorded matches, so the Log Buyback form stays
+  //    reachable for a couple of days after a win.
+  const RECORDED_WINDOW_MS = 72 * 60 * 60 * 1000;
+  const now = Date.now();
+  const today = new Date().toISOString().slice(0, 10);
+  const pending = SCHEDULE.filter((m) => {
+    if (resultFor(m)) return now - getKickoffMs(m) <= RECORDED_WINDOW_MS;
+    return m.date === today || getKickoffMs(m) <= now;
+  }).sort((a, b) => getKickoffMs(a) - getKickoffMs(b));
 
   const submit = (m: ScheduledMatch) => {
     const d = draftFor(m.id);
@@ -320,11 +332,11 @@ function ResultsSection({
 
   return (
     <Panel n={2} title="Submit Match Result">
-      {todays.length === 0 ? (
-        <p className="text-sm text-slate-400">No matches scheduled today.</p>
+      {pending.length === 0 ? (
+        <p className="text-sm text-slate-400">No matches to record yet.</p>
       ) : (
         <div className="flex flex-col gap-3">
-          {todays.map((m) => {
+          {pending.map((m) => {
             const existing = resultFor(m);
             const d = draftFor(m.id);
             if (existing) {
