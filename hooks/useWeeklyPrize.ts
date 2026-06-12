@@ -19,7 +19,7 @@ export function useWeeklyPrize(): UseWeeklyPrizeResult {
 
   const load = useCallback(async (): Promise<void> => {
     try {
-      const res = await fetch("/api/weekly-prize");
+      const res = await fetch("/api/weekly-prize", { cache: "no-store" });
       if (!res.ok) throw new Error(`Request failed: ${res.status}`);
       const data = (await res.json()) as Partial<WeeklyPrizeApiResponse>;
       setCurrent(data.current ?? null);

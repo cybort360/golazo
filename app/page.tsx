@@ -13,7 +13,12 @@ import { LocalTime } from "@/components/LocalTime";
 import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
 import { TEAMS, type Team } from "@/constants/teams";
 import { useTokenAddresses } from "@/hooks/useTokenAddresses";
-import { getUpcomingMatches, getTodaysMatches, getMatchStatus } from "@/lib/schedule";
+import {
+  getUpcomingMatches,
+  getTodaysMatches,
+  getMatchStatus,
+  resultForMatch,
+} from "@/lib/schedule";
 import { GROUP_LETTERS } from "@/lib/standings";
 import { useMatchResults, type MatchResult } from "@/hooks/useMatchResults";
 import {
@@ -56,11 +61,7 @@ function todayMatchStatus(
   results: MatchResult[],
   now: number | null,
 ): Status {
-  const r = results.find(
-    (rr) =>
-      (rr.winner === match.teamA && rr.loser === match.teamB) ||
-      (rr.winner === match.teamB && rr.loser === match.teamA),
-  );
+  const r = resultForMatch(match, results);
   if (r) return r.isDraw ? "draw" : "completed";
   if (now === null) return "upcoming";
   return getMatchStatus(match, results);
@@ -357,7 +358,7 @@ export default function Home() {
   // Featured match / announcement from KV.
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/featured")
+    fetch("/api/featured", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : { matchId: null, announcement: null }))
       .then((d: Partial<Featured>) => {
         if (cancelled) return;

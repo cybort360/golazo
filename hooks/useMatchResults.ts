@@ -35,7 +35,7 @@ export function useMatchResults(): UseMatchResultsResult {
 
   const load = useCallback(async (): Promise<void> => {
     try {
-      const res = await fetch("/api/results");
+      const res = await fetch("/api/results", { cache: "no-store" });
       if (!res.ok) throw new Error(`Request failed: ${res.status}`);
 
       const data = (await res.json()) as ResultsApiResponse;

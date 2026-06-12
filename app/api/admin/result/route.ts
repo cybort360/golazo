@@ -48,6 +48,16 @@ export async function POST(request: Request) {
     const next = existing.filter((r) => r.matchId !== result.matchId);
     next.push(result);
     await kv.set("match_results", next);
+
+    // Recording a result retires the featured pin for that match: once a game
+    // is decided the homepage advances past it anyway, so leaving the pin set
+    // only stranded a finished game in the admin panel. Clearing it here means
+    // logging the result is the single action that resolves the pin too.
+    const pinned = await kv.get<string>("featured_match_id");
+    if (pinned === result.matchId) {
+      await kv.del("featured_match_id");
+    }
+
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: false, error: "KV error" }, { status: 500 });

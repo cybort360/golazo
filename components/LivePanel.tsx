@@ -10,6 +10,7 @@ import {
   getTodaysMatches,
   getUpcomingMatches,
   getMatchStatus,
+  resultForMatch,
 } from "@/lib/schedule";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
@@ -65,11 +66,9 @@ function findResult(
   match: ScheduledMatch,
   results: MatchResult[],
 ): MatchResult | undefined {
-  return results.find(
-    (r) =>
-      (r.winner === match.teamA && r.loser === match.teamB) ||
-      (r.winner === match.teamB && r.loser === match.teamA),
-  );
+  // Link by stable matchId (see lib/schedule.resultForMatch) so knockout
+  // fixtures and repeat pairings stay correct.
+  return resultForMatch(match, results);
 }
 
 // ── Shared bits ───────────────────────────────────────────────────────────────

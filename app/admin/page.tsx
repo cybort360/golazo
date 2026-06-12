@@ -13,6 +13,7 @@ import { TEAMS } from "@/constants/teams";
 import { ALL_TOKENS } from "@/constants/tokens";
 import { deriveTeamStatuses } from "@/lib/standings";
 import { useMatchResults, type MatchResult } from "@/hooks/useMatchResults";
+import { useBuybackHistory } from "@/hooks/useBuybackHistory";
 import { usePrizePool } from "@/hooks/usePrizePool";
 import { useWeeklyPrize } from "@/hooks/useWeeklyPrize";
 import { useTokenAddresses } from "@/hooks/useTokenAddresses";
@@ -141,21 +142,36 @@ const input =
 function FeaturedSection({
   ui,
   featured,
+  results,
   reload,
 }: {
   ui: AdminUI;
   featured: { matchId: string | null; announcement: string | null };
+  results: MatchResult[];
   reload: () => void;
 }) {
   const [selectedId, setSelectedId] = useState("");
 
-  const pinned = featured.matchId
+  // Don't surface a pin whose match is already decided. Recording a result
+  // auto-clears the pin server-side, but a result that lands by any other path
+  // (or a pin set before this behavior existed) shouldn't strand a finished
+  // game here either — mirror the homepage, which advances past decided pins.
+  const pinnedMatch = featured.matchId
     ? SCHEDULE.find((m) => m.id === featured.matchId)
     : undefined;
+  const pinDecided =
+    pinnedMatch && results.some((r) => r.matchId === pinnedMatch.id);
+  const pinned = pinDecided ? undefined : pinnedMatch;
 
   const pin = () => {
     if (!selectedId) {
       ui.showToast("error", "Select a valid match first");
+      return;
+    }
+    // A decided match would be skipped by both the panel and the homepage, so
+    // pinning one looks like the button did nothing. Refuse it up front.
+    if (results.some((r) => r.matchId === selectedId)) {
+      ui.showToast("error", "That match already has a result — pick another");
       return;
     }
     ui.requestConfirm(`Pin ${selectedId} to the homepage?`, async () => {
@@ -220,8 +236,25 @@ interface Draft {
   outcome: "A" | "B" | "draw" | "";
   buybackDone: boolean;
   buybackUrl: string;
+  // Knockout fixtures carry placeholder participants ("Winner Match 73"), so the
+  // admin picks the two real teams here instead of choosing teamA/teamB.
+  koWinner: string;
+  koLoser: string;
 }
-const EMPTY_DRAFT: Draft = { outcome: "", buybackDone: false, buybackUrl: "" };
+const EMPTY_DRAFT: Draft = {
+  outcome: "",
+  buybackDone: false,
+  buybackUrl: "",
+  koWinner: "",
+  koLoser: "",
+};
+
+// A fixture is "resolved" once both participants are real team tickers. Group
+// matches always are; knockout fixtures aren't until the admin names the teams.
+const TEAMS_BY_NAME = [...TEAMS].sort((a, b) => a.name.localeCompare(b.name));
+function isResolvedFixture(m: ScheduledMatch): boolean {
+  return TEAM_BY_TICKER.has(m.teamA) && TEAM_BY_TICKER.has(m.teamB);
+}
 
 // Logged after a win, separately from the result, once the admin has run the
 // actual buyback from their wallet. Appends to the public buyback_history feed.
@@ -229,10 +262,12 @@ function LogBuybackForm({
   ui,
   match,
   winnerTicker,
+  onLogged,
 }: {
   ui: AdminUI;
   match: ScheduledMatch;
   winnerTicker: string;
+  onLogged: () => void;
 }) {
   const [tokensBurned, setTokensBurned] = useState("");
   const [txUrl, setTxUrl] = useState("");
@@ -260,7 +295,7 @@ function LogBuybackForm({
     ui.requestConfirm(`Log buyback for ${winnerTicker}?`, async () => {
       let existing: BuybackEntry[] = [];
       try {
-        const res = await fetch("/api/buyback-history");
+        const res = await fetch("/api/buyback-history", { cache: "no-store" });
         if (res.ok) {
           const data = (await res.json()) as { entries?: BuybackEntry[] };
           existing = Array.isArray(data.entries) ? data.entries : [];
@@ -276,6 +311,8 @@ function LogBuybackForm({
         ui.showToast("success", "Buyback logged");
         setTokensBurned("");
         setTxUrl("");
+        // The match is now fully handled; refresh so it leaves the list.
+        onLogged();
       } else {
         onWriteError(ui, status, "Failed to log buyback");
       }
@@ -319,41 +356,77 @@ function ResultsSection({
   reload: () => void;
 }) {
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const { entries: buybacks, reload: reloadBuybacks } = useBuybackHistory();
 
   const draftFor = (id: string): Draft => drafts[id] ?? EMPTY_DRAFT;
   const patch = (id: string, p: Partial<Draft>) =>
     setDrafts((prev) => ({ ...prev, [id]: { ...draftFor(id), ...p } }));
 
+  // Link by stable matchId, not team pair: knockout fixtures use placeholder
+  // names and two teams can meet twice, both of which break pair matching.
   const resultFor = (m: ScheduledMatch) =>
-    results.find(
-      (r) =>
-        (r.winner === m.teamA && r.loser === m.teamB) ||
-        (r.winner === m.teamB && r.loser === m.teamA),
-    );
+    results.find((r) => r.matchId === m.id);
+
+  // A decisive result still needs its buyback logged before it's "done"; a draw
+  // never has one. Treat the buyback as recorded if the result carries a tx URL
+  // or a matching entry exists in the public buyback feed.
+  const buybackLogged = (r: MatchResult): boolean =>
+    r.isDraw ||
+    r.buybackTxUrl !== null ||
+    buybacks.some((b) => b.matchId === r.matchId);
 
   // Matches the admin can act on right now, soonest kickoff first:
   //  - every match scheduled today (so upcoming games are visible to record),
   //  - any already-kicked-off match with no result yet (catch-up: late games
   //    roll into the next UTC day and must stay recordable, never vanish),
-  //  - recently-played recorded matches, so the Log Buyback form stays
-  //    reachable for a couple of days after a win.
+  //  - a recorded win whose buyback isn't logged yet, so the Log Buyback form
+  //    stays reachable for a couple of days.
+  // A fully-handled match (result in, and buyback logged or it's a draw) drops
+  // off entirely — the panel shouldn't keep nagging about finished work.
   const RECORDED_WINDOW_MS = 72 * 60 * 60 * 1000;
   const now = Date.now();
   const today = new Date().toISOString().slice(0, 10);
   const pending = SCHEDULE.filter((m) => {
-    if (resultFor(m)) return now - getKickoffMs(m) <= RECORDED_WINDOW_MS;
+    const r = resultFor(m);
+    if (r) {
+      if (buybackLogged(r)) return false; // done — hide it
+      return now - getKickoffMs(m) <= RECORDED_WINDOW_MS; // win awaiting buyback
+    }
     return m.date === today || getKickoffMs(m) <= now;
   }).sort((a, b) => getKickoffMs(a) - getKickoffMs(b));
 
   const submit = (m: ScheduledMatch) => {
     const d = draftFor(m.id);
-    if (!d.outcome) {
-      ui.showToast("error", "Pick an outcome first");
-      return;
+    const resolved = isResolvedFixture(m);
+
+    let winner: string;
+    let loser: string;
+    let isDraw: boolean;
+
+    if (resolved) {
+      if (!d.outcome) {
+        ui.showToast("error", "Pick an outcome first");
+        return;
+      }
+      isDraw = d.outcome === "draw";
+      winner = d.outcome === "B" ? m.teamB : m.teamA;
+      loser = d.outcome === "B" ? m.teamA : m.teamB;
+    } else {
+      // Knockout fixture: the admin names the two real teams. Knockouts always
+      // produce a winner (extra time / penalties), so there's no draw option.
+      if (!d.koWinner || !d.koLoser) {
+        ui.showToast("error", "Pick the winning and losing team");
+        return;
+      }
+      if (d.koWinner === d.koLoser) {
+        ui.showToast("error", "Winner and loser must differ");
+        return;
+      }
+      winner = d.koWinner;
+      loser = d.koLoser;
+      isDraw = false;
     }
-    const isDraw = d.outcome === "draw";
-    const winner = d.outcome === "B" ? m.teamB : m.teamA;
-    const loser = d.outcome === "B" ? m.teamA : m.teamB;
+
     const payload: MatchResult = {
       matchId: m.id,
       winner,
@@ -387,7 +460,10 @@ function ResultsSection({
                 <div key={m.id} className="flex flex-col gap-2">
                   <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm opacity-70">
                     <span className="text-slate-600">
-                      {flag(m.teamA)} {m.teamA} vs {flag(m.teamB)} {m.teamB}
+                      {/* Show the real teams from the result — for knockouts the
+                          fixture's own teamA/teamB are placeholders. */}
+                      {flag(existing.winner)} {existing.winner} vs{" "}
+                      {flag(existing.loser)} {existing.loser}
                     </span>
                     <span className="font-semibold text-green-600">
                       {existing.isDraw ? "Draw" : `${existing.winner} won`}
@@ -398,6 +474,7 @@ function ResultsSection({
                       ui={ui}
                       match={m}
                       winnerTicker={existing.winner}
+                      onLogged={reloadBuybacks}
                     />
                   )}
                 </div>
@@ -413,28 +490,51 @@ function ResultsSection({
                     {flag(m.teamA)} {m.teamA} vs {flag(m.teamB)} {m.teamB}
                   </span>
                   <span className="text-xs text-slate-400">
-                    {m.time} · {m.venue}
+                    {m.groupOrRound} · {m.time} · {m.venue}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-3 text-sm text-slate-700">
-                  {(
-                    [
-                      ["A", `${m.teamA} wins`],
-                      ["B", `${m.teamB} wins`],
-                      ["draw", "Draw"],
-                    ] as const
-                  ).map(([val, label]) => (
-                    <label key={val} className="flex items-center gap-1.5">
-                      <input
-                        type="radio"
-                        name={`outcome-${m.id}`}
-                        checked={d.outcome === val}
-                        onChange={() => patch(m.id, { outcome: val })}
+                {isResolvedFixture(m) ? (
+                  <div className="flex flex-wrap gap-3 text-sm text-slate-700">
+                    {(
+                      [
+                        ["A", `${m.teamA} wins`],
+                        ["B", `${m.teamB} wins`],
+                        ["draw", "Draw"],
+                      ] as const
+                    ).map(([val, label]) => (
+                      <label key={val} className="flex items-center gap-1.5">
+                        <input
+                          type="radio"
+                          name={`outcome-${m.id}`}
+                          checked={d.outcome === val}
+                          onChange={() => patch(m.id, { outcome: val })}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  // Knockout fixture: name the two real teams (no draw — these
+                  // are settled in extra time / penalties).
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <div className="flex-1">
+                      <TeamSelect
+                        teams={TEAMS_BY_NAME}
+                        value={d.koWinner}
+                        onChange={(t) => patch(m.id, { koWinner: t })}
+                        placeholder="Winner…"
                       />
-                      {label}
-                    </label>
-                  ))}
-                </div>
+                    </div>
+                    <div className="flex-1">
+                      <TeamSelect
+                        teams={TEAMS_BY_NAME}
+                        value={d.koLoser}
+                        onChange={(t) => patch(m.id, { koLoser: t })}
+                        placeholder="Loser…"
+                      />
+                    </div>
+                  </div>
+                )}
                 <label className="flex items-center gap-1.5 text-sm text-slate-700">
                   <input
                     type="checkbox"
@@ -1211,7 +1311,7 @@ export default function AdminPage() {
 
   const reloadFeatured = useCallback(async () => {
     try {
-      const res = await fetch("/api/featured");
+      const res = await fetch("/api/featured", { cache: "no-store" });
       if (!res.ok) return;
       const d = (await res.json()) as {
         matchId?: unknown;
@@ -1264,7 +1364,12 @@ export default function AdminPage() {
         </span>
       </header>
 
-      <FeaturedSection ui={ui} featured={featured} reload={reloadFeatured} />
+      <FeaturedSection
+        ui={ui}
+        featured={featured}
+        results={results}
+        reload={reloadFeatured}
+      />
       <ResultsSection ui={ui} results={results} reload={reloadAll} />
       <TokenAddressSection ui={ui} />
       <ChampionSection

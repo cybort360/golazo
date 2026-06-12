@@ -4,6 +4,7 @@
 import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
 
 export interface MatchResult {
+  matchId: string;
   winner: string;
   loser: string;
   isDraw: boolean;
@@ -90,19 +91,20 @@ export function getKickoffMs(match: ScheduledMatch): number {
 }
 
 /**
- * Find a result whose two participants match this fixture's teamA/teamB
- * (in either order). Works for both decisive results and draws, since both
- * carry the two tickers in the winner/loser fields.
+ * Find a fixture's result by its stable `matchId` — never by team pair.
+ *
+ * Team-pair matching looks tempting but breaks as the tournament progresses:
+ * knockout fixtures carry placeholder names ("Winner Match 73", "Runner-up
+ * Group A") that are not tickers, and two teams can meet twice (group + a
+ * knockout), so one result would mislabel a second fixture. matchId is unique
+ * per fixture and is stamped on the result when it's recorded, so it stays
+ * correct in every round. Generic so callers keep their concrete result type.
  */
-function resultForMatch(
+export function resultForMatch<T extends { matchId: string }>(
   match: ScheduledMatch,
-  results: MatchResult[],
-): MatchResult | undefined {
-  return results.find(
-    (r) =>
-      (r.winner === match.teamA && r.loser === match.teamB) ||
-      (r.winner === match.teamB && r.loser === match.teamA),
-  );
+  results: T[],
+): T | undefined {
+  return results.find((r) => r.matchId === match.id);
 }
 
 /** Matches scheduled for today (UTC), sorted by kickoff time ascending. */
@@ -142,7 +144,7 @@ export function getUpcomingMatches(
  */
 export function getMatchStatus(
   match: ScheduledMatch,
-  results: { winner: string; loser: string; isDraw: boolean }[],
+  results: MatchResult[],
 ): "upcoming" | "live" | "completed" | "draw" {
   const result = resultForMatch(match, results);
   if (result) return result.isDraw ? "draw" : "completed";

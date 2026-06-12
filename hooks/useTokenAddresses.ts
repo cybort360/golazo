@@ -27,7 +27,7 @@ const subscribers = new Set<() => void>();
 
 function loadOnce(): Promise<Snapshot> {
   if (inFlight) return inFlight;
-  inFlight = fetch("/api/tokens")
+  inFlight = fetch("/api/tokens", { cache: "no-store" })
     .then((res) => (res.ok ? res.json() : Promise.reject(new Error("bad status"))))
     .then((data: Partial<Snapshot>) => {
       cache = {
