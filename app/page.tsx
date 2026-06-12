@@ -17,6 +17,7 @@ import {
   getUpcomingMatches,
   getTodaysMatches,
   getMatchStatus,
+  getKickoffMs,
   resultForMatch,
 } from "@/lib/schedule";
 import { GROUP_LETTERS } from "@/lib/standings";
@@ -30,6 +31,11 @@ import {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const TEAM_BY_TICKER = new Map(TEAMS.map((t) => [t.ticker, t]));
+
+// How long after kickoff a manual pin keeps featuring its match. Long enough to
+// cover a full game + stoppage/extra time, after which an un-recorded pin is
+// considered stale and the banner advances to the next match on its own.
+const PIN_STALE_AFTER_KICKOFF_MS = 3 * 60 * 60 * 1000;
 
 function teamFor(ticker: string): Team | undefined {
   return TEAM_BY_TICKER.get(ticker);
@@ -383,20 +389,25 @@ export default function Home() {
   }, []);
 
   const featuredMatch = useMemo<ScheduledMatch | null>(() => {
-    // A manual pin wins, but only while that match is still undecided. Once a
-    // result is in, fall through so the banner advances instead of staying
-    // stuck on a finished game.
+    // A manual pin wins, but only while that match is still the relevant one:
+    //  - not yet decided (once a result is in, advance off the finished game),
+    //  - and not already well past kickoff. A pin for a match that came and
+    //    went without a result must not stick on the banner forever; treat it
+    //    as stale a few hours after kickoff and fall through to the next match.
     if (featured.matchId) {
       const pinned = SCHEDULE.find((m) => m.id === featured.matchId);
-      const decided =
-        pinned && results.some((r) => r.matchId === pinned.id);
-      if (pinned && !decided) return pinned;
+      const decided = pinned && results.some((r) => r.matchId === pinned.id);
+      const reference = now ?? Date.now();
+      const stale =
+        pinned &&
+        reference > getKickoffMs(pinned) + PIN_STALE_AFTER_KICKOFF_MS;
+      if (pinned && !decided && !stale) return pinned;
     }
     // Auto-pick the next match that hasn't been played yet. Passing `results`
     // is essential: without it, completed matches are never excluded and the
     // banner reverts to a game whose result is already determined.
     return getUpcomingMatches(1, results)[0] ?? null;
-  }, [featured.matchId, results]);
+  }, [featured.matchId, results, now]);
 
   const featuredResult = useMemo<MatchResult | null>(
     () =>
