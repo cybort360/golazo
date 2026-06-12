@@ -382,12 +382,20 @@ export default function Home() {
   }, []);
 
   const featuredMatch = useMemo<ScheduledMatch | null>(() => {
+    // A manual pin wins, but only while that match is still undecided. Once a
+    // result is in, fall through so the banner advances instead of staying
+    // stuck on a finished game.
     if (featured.matchId) {
       const pinned = SCHEDULE.find((m) => m.id === featured.matchId);
-      if (pinned) return pinned;
+      const decided =
+        pinned && results.some((r) => r.matchId === pinned.id);
+      if (pinned && !decided) return pinned;
     }
-    return getUpcomingMatches(1)[0] ?? null;
-  }, [featured.matchId]);
+    // Auto-pick the next match that hasn't been played yet. Passing `results`
+    // is essential: without it, completed matches are never excluded and the
+    // banner reverts to a game whose result is already determined.
+    return getUpcomingMatches(1, results)[0] ?? null;
+  }, [featured.matchId, results]);
 
   const featuredResult = useMemo<MatchResult | null>(
     () =>

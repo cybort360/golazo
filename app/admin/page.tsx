@@ -1119,7 +1119,7 @@ function WeeklySection({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
-  const { results, champion } = useMatchResults();
+  const { results, champion, reload: reloadResults } = useMatchResults();
   const { balanceSOL } = usePrizePool();
   const { publicKey } = useWallet();
 
@@ -1157,6 +1157,14 @@ export default function AdminPage() {
     void reloadFeatured();
   }, [reloadFeatured]);
 
+  // Refresh everything the panels read after a write: the featured pin/banner
+  // and the match results + champion. Submitting a result must re-pull results
+  // so the saved win shows immediately (and unlocks the Log Buyback form).
+  const reloadAll = useCallback(() => {
+    void reloadFeatured();
+    reloadResults();
+  }, [reloadFeatured, reloadResults]);
+
   useEffect(() => {
     if (!toast) return;
     const id = setTimeout(() => setToast(null), 3000);
@@ -1184,14 +1192,14 @@ export default function AdminPage() {
       </header>
 
       <FeaturedSection ui={ui} featured={featured} reload={reloadFeatured} />
-      <ResultsSection ui={ui} results={results} reload={reloadFeatured} />
+      <ResultsSection ui={ui} results={results} reload={reloadAll} />
       <TokenAddressSection ui={ui} />
       <ChampionSection
         ui={ui}
         results={results}
         champion={champion}
         balanceSOL={balanceSOL}
-        reload={reloadFeatured}
+        reload={reloadAll}
       />
       <AnnouncementSection ui={ui} featured={featured} reload={reloadFeatured} />
       <WeeklySection ui={ui} results={results} />
