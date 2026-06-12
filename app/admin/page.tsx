@@ -1349,19 +1349,37 @@ export default function AdminPage() {
     requestConfirm: (message, action) => setConfirm({ message, action }),
   };
 
+  // Clear this browser's admin cookie, then bounce to the login page (the
+  // middleware would redirect there anyway once the cookie is gone).
+  const logout = async () => {
+    try {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+    } finally {
+      window.location.href = "/admin/login";
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold uppercase tracking-tight text-slate-900">
           Control Panel
         </h1>
-        <span className="font-mono text-xs text-slate-400">
-          {publicKey
-            ? `Connected: ${publicKey.toBase58().slice(0, 4)}…${publicKey
-                .toBase58()
-                .slice(-4)}`
-            : "Wallet not connected"}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-xs text-slate-400">
+            {publicKey
+              ? `Connected: ${publicKey.toBase58().slice(0, 4)}…${publicKey
+                  .toBase58()
+                  .slice(-4)}`
+              : "Wallet not connected"}
+          </span>
+          <button onClick={logout} className={btnGhost}>
+            Log out
+          </button>
+        </div>
       </header>
 
       <FeaturedSection
