@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     sameSite: "lax",
     path: "/",
     secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 8, // 8 hours
+    maxAge: 60 * 60 * 24 * 7, // 7 days (survives overnight admin sessions)
   });
   return res;
 }

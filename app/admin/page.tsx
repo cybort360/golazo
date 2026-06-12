@@ -51,21 +51,47 @@ function flag(ticker: string): string {
   );
 }
 
-async function postJson(url: string, body: unknown): Promise<boolean> {
+interface WriteResult {
+  ok: boolean;
+  status: number; // HTTP status, or 0 on a network error
+}
+
+async function postJson(url: string, body: unknown): Promise<WriteResult> {
   try {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      // Be explicit so the admin cookie is always sent (some browsers, notably
+      // Safari, are stricter about when cookies ride along on fetch).
+      credentials: "same-origin",
       body: JSON.stringify(body),
     });
-    return res.ok;
+    return { ok: res.ok, status: res.status };
   } catch {
-    return false;
+    return { ok: false, status: 0 };
   }
 }
 
-function saveKv(key: string, value: unknown): Promise<boolean> {
+function saveKv(key: string, value: unknown): Promise<WriteResult> {
   return postJson("/api/admin/kv", { key, value });
+}
+
+// Surface a failed admin write instead of swallowing it. A silent failure once
+// let a result look saved overnight and then "revert"; now every failure shows
+// its HTTP status, and an expired/rejected session (401) bounces back to login
+// so the write can be retried authenticated rather than lost.
+function onWriteError(ui: AdminUI, status: number, context: string): void {
+  if (status === 401) {
+    ui.showToast("error", "Session expired — please log in again");
+    setTimeout(() => {
+      window.location.href = "/admin/login";
+    }, 1000);
+    return;
+  }
+  ui.showToast(
+    "error",
+    status === 0 ? `${context}: network error` : `${context} (HTTP ${status})`,
+  );
 }
 
 function downloadCsv(filename: string, rows: string[][]): void {
@@ -133,17 +159,25 @@ function FeaturedSection({
       return;
     }
     ui.requestConfirm(`Pin ${selectedId} to the homepage?`, async () => {
-      const ok = await saveKv("featured_match_id", selectedId);
-      ui.showToast(ok ? "success" : "error", ok ? "Match pinned" : "Failed to pin");
-      if (ok) reload();
+      const { ok, status } = await saveKv("featured_match_id", selectedId);
+      if (ok) {
+        ui.showToast("success", "Match pinned");
+        reload();
+      } else {
+        onWriteError(ui, status, "Failed to pin");
+      }
     });
   };
 
   const clear = () => {
     ui.requestConfirm("Remove the pinned featured match?", async () => {
-      const ok = await saveKv("featured_match_id", null);
-      ui.showToast(ok ? "success" : "error", ok ? "Cleared" : "Failed");
-      if (ok) reload();
+      const { ok, status } = await saveKv("featured_match_id", null);
+      if (ok) {
+        ui.showToast("success", "Cleared");
+        reload();
+      } else {
+        onWriteError(ui, status, "Failed to clear");
+      }
     });
   };
 
@@ -234,11 +268,16 @@ function LogBuybackForm({
       } catch {
         /* fall back to empty list */
       }
-      const ok = await saveKv("buyback_history", [entry, ...existing]);
-      ui.showToast(ok ? "success" : "error", ok ? "Buyback logged" : "Failed");
+      const { ok, status } = await saveKv("buyback_history", [
+        entry,
+        ...existing,
+      ]);
       if (ok) {
+        ui.showToast("success", "Buyback logged");
         setTokensBurned("");
         setTxUrl("");
+      } else {
+        onWriteError(ui, status, "Failed to log buyback");
       }
     });
   };
@@ -324,9 +363,13 @@ function ResultsSection({
       buybackTxUrl: d.buybackDone && d.buybackUrl ? d.buybackUrl : null,
     };
     ui.requestConfirm(`Submit result for ${m.id}?`, async () => {
-      const ok = await postJson("/api/admin/result", payload);
-      ui.showToast(ok ? "success" : "error", ok ? "Result saved" : "Failed");
-      if (ok) reload();
+      const { ok, status } = await postJson("/api/admin/result", payload);
+      if (ok) {
+        ui.showToast("success", "Result saved");
+        reload();
+      } else {
+        onWriteError(ui, status, "Failed to save result");
+      }
     });
   };
 
@@ -457,8 +500,9 @@ function TokenAddressSection({ ui }: { ui: AdminUI }) {
           axiomUrl: edit.axiomUrl.trim(),
         };
       }
-      const ok = await saveKv("token_addresses", value);
-      ui.showToast(ok ? "success" : "error", ok ? "Saved" : "Failed");
+      const { ok, status } = await saveKv("token_addresses", value);
+      if (ok) ui.showToast("success", "Saved");
+      else onWriteError(ui, status, "Failed to save addresses");
     });
   };
 
@@ -570,9 +614,13 @@ function ChampionSection({
       return;
     }
     ui.requestConfirm(`Crown ${pick} as champion?`, async () => {
-      const ok = await saveKv("champion", pick);
-      ui.showToast(ok ? "success" : "error", ok ? "Champion set" : "Failed");
-      if (ok) reload();
+      const { ok, status } = await saveKv("champion", pick);
+      if (ok) {
+        ui.showToast("success", "Champion set");
+        reload();
+      } else {
+        onWriteError(ui, status, "Failed to set champion");
+      }
     });
   };
 
@@ -706,18 +754,24 @@ function AnnouncementSection({
 
   const publish = () => {
     ui.requestConfirm("Publish this announcement site-wide?", async () => {
-      const ok = await saveKv("featured_announcement", text);
-      ui.showToast(ok ? "success" : "error", ok ? "Published" : "Failed");
-      if (ok) reload();
+      const { ok, status } = await saveKv("featured_announcement", text);
+      if (ok) {
+        ui.showToast("success", "Published");
+        reload();
+      } else {
+        onWriteError(ui, status, "Failed to publish");
+      }
     });
   };
   const clear = () => {
     ui.requestConfirm("Remove the site-wide announcement?", async () => {
-      const ok = await saveKv("featured_announcement", null);
-      ui.showToast(ok ? "success" : "error", ok ? "Cleared" : "Failed");
+      const { ok, status } = await saveKv("featured_announcement", null);
       if (ok) {
+        ui.showToast("success", "Cleared");
         setText("");
         reload();
+      } else {
+        onWriteError(ui, status, "Failed to clear");
       }
     });
   };
@@ -844,12 +898,12 @@ function WeeklySection({
     ui.requestConfirm(`Set week ${nextWeek} prize on ${selectedId}?`, async () => {
       // Archive the outgoing week before overwriting it.
       if (current) {
-        const okHist = await saveKv("weekly_prize_history", [
-          ...history,
-          current,
-        ]);
+        const { ok: okHist, status: archiveStatus } = await saveKv(
+          "weekly_prize_history",
+          [...history, current],
+        );
         if (!okHist) {
-          ui.showToast("error", "Failed to archive previous week");
+          onWriteError(ui, archiveStatus, "Failed to archive previous week");
           return;
         }
       }
@@ -861,13 +915,15 @@ function WeeklySection({
         txHash: null,
         week: nextWeek,
       };
-      const ok = await saveKv("weekly_prize", prize);
-      ui.showToast(ok ? "success" : "error", ok ? "Weekly prize set" : "Failed");
+      const { ok, status } = await saveKv("weekly_prize", prize);
       if (ok) {
+        ui.showToast("success", "Weekly prize set");
         setSelectedId("");
         setPotDraft("");
         setHolders(null);
         reload();
+      } else {
+        onWriteError(ui, status, "Failed to set weekly prize");
       }
     });
   };
@@ -884,11 +940,12 @@ function WeeklySection({
       setHolders(rows);
       ui.showToast("success", `${rows.length} holders`);
       // Mark the snapshot as ready and record the winner.
-      await saveKv("weekly_prize", {
+      const { ok, status } = await saveKv("weekly_prize", {
         ...current,
         status: "snapshot_ready",
         winnerTeamId: winnerTicker,
       } satisfies WeeklyPrize);
+      if (!ok) onWriteError(ui, status, "Failed to save snapshot status");
       reload();
     } catch {
       ui.showToast("error", "Snapshot failed");
@@ -908,16 +965,18 @@ function WeeklySection({
       return;
     }
     ui.requestConfirm("Mark this week's prize as paid?", async () => {
-      const ok = await saveKv("weekly_prize", {
+      const { ok, status } = await saveKv("weekly_prize", {
         ...current,
         status: "paid",
         txHash: txHash.trim(),
         winnerTeamId: winnerTicker ?? current.winnerTeamId,
       } satisfies WeeklyPrize);
-      ui.showToast(ok ? "success" : "error", ok ? "Marked paid" : "Failed");
       if (ok) {
+        ui.showToast("success", "Marked paid");
         setTxHash("");
         reload();
+      } else {
+        onWriteError(ui, status, "Failed to mark paid");
       }
     });
   };
@@ -927,23 +986,25 @@ function WeeklySection({
     ui.requestConfirm(
       `Roll ${current.potSol} SOL over to next week?`,
       async () => {
-        const okHist = await saveKv("weekly_prize_history", [
-          ...history,
-          current,
-        ]);
+        const { ok: okHist, status: archiveStatus } = await saveKv(
+          "weekly_prize_history",
+          [...history, current],
+        );
         if (!okHist) {
-          ui.showToast("error", "Failed to archive");
+          onWriteError(ui, archiveStatus, "Failed to archive");
           return;
         }
-        const okClear = await saveKv("weekly_prize", null);
-        ui.showToast(
-          okClear ? "success" : "error",
-          okClear ? "Pot carried to next week" : "Failed",
+        const { ok: okClear, status: clearStatus } = await saveKv(
+          "weekly_prize",
+          null,
         );
         if (okClear) {
+          ui.showToast("success", "Pot carried to next week");
           setPotDraft(String(current.potSol));
           setHolders(null);
           reload();
+        } else {
+          onWriteError(ui, clearStatus, "Failed to roll over");
         }
       },
     );
