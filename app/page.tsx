@@ -14,7 +14,7 @@ import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
 import { TEAMS, type Team } from "@/constants/teams";
 import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import {
-  getUpcomingMatches,
+  getNextUnplayedMatch,
   getTodaysMatches,
   getMatchStatus,
   getKickoffMs,
@@ -403,10 +403,11 @@ export default function Home() {
         reference > getKickoffMs(pinned) + PIN_STALE_AFTER_KICKOFF_MS;
       if (pinned && !decided && !stale) return pinned;
     }
-    // Auto-pick the next match that hasn't been played yet. Passing `results`
-    // is essential: without it, completed matches are never excluded and the
-    // banner reverts to a game whose result is already determined.
-    return getUpcomingMatches(1, results)[0] ?? null;
+    // Auto-pick the earliest match without a recorded result — ignoring the
+    // calendar date so the banner never jumps to a later day's game while an
+    // earlier one is still unrecorded (e.g. a match in progress when the
+    // viewer's clock has already rolled to the next day in their time zone).
+    return getNextUnplayedMatch(results);
   }, [featured.matchId, results, now]);
 
   const featuredResult = useMemo<MatchResult | null>(

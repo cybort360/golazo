@@ -137,6 +137,25 @@ export function getUpcomingMatches(
 }
 
 /**
+ * The single match to feature as "next": the earliest fixture (chronologically)
+ * that has no recorded result yet — deliberately ignoring the calendar date.
+ *
+ * The banner must not skip a game just because the viewer's clock rolled to a
+ * new day in their time zone; a match that has kicked off (or even finished) but
+ * isn't recorded yet is still "next" until its result is entered. It advances
+ * only when a result lands, never on the wall clock alone.
+ */
+export function getNextUnplayedMatch<T extends { matchId: string }>(
+  results: T[] = [],
+): ScheduledMatch | null {
+  return (
+    [...SCHEDULE]
+      .sort(compareByDateTime)
+      .find((m) => !resultForMatch(m, results)) ?? null
+  );
+}
+
+/**
  * Status of a single fixture.
  * - "completed" / "draw": a matching result exists.
  * - "live": match is today and now is within 2h after kickoff.

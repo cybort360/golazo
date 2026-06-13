@@ -67,8 +67,14 @@ function computeClock(
   // now === null on the server / first paint -> render a stable placeholder.
   if (!match || now === null) return { kind: "upcoming", label: "—" };
 
-  if (getMatchStatus(match, []) === "live") {
+  const status = getMatchStatus(match, []);
+  if (status === "live") {
     return { kind: "live", label: "LIVE NOW" };
+  }
+  // Featured match has kicked off and its window has passed, but no result is
+  // recorded yet — show it as full time rather than a negative countdown.
+  if (status === "completed") {
+    return { kind: "completed", label: "FINAL" };
   }
   return {
     kind: "upcoming",
