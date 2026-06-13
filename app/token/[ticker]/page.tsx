@@ -6,6 +6,7 @@ import { TEAMS } from "@/constants/teams";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import { useMatchResults } from "@/hooks/useMatchResults";
+import { useBurns } from "@/hooks/useBurns";
 import { getTeamRecord } from "@/lib/schedule";
 import { deriveTeamStatuses } from "@/lib/standings";
 import { formatPrice, compactUsd, formatPct } from "@/lib/format";
@@ -55,6 +56,8 @@ export default function TokenPage({
   const launched = tokenAddress !== null;
   const record = getTeamRecord(team.ticker, results);
   const status = deriveTeamStatuses(results, champion).get(team.ticker) ?? "active";
+  const { byTicker: burnByTicker } = useBurns();
+  const burn = burnByTicker[team.ticker];
   const up = priceChange24h !== null && priceChange24h >= 0;
 
   return (
@@ -214,6 +217,22 @@ export default function TokenPage({
           <StatTile label="Draws" value={`${record.draws}`} />
         </div>
       </section>
+
+      {/* Deflation — only once the token is launched and has on-chain supply */}
+      {burn && (
+        <section className="flex flex-col gap-2">
+          <h2 className="label tracking-widest">Deflation</h2>
+          <div className="flex items-center justify-between rounded-xl border border-orange-200 bg-orange-50/50 p-4">
+            <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <Icon name="fire" size={16} className="text-orange-500" />
+              Supply burned
+            </span>
+            <span className="text-2xl font-bold tabular-nums text-orange-600">
+              {burn.percentBurned.toFixed(2)}%
+            </span>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

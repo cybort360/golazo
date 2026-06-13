@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import MatchBanner from "@/components/MatchBanner";
 import BuybackFeed from "@/components/BuybackFeed";
+import BurnTracker from "@/components/BurnTracker";
 import LivePanel from "@/components/LivePanel";
 import StatsCard from "@/components/StatsCard";
 import GroupTable from "@/components/GroupTable";
@@ -491,6 +492,10 @@ export default function Home() {
 
       <div className="reveal" style={{ animationDelay: "60ms" }}>
         <BuybackFeed />
+      </div>
+
+      <div className="reveal" style={{ animationDelay: "75ms" }}>
+        <BurnTracker />
       </div>
 
       <div
