@@ -427,13 +427,29 @@ function ResultsSection({
       isDraw = false;
     }
 
+    // If the admin marks the buyback done, a valid URL is required — don't let a
+    // ticked "Buyback done" silently save with no proof link. A result with no
+    // buyback at all is still fine (draws, or record now and log the burn later).
+    let buybackTxUrl: string | null = null;
+    if (d.buybackDone) {
+      const safe = safeHttpUrl(d.buybackUrl);
+      if (!safe) {
+        ui.showToast(
+          "error",
+          "Enter a valid buyback URL, or untick Buyback done",
+        );
+        return;
+      }
+      buybackTxUrl = safe;
+    }
+
     const payload: MatchResult = {
       matchId: m.id,
       winner,
       loser,
       isDraw,
       timestamp: Date.now(),
-      buybackTxUrl: d.buybackDone && d.buybackUrl ? d.buybackUrl : null,
+      buybackTxUrl,
     };
     ui.requestConfirm(`Submit result for ${m.id}?`, async () => {
       const { ok, status } = await postJson("/api/admin/result", payload);
