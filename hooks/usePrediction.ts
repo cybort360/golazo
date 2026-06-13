@@ -62,11 +62,16 @@ export function usePrediction() {
       headers: { authorization: `Bearer ${reg.token}` },
     })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { picks?: Record<string, string> } | null) => {
-        if (cancelled || !d?.picks) return;
-        setPicks(d.picks);
-        write({ reg, picks: d.picks });
-      })
+      .then(
+        (d: { player?: unknown; picks?: Record<string, string> } | null) => {
+          // Only adopt the server's picks when it actually recognized the
+          // player. An error / unknown-token response returns player:null with
+          // empty picks — don't let that blank out the device's local picks.
+          if (cancelled || !d?.player || !d.picks) return;
+          setPicks(d.picks);
+          write({ reg, picks: d.picks });
+        },
+      )
       .catch(() => {});
     return () => {
       cancelled = true;
