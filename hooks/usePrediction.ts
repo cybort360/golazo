@@ -10,6 +10,12 @@ export interface Registration {
   token: string;
 }
 
+export interface Eligibility {
+  golazoBalance: number | null;
+  threshold: number;
+  eligible: boolean;
+}
+
 interface Stored {
   reg: Registration | null;
   picks: Record<string, string>;
@@ -44,6 +50,7 @@ function write(stored: Stored): void {
 export function usePrediction() {
   const [reg, setReg] = useState<Registration | null>(null);
   const [picks, setPicks] = useState<Record<string, string>>({});
+  const [eligibility, setEligibility] = useState<Eligibility | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -63,13 +70,24 @@ export function usePrediction() {
     })
       .then((r) => (r.ok ? r.json() : null))
       .then(
-        (d: { player?: unknown; picks?: Record<string, string> } | null) => {
+        (d: {
+          player?: unknown;
+          picks?: Record<string, string>;
+          golazoBalance?: number | null;
+          threshold?: number;
+          eligible?: boolean;
+        } | null) => {
           // Only adopt the server's picks when it actually recognized the
           // player. An error / unknown-token response returns player:null with
           // empty picks — don't let that blank out the device's local picks.
           if (cancelled || !d?.player || !d.picks) return;
           setPicks(d.picks);
           write({ reg, picks: d.picks });
+          setEligibility({
+            golazoBalance: d.golazoBalance ?? null,
+            threshold: d.threshold ?? 0,
+            eligible: d.eligible ?? true,
+          });
         },
       )
       .catch(() => {});
@@ -140,5 +158,5 @@ export function usePrediction() {
     [reg, picks],
   );
 
-  return { reg, picks, loaded, register, submitPick };
+  return { reg, picks, eligibility, loaded, register, submitPick };
 }

@@ -12,6 +12,7 @@ import {
   type LeaderboardRow,
 } from "@/hooks/usePredictionLeaderboard";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
+import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { registerMessage } from "@/lib/predictAuth";
@@ -292,9 +293,10 @@ function LeaderboardTable({
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function PredictPage() {
-  const { reg, picks, loaded, register, submitPick } = usePrediction();
+  const { reg, picks, eligibility, loaded, register, submitPick } = usePrediction();
   const { liveByMatchId } = useLiveMatches();
   const { data: leaderboard } = usePredictionLeaderboard();
+  const { golazo } = useTokenAddresses();
 
   const [now, setNow] = useState<number | null>(null);
   const [tab, setTab] = useState<"week" | "season">("week");
@@ -341,13 +343,6 @@ export default function PredictPage() {
           Call the result of each match — 1 point per correct pick. Top the
           weekly board to win SOL. Picks lock at kickoff.
         </p>
-        {(leaderboard?.minGolazo ?? 0) > 0 && (
-          <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
-            <Icon name="fire" size={13} className="text-orange-500" />
-            Hold ≥ {leaderboard?.minGolazo?.toLocaleString()} $GOLAZO to be
-            eligible for the weekly pot.
-          </p>
-        )}
       </header>
 
       {!loaded ? (
@@ -360,6 +355,35 @@ export default function PredictPage() {
             <Icon name="check" size={15} className="text-green-600" />
             Playing as <span className="font-bold">{reg.nickname}</span>
           </div>
+
+          {eligibility &&
+            (eligibility.threshold <= 0 ? (
+              <p className="text-xs text-slate-500">
+                Open entry — anyone can predict, no $GOLAZO needed.
+              </p>
+            ) : eligibility.eligible ? (
+              <p className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-green-700">
+                <Icon name="check" size={13} />
+                You&apos;re in for the weekly pot — holding enough $GOLAZO.
+              </p>
+            ) : (
+              <p className="flex flex-wrap items-center gap-1.5 text-xs text-amber-700">
+                <Icon name="fire" size={13} className="text-orange-500" />
+                Hold {eligibility.threshold.toLocaleString()} $GOLAZO to qualify
+                for the pot — you have{" "}
+                {(eligibility.golazoBalance ?? 0).toLocaleString()}.
+                {golazo.meteoraUrl && (
+                  <a
+                    href={golazo.meteoraUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-green-700 underline underline-offset-2 hover:text-green-800"
+                  >
+                    Get $GOLAZO
+                  </a>
+                )}
+              </p>
+            ))}
 
           <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-card">
             <div className="flex flex-wrap items-center justify-between gap-2">
