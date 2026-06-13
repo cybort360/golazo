@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
 import { TEAMS } from "@/constants/teams";
 import { getKickoffMs } from "@/lib/schedule";
+import { formatCountdownPrecise } from "@/lib/time";
 import { DRAW } from "@/lib/predictions";
 import { usePrediction } from "@/hooks/usePrediction";
 import {
@@ -172,6 +173,27 @@ function RegistrationForm({
 
 // ── Slate ─────────────────────────────────────────────────────────────────────
 
+// Live, per-second countdown to a match's kickoff (when picks lock). Isolated so
+// only this tiny node re-renders each second, not the whole slate/leaderboard.
+function LockCountdown({ kickoffMs }: { kickoffMs: number }) {
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    const tick = () => setNow(Date.now());
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (now === null) return <span className="text-slate-300">—</span>;
+  const diff = kickoffMs - now;
+  if (diff <= 0)
+    return <span className="font-semibold text-amber-600">Locked</span>;
+  return (
+    <span suppressHydrationWarning className="tabular-nums text-slate-500">
+      Locks in {formatCountdownPrecise(diff)}
+    </span>
+  );
+}
+
 function SlateRow({
   entry,
   pick,
@@ -185,8 +207,10 @@ function SlateRow({
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-card">
       <div className="flex items-center justify-between text-xs text-slate-400">
-        <span>{match.groupOrRound}</span>
-        <LocalTime date={match.date} time={match.time} />
+        <span>
+          {match.groupOrRound} · <LocalTime date={match.date} time={match.time} />
+        </span>
+        <LockCountdown kickoffMs={getKickoffMs(match)} />
       </div>
       <div className="flex gap-2">
         {options.map((o) => {
