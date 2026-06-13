@@ -498,6 +498,31 @@ export default function Home() {
         <BurnTracker />
       </div>
 
+      <Link
+        href="/predict"
+        className="reveal group flex items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-4 shadow-card transition-transform hover:-translate-y-0.5"
+        style={{ animationDelay: "82ms" }}
+      >
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+            <Icon name="trophy" size={20} />
+          </span>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-slate-900">
+              Predict &amp; win SOL
+            </span>
+            <span className="text-xs text-slate-500">
+              Call each match. Top the weekly board to win the bounty.
+            </span>
+          </div>
+        </div>
+        <Icon
+          name="right"
+          size={18}
+          className="shrink-0 text-violet-400 transition-transform group-hover:translate-x-0.5"
+        />
+      </Link>
+
       <div
         className="reveal grid grid-cols-1 gap-6 lg:grid-cols-[7fr_3fr]"
         style={{ animationDelay: "90ms" }}

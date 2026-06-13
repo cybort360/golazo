@@ -14,6 +14,7 @@ import { getTodaysMatches, getMatchStatus } from "@/lib/schedule";
 
 const LINKS = [
   { href: "/", label: "Home" },
+  { href: "/predict", label: "Predict" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/prize-pool", label: "Prize Pool" },
 ];

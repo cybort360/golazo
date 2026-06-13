@@ -1340,6 +1340,95 @@ function WeeklySection({
   );
 }
 
+// ── Section 7: Prediction Payouts ────────────────────────────────────────────
+
+interface PayoutRow {
+  nickname: string;
+  wallet: string;
+  points: number;
+  correct: number;
+  played: number;
+}
+
+function PayoutTable({ title, rows }: { title: string; rows: PayoutRow[] }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+        {title}
+      </h3>
+      {rows.length === 0 ? (
+        <p className="text-sm text-slate-400">No entries yet.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <table className="w-full min-w-[480px] text-left text-sm">
+            <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-400">
+              <tr>
+                <th className="px-3 py-2 font-medium">#</th>
+                <th className="px-3 py-2 font-medium">Player</th>
+                <th className="px-3 py-2 font-medium">Wallet</th>
+                <th className="px-3 py-2 text-right font-medium">Pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={r.wallet} className="border-t border-slate-100">
+                  <td className="px-3 py-1.5 tabular-nums text-slate-400">{i + 1}</td>
+                  <td className="px-3 py-1.5 font-semibold text-slate-800">
+                    {r.nickname}
+                  </td>
+                  <td className="px-3 py-1.5 font-mono text-xs text-slate-500">
+                    {r.wallet}
+                  </td>
+                  <td className="px-3 py-1.5 text-right font-bold tabular-nums text-green-600">
+                    {r.points}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PredictionPayoutsSection() {
+  const [data, setData] = useState<{
+    currentWeek: string;
+    weekTop: PayoutRow[];
+    seasonTop: PayoutRow[];
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/predict/payouts", { cache: "no-store", credentials: "same-origin" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.ok) setData(d);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <Panel n={7} title="Prediction Payouts">
+      <p className="text-xs text-slate-400">
+        Pay the weekly bounty to the top predictor&apos;s registered wallet.
+      </p>
+      {!data ? (
+        <p className="text-sm text-slate-400">Loading…</p>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <PayoutTable title={`This week (${data.currentWeek})`} rows={data.weekTop} />
+          <PayoutTable title="Season" rows={data.seasonTop} />
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
@@ -1440,6 +1529,7 @@ export default function AdminPage() {
       <AnnouncementSection ui={ui} featured={featured} reload={reloadFeatured} />
       <WeeklySection ui={ui} results={results} />
       <BuybackSection ui={ui} results={results} />
+      <PredictionPayoutsSection />
 
       {/* Toast */}
       {toast && (
