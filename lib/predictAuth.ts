@@ -1,0 +1,10 @@
+// Shared (client + server) registration-signature contract. The client signs
+// this exact message with the connected wallet; the server reconstructs it from
+// the wallet + timestamp and verifies the signature. Pure — no crypto deps here
+// so it's safe to import in the browser.
+
+export const SIGN_FRESHNESS_MS = 5 * 60 * 1000;
+
+export function registerMessage(wallet: string, ts: number): string {
+  return `Golazo predictions — sign to register\nWallet: ${wallet}\nTime: ${new Date(ts).toISOString()}`;
+}

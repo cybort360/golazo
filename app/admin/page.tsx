@@ -1348,9 +1348,19 @@ interface PayoutRow {
   points: number;
   correct: number;
   played: number;
+  golazo: number | null;
+  eligible: boolean;
 }
 
-function PayoutTable({ title, rows }: { title: string; rows: PayoutRow[] }) {
+function PayoutTable({
+  title,
+  rows,
+  gated,
+}: {
+  title: string;
+  rows: PayoutRow[];
+  gated: boolean;
+}) {
   return (
     <div className="flex flex-col gap-1">
       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -1360,25 +1370,39 @@ function PayoutTable({ title, rows }: { title: string; rows: PayoutRow[] }) {
         <p className="text-sm text-slate-400">No entries yet.</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-slate-200">
-          <table className="w-full min-w-[480px] text-left text-sm">
+          <table className="w-full min-w-[560px] text-left text-sm">
             <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-400">
               <tr>
                 <th className="px-3 py-2 font-medium">#</th>
                 <th className="px-3 py-2 font-medium">Player</th>
                 <th className="px-3 py-2 font-medium">Wallet</th>
+                {gated && <th className="px-3 py-2 text-right font-medium">$GOLAZO</th>}
                 <th className="px-3 py-2 text-right font-medium">Pts</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r, i) => (
-                <tr key={r.wallet} className="border-t border-slate-100">
+                <tr
+                  key={r.wallet}
+                  className={`border-t border-slate-100 ${gated && !r.eligible ? "opacity-50" : ""}`}
+                >
                   <td className="px-3 py-1.5 tabular-nums text-slate-400">{i + 1}</td>
                   <td className="px-3 py-1.5 font-semibold text-slate-800">
                     {r.nickname}
+                    {gated && r.eligible && (
+                      <span className="ml-1.5 rounded-full bg-green-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-green-700">
+                        Eligible
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-1.5 font-mono text-xs text-slate-500">
                     {r.wallet}
                   </td>
+                  {gated && (
+                    <td className="px-3 py-1.5 text-right tabular-nums text-slate-500">
+                      {r.golazo == null ? "—" : r.golazo.toLocaleString()}
+                    </td>
+                  )}
                   <td className="px-3 py-1.5 text-right font-bold tabular-nums text-green-600">
                     {r.points}
                   </td>
@@ -1392,37 +1416,88 @@ function PayoutTable({ title, rows }: { title: string; rows: PayoutRow[] }) {
   );
 }
 
-function PredictionPayoutsSection() {
+function PredictionPayoutsSection({ ui }: { ui: AdminUI }) {
   const [data, setData] = useState<{
     currentWeek: string;
+    threshold: number;
     weekTop: PayoutRow[];
     seasonTop: PayoutRow[];
   } | null>(null);
+  const [threshold, setThreshold] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
+  const load = useCallback(() => {
     fetch("/api/predict/payouts", { cache: "no-store", credentials: "same-origin" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!cancelled && d?.ok) setData(d);
+        if (d?.ok) {
+          setData(d);
+          setThreshold(String(d.threshold ?? 0));
+        }
       })
       .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const saveThreshold = () => {
+    const n = Number(threshold);
+    if (!Number.isFinite(n) || n < 0) {
+      ui.showToast("error", "Enter a non-negative number");
+      return;
+    }
+    ui.requestConfirm(
+      n > 0
+        ? `Require ${n} $GOLAZO to be eligible for the pot?`
+        : "Turn the $GOLAZO gate off (everyone eligible)?",
+      async () => {
+        const { ok, status } = await saveKv("pred_min_golazo", n);
+        if (ok) {
+          ui.showToast("success", "Threshold saved");
+          load();
+        } else {
+          onWriteError(ui, status, "Failed to save threshold");
+        }
+      },
+    );
+  };
+
+  const gated = (data?.threshold ?? 0) > 0;
 
   return (
     <Panel n={7} title="Prediction Payouts">
       <p className="text-xs text-slate-400">
-        Pay the weekly bounty to the top predictor&apos;s registered wallet.
+        Pay the weekly bounty + token airdrop to the top <strong>eligible</strong>{" "}
+        predictor&apos;s registered wallet.
       </p>
+
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="flex flex-col gap-1 text-xs text-slate-500">
+          Min $GOLAZO to enter the pot (0 = gate off)
+          <input
+            value={threshold}
+            onChange={(e) => setThreshold(e.target.value)}
+            inputMode="numeric"
+            placeholder="0"
+            className={`${input} w-48`}
+          />
+        </label>
+        <button onClick={saveThreshold} className={btnPrimary}>
+          Save
+        </button>
+      </div>
+
       {!data ? (
         <p className="text-sm text-slate-400">Loading…</p>
       ) : (
         <div className="flex flex-col gap-4">
-          <PayoutTable title={`This week (${data.currentWeek})`} rows={data.weekTop} />
-          <PayoutTable title="Season" rows={data.seasonTop} />
+          <PayoutTable
+            title={`This week (${data.currentWeek})`}
+            rows={data.weekTop}
+            gated={gated}
+          />
+          <PayoutTable title="Season" rows={data.seasonTop} gated={gated} />
         </div>
       )}
     </Panel>
@@ -1529,7 +1604,7 @@ export default function AdminPage() {
       <AnnouncementSection ui={ui} featured={featured} reload={reloadFeatured} />
       <WeeklySection ui={ui} results={results} />
       <BuybackSection ui={ui} results={results} />
-      <PredictionPayoutsSection />
+      <PredictionPayoutsSection ui={ui} />
 
       {/* Toast */}
       {toast && (

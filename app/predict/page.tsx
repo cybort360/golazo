@@ -11,10 +11,20 @@ import {
   type LeaderboardRow,
 } from "@/hooks/usePredictionLeaderboard";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { registerMessage } from "@/lib/predictAuth";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 import { LocalTime } from "@/components/LocalTime";
 import ShareButtons from "@/components/ShareButtons";
+
+/** base64-encode a signature byte array in the browser (no Buffer). */
+function toBase64(bytes: Uint8Array): string {
+  let s = "";
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s);
+}
 
 const TICKERS = new Set(TEAMS.map((t) => t.ticker));
 const TEAM_BY_TICKER = new Map(TEAMS.map((t) => [t.ticker, t]));
@@ -73,19 +83,37 @@ function buildSlate(
 function RegistrationForm({
   onRegister,
 }: {
-  onRegister: (nickname: string, wallet: string) => Promise<{ ok: boolean; error?: string }>;
+  onRegister: (payload: {
+    nickname: string;
+    wallet: string;
+    signature: string;
+    ts: number;
+  }) => Promise<{ ok: boolean; error?: string }>;
 }) {
+  const { publicKey, signMessage, connected } = useWallet();
   const [nickname, setNickname] = useState("");
-  const [wallet, setWallet] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
     setError(null);
+    if (!publicKey || !signMessage) {
+      setError("Connect a wallet that can sign messages (e.g. Phantom).");
+      return;
+    }
     setBusy(true);
-    const res = await onRegister(nickname, wallet);
-    setBusy(false);
-    if (!res.ok) setError(res.error ?? "Registration failed");
+    try {
+      const wallet = publicKey.toBase58();
+      const ts = Date.now();
+      const message = registerMessage(wallet, ts);
+      const signature = toBase64(await signMessage(new TextEncoder().encode(message)));
+      const res = await onRegister({ nickname, wallet, signature, ts });
+      if (!res.ok) setError(res.error ?? "Registration failed");
+    } catch {
+      setError("Signature was rejected.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -94,29 +122,25 @@ function RegistrationForm({
         Register to play
       </h2>
       <p className="text-sm text-slate-500">
-        Pick a nickname and the Solana wallet your prizes pay to. This is a
-        one-time registration — it can&apos;t be changed later.
+        Connect your Solana wallet and pick a nickname. You&apos;ll sign a
+        message to prove the wallet is yours — it becomes your identity, where
+        prizes pay out, and how pot eligibility is checked. One-time, no edits.
       </p>
+      <WalletMultiButton style={{ width: "fit-content" }} />
       <input
         value={nickname}
         onChange={(e) => setNickname(e.target.value)}
         placeholder="Nickname (3–20 chars)"
         className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-green-500/40 focus:ring-2"
       />
-      <input
-        value={wallet}
-        onChange={(e) => setWallet(e.target.value)}
-        placeholder="Solana wallet address"
-        className="rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-sm outline-none ring-green-500/40 focus:ring-2"
-      />
       {error && <p className="text-sm font-medium text-red-600">{error}</p>}
       <button
         type="button"
         onClick={submit}
-        disabled={busy}
+        disabled={busy || !connected}
         className="w-fit rounded-full bg-green-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
       >
-        {busy ? "Registering…" : "Register"}
+        {busy ? "Signing…" : connected ? "Sign & register" : "Connect wallet first"}
       </button>
     </section>
   );
@@ -269,6 +293,13 @@ export default function PredictPage() {
           Call the result of each match — 1 point per correct pick. Top the
           weekly board to win SOL. Picks lock at kickoff.
         </p>
+        {(leaderboard?.minGolazo ?? 0) > 0 && (
+          <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+            <Icon name="fire" size={13} className="text-orange-500" />
+            Hold ≥ {leaderboard?.minGolazo?.toLocaleString()} $GOLAZO to be
+            eligible for the weekly pot.
+          </p>
+        )}
       </header>
 
       {!loaded ? (

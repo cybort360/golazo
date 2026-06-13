@@ -17,6 +17,7 @@ const PERMITTED_KEYS = new Set([
   "weekly_prize",
   "weekly_prize_history",
   "buyback_history",
+  "pred_min_golazo",
 ]);
 
 export async function POST(request: Request) {

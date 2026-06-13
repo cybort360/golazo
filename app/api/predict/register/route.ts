@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { kv } from "@vercel/kv";
 import { validateNickname, validateWallet, type Player } from "@/lib/predictions";
+import { registerMessage, SIGN_FRESHNESS_MS } from "@/lib/predictAuth";
+import { verifyWalletSignature } from "@/lib/verifyWalletSignature";
 import {
   PLAYERS_KEY,
   playerKey,
@@ -39,7 +41,12 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: { nickname?: unknown; wallet?: unknown };
+  let body: {
+    nickname?: unknown;
+    wallet?: unknown;
+    signature?: unknown;
+    ts?: unknown;
+  };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -51,6 +58,27 @@ export async function POST(request: Request) {
   const wallet = validateWallet(body.wallet);
   if (!wallet.ok)
     return NextResponse.json({ ok: false, error: wallet.error }, { status: 400 });
+
+  // Prove the registrant controls the wallet: verify a fresh signed message.
+  if (typeof body.signature !== "string" || typeof body.ts !== "number") {
+    return NextResponse.json(
+      { ok: false, error: "Missing wallet signature" },
+      { status: 400 },
+    );
+  }
+  if (Math.abs(Date.now() - body.ts) > SIGN_FRESHNESS_MS) {
+    return NextResponse.json(
+      { ok: false, error: "Signature expired — try again" },
+      { status: 400 },
+    );
+  }
+  const message = registerMessage(wallet.value, body.ts);
+  if (!verifyWalletSignature(wallet.value, message, body.signature)) {
+    return NextResponse.json(
+      { ok: false, error: "Wallet signature did not verify" },
+      { status: 401 },
+    );
+  }
 
   try {
     // One registration per wallet, and nicknames are unique (case-insensitive).

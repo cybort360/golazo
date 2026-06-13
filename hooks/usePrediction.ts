@@ -79,12 +79,17 @@ export function usePrediction() {
   }, [reg]);
 
   const register = useCallback(
-    async (nickname: string, wallet: string): Promise<ActionResult> => {
+    async (payload: {
+      nickname: string;
+      wallet: string;
+      signature: string;
+      ts: number;
+    }): Promise<ActionResult> => {
       try {
         const res = await fetch("/api/predict/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nickname, wallet }),
+          body: JSON.stringify(payload),
         });
         const data = (await res.json()) as {
           ok?: boolean;

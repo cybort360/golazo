@@ -1,3 +1,4 @@
+import { kv } from "@vercel/kv";
 import { getCachedLeaderboards, currentWeekKeyEt } from "@/lib/predictionStore";
 import type { LeaderRow } from "@/lib/predictions";
 
@@ -20,8 +21,15 @@ function publicRow(r: LeaderRow) {
 export async function GET() {
   const lb = await getCachedLeaderboards();
   const currentWeek = currentWeekKeyEt();
+  let minGolazo = 0;
+  try {
+    minGolazo = (await kv.get<number>("pred_min_golazo")) ?? 0;
+  } catch {
+    minGolazo = 0;
+  }
   return Response.json({
     currentWeek,
+    minGolazo,
     season: lb.season.slice(0, TOP_N).map(publicRow),
     week: (lb.weeks[currentWeek] ?? []).slice(0, TOP_N).map(publicRow),
   });

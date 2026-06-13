@@ -12,6 +12,7 @@ export interface LeaderboardRow {
 
 export interface LeaderboardData {
   currentWeek: string;
+  minGolazo?: number;
   season: LeaderboardRow[];
   week: LeaderboardRow[];
 }
