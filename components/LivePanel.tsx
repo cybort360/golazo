@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import type { ScheduledMatch } from "@/constants/schedule";
+import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
 import { TEAMS } from "@/constants/teams";
 import { usePrizePool } from "@/hooks/usePrizePool";
 import { useMatchResults, type MatchResult } from "@/hooks/useMatchResults";
@@ -11,6 +11,7 @@ import {
   getTodaysMatches,
   getUpcomingMatches,
   getMatchStatus,
+  getKickoffMs,
   resultForMatch,
 } from "@/lib/schedule";
 import { Flag } from "@/components/Flag";
@@ -25,8 +26,9 @@ function solscanAccount(address: string): string {
   return `https://solscan.io/account/${address}`;
 }
 
-// How long a finished match stays in the Recent Results feed before it drops off.
-const RESULT_FEED_TTL_MS = 24 * 60 * 60 * 1000;
+// Kickoff time per match id, so Recent Results can order by when a match was
+// actually played (not when its result happened to be recorded).
+const KICKOFF_BY_ID = new Map(SCHEDULE.map((m) => [m.id, getKickoffMs(m)]));
 
 function flagCodeFor(ticker: string): string | null {
   return TEAMS.find((t) => t.ticker === ticker)?.flagCode ?? null;
@@ -48,22 +50,6 @@ function formatShortDate(date: string): string {
     day: "numeric",
     timeZone: "UTC",
   });
-}
-
-/** Timestamps may be seconds or milliseconds; normalize to ms. */
-function normalizeTs(ts: number): number {
-  return ts < 1e12 ? ts * 1000 : ts;
-}
-
-function timeAgo(ts: number, now: number): string {
-  const diff = now - normalizeTs(ts);
-  if (diff < 60_000) return "just now";
-  const minutes = Math.floor(diff / 60_000);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }
 
 function findResult(
@@ -235,14 +221,13 @@ export default function LivePanel() {
   const nextMatch =
     today.length === 0 ? (getUpcomingMatches(1, results)[0] ?? null) : null;
 
-  // Recent Results only surfaces the last 24h, so a finished match drops off on
-  // its own a day later instead of lingering as "stale" on the panel.
+  // The three most-recently-played results, latest match first — ordered by
+  // kickoff, not by when the result was recorded.
   const recent = [...results]
-    .filter(
-      (r) =>
-        now === null || now - normalizeTs(r.timestamp) < RESULT_FEED_TTL_MS,
+    .sort(
+      (a, b) =>
+        (KICKOFF_BY_ID.get(b.matchId) ?? 0) - (KICKOFF_BY_ID.get(a.matchId) ?? 0),
     )
-    .sort((a, b) => normalizeTs(b.timestamp) - normalizeTs(a.timestamp))
     .slice(0, 3);
 
   return (
@@ -368,21 +353,13 @@ export default function LivePanel() {
                     {r.loser}
                   </span>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {r.goalsWinner != null && r.goalsLoser != null && (
-                    <span className="tabular-nums text-xs font-bold text-slate-700">
-                      {r.goalsWinner}
-                      <span className="px-0.5 text-slate-300">–</span>
-                      {r.goalsLoser}
-                    </span>
-                  )}
-                  <span
-                    suppressHydrationWarning
-                    className="text-[11px] tabular-nums text-slate-400"
-                  >
-                    {now !== null ? timeAgo(r.timestamp, now) : ""}
+                {r.goalsWinner != null && r.goalsLoser != null && (
+                  <span className="shrink-0 tabular-nums text-xs font-bold text-slate-700">
+                    {r.goalsWinner}
+                    <span className="px-0.5 text-slate-300">–</span>
+                    {r.goalsLoser}
                   </span>
-                </div>
+                )}
               </div>
             ))}
           </div>
