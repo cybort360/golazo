@@ -8,7 +8,13 @@ export interface MatchResult {
   loser: string; // ticker
   isDraw: boolean;
   timestamp: number;
-  buybackTxUrl: string | null;
+  // Final score, when known (API-sourced results carry it; manual entries may).
+  // Drives the goal-difference tiebreaker in standings.
+  goalsWinner?: number | null;
+  goalsLoser?: number | null;
+  // How the result was recorded. A "manual" result is never overwritten by a
+  // later API sync. Older records predate this field, so it's optional.
+  source?: "api" | "manual";
 }
 
 export interface UseMatchResultsResult {

@@ -5,6 +5,8 @@ import type { ScheduledMatch } from "@/constants/schedule";
 import { TEAMS } from "@/constants/teams";
 import { usePrizePool } from "@/hooks/usePrizePool";
 import { useMatchResults, type MatchResult } from "@/hooks/useMatchResults";
+import { useLiveMatches } from "@/hooks/useLiveMatches";
+import type { LiveMatch } from "@/lib/resultsSync";
 import {
   getTodaysMatches,
   getUpcomingMatches,
@@ -176,17 +178,40 @@ function MatchStatusBadge({
   );
 }
 
-function BuybackBadge({ href }: { href: string }) {
+/**
+ * Align a live snapshot's home/away scores to a fixture's teamA/teamB and render
+ * "A–B". Returns null when there's no usable score yet. For knockout fixtures
+ * (placeholder teamA/teamB) the tickers won't match, so we fall back to the
+ * feed's home–away order.
+ */
+function LiveScore({
+  match,
+  live,
+  tone,
+}: {
+  match: ScheduledMatch;
+  live: LiveMatch | undefined;
+  tone: "live" | "final";
+}) {
+  if (!live || live.homeScore === null || live.awayScore === null) return null;
+  let a = live.homeScore;
+  let b = live.awayScore;
+  if (live.homeTicker === match.teamB && live.awayTicker === match.teamA) {
+    a = live.awayScore;
+    b = live.homeScore;
+  }
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-600 transition-colors hover:bg-green-100"
+    <span
+      className={
+        tone === "live"
+          ? "tabular-nums text-sm font-bold text-green-700"
+          : "tabular-nums text-sm font-bold text-slate-700"
+      }
     >
-      <Icon name="fire" size={11} className="text-orange-500" />
-      Buyback
-    </a>
+      {a}
+      <span className="px-0.5 text-slate-300">–</span>
+      {b}
+    </span>
   );
 }
 
@@ -203,6 +228,7 @@ export default function LivePanel() {
 
   const { balanceSOL, balanceUSD, futureFundSOL } = usePrizePool();
   const { results } = useMatchResults();
+  const { liveByMatchId } = useLiveMatches();
 
   const today = getTodaysMatches();
   const shownToday = today.slice(0, 4);
@@ -280,6 +306,8 @@ export default function LivePanel() {
             {shownToday.map((match) => {
               const status = matchStatus(match, results, now);
               const result = findResult(match, results);
+              const live = liveByMatchId[match.id];
+              const showScore = status === "live" || status === "completed";
               return (
                 <div key={match.id} className="flex flex-col gap-1">
                   <div className="flex items-center justify-between gap-2">
@@ -288,24 +316,21 @@ export default function LivePanel() {
                       <span className="text-xs text-slate-300">vs</span>
                       <TeamInline ticker={match.teamB} />
                     </div>
-                    <MatchStatusBadge
-                      status={status}
-                      match={match}
-                      result={result}
-                    />
+                    <div className="flex shrink-0 items-center gap-2">
+                      {showScore && (
+                        <LiveScore
+                          match={match}
+                          live={live}
+                          tone={status === "live" ? "live" : "final"}
+                        />
+                      )}
+                      <MatchStatusBadge
+                        status={status}
+                        match={match}
+                        result={result}
+                      />
+                    </div>
                   </div>
-                  {status === "completed" && result?.buybackTxUrl && (
-                    <a
-                      href={result.buybackTxUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[11px] font-medium text-green-600 hover:text-green-700"
-                    >
-                      <Icon name="fire" size={12} className="text-orange-500" />
-                      Buyback executed
-                      <Icon name="upRight" size={12} />
-                    </a>
-                  )}
                 </div>
               );
             })}
@@ -344,7 +369,13 @@ export default function LivePanel() {
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  {r.buybackTxUrl && <BuybackBadge href={r.buybackTxUrl} />}
+                  {r.goalsWinner != null && r.goalsLoser != null && (
+                    <span className="tabular-nums text-xs font-bold text-slate-700">
+                      {r.goalsWinner}
+                      <span className="px-0.5 text-slate-300">–</span>
+                      {r.goalsLoser}
+                    </span>
+                  )}
                   <span
                     suppressHydrationWarning
                     className="text-[11px] tabular-nums text-slate-400"

@@ -21,6 +21,8 @@ import {
 } from "@/lib/schedule";
 import { GROUP_LETTERS } from "@/lib/standings";
 import { useMatchResults, type MatchResult } from "@/hooks/useMatchResults";
+import { useLiveMatches } from "@/hooks/useLiveMatches";
+import type { LiveMatch } from "@/lib/resultsSync";
 import {
   getMultipleTokenPrices,
   getTokenPrice,
@@ -136,19 +138,48 @@ function TodayCardBadge({
   );
 }
 
+function liveScoreForCard(
+  match: ScheduledMatch,
+  live: LiveMatch | undefined,
+): { a: number; b: number } | null {
+  if (!live || live.homeScore === null || live.awayScore === null) return null;
+  return live.homeTicker === match.teamB && live.awayTicker === match.teamA
+    ? { a: live.awayScore, b: live.homeScore }
+    : { a: live.homeScore, b: live.awayScore };
+}
+
 function TodayMatchCard({
   match,
   status,
+  live,
 }: {
   match: ScheduledMatch;
   status: Status;
+  live: LiveMatch | undefined;
 }) {
+  const score =
+    status === "live" || status === "completed" || status === "draw"
+      ? liveScoreForCard(match, live)
+      : null;
   return (
     <div className="flex min-w-[230px] shrink-0 snap-start flex-col gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-card transition-shadow hover:shadow-card-md">
-      <div className="flex items-center gap-2">
-        <MiniTeam ticker={match.teamA} />
-        <span className="text-xs text-slate-300">vs</span>
-        <MiniTeam ticker={match.teamB} />
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <MiniTeam ticker={match.teamA} />
+          <span className="text-xs text-slate-300">vs</span>
+          <MiniTeam ticker={match.teamB} />
+        </div>
+        {score && (
+          <span
+            className={`tabular-nums text-sm font-bold ${
+              status === "live" ? "text-green-700" : "text-slate-700"
+            }`}
+          >
+            {score.a}
+            <span className="px-0.5 text-slate-300">–</span>
+            {score.b}
+          </span>
+        )}
       </div>
       <div className="text-xs text-slate-400">
         <LocalTime date={match.date} time={match.time} /> · {match.venue}
@@ -330,6 +361,7 @@ function GolazoCard() {
 export default function Home() {
   const { results, champion } = useMatchResults();
   const { teams: liveTeams } = useTokenAddresses();
+  const { liveByMatchId } = useLiveMatches();
 
   const [announcement, setAnnouncement] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
@@ -477,6 +509,7 @@ export default function Home() {
                     key={match.id}
                     match={match}
                     status={todayMatchStatus(match, results, now)}
+                    live={liveByMatchId[match.id]}
                   />
                 ))}
               </div>

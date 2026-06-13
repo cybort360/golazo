@@ -8,6 +8,8 @@ import { TEAMS } from "@/constants/teams";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import { usePrizePool } from "@/hooks/usePrizePool";
+import { useLiveMatches } from "@/hooks/useLiveMatches";
+import type { LiveMatch } from "@/lib/resultsSync";
 import { getMatchStatus, getKickoffMs } from "@/lib/schedule";
 import { formatCountdown, formatCountdownPrecise } from "@/lib/time";
 import { Flag } from "@/components/Flag";
@@ -34,6 +36,29 @@ function cx(...classes: Array<string | false | null | undefined>): string {
 
 function teamFor(ticker: string) {
   return TEAMS.find((t) => t.ticker === ticker);
+}
+
+/**
+ * The score to show for the featured match, aligned to teamA / teamB. Prefers
+ * the live snapshot (covers in-progress games); falls back to a finished
+ * result's goals. Returns null when there's no score to show yet.
+ */
+function bannerScore(
+  match: ScheduledMatch,
+  result: MatchResult | null,
+  live: LiveMatch | undefined,
+): { a: number; b: number } | null {
+  if (live && live.homeScore !== null && live.awayScore !== null) {
+    return live.homeTicker === match.teamB && live.awayTicker === match.teamA
+      ? { a: live.awayScore, b: live.homeScore }
+      : { a: live.homeScore, b: live.awayScore };
+  }
+  if (result && result.goalsWinner != null && result.goalsLoser != null) {
+    return result.winner === match.teamA
+      ? { a: result.goalsWinner, b: result.goalsLoser }
+      : { a: result.goalsLoser, b: result.goalsWinner };
+  }
+  return null;
 }
 
 function formatUsdPrice(value: string): string {
@@ -300,17 +325,29 @@ function CenterColumn({
   match,
   result,
   clock,
+  score,
 }: {
   match: ScheduledMatch;
   result: MatchResult | null;
   clock: Clock;
+  score: { a: number; b: number } | null;
 }) {
+  const showScore =
+    score !== null && (clock.kind === "live" || clock.kind === "completed" || clock.kind === "draw");
   return (
     <div className="flex flex-col items-center gap-2 px-1 text-center md:px-4">
       <StatusBadge match={match} result={result} clock={clock} />
-      <div className="text-3xl font-black tracking-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.4)] md:text-4xl">
-        VS
-      </div>
+      {showScore ? (
+        <div className="flex items-center gap-2 text-4xl font-black tabular-nums tracking-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.4)] md:text-5xl">
+          <span>{score.a}</span>
+          <span className="text-white/50">–</span>
+          <span>{score.b}</span>
+        </div>
+      ) : (
+        <div className="text-3xl font-black tracking-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.4)] md:text-4xl">
+          VS
+        </div>
+      )}
       <div className="text-[10px] font-medium uppercase tracking-wider text-white/70 [text-shadow:0_1px_2px_rgba(0,0,0,0.35)] md:text-xs">
         {match.groupOrRound} · {match.venue}
       </div>
@@ -380,6 +417,7 @@ function PrizeStrip() {
 
 export default function MatchBanner({ match, result }: MatchBannerProps) {
   const [now, setNow] = useState<number | null>(null);
+  const { liveByMatchId } = useLiveMatches();
 
   useEffect(() => {
     const tick = () => setNow(Date.now());
@@ -389,6 +427,8 @@ export default function MatchBanner({ match, result }: MatchBannerProps) {
   }, []);
 
   const clock = computeClock(match, result, now);
+  const live = match ? liveByMatchId[match.id] : undefined;
+  const score = match ? bannerScore(match, result, live) : null;
   const winner = result && !result.isDraw ? result.winner : null;
   const loser = result && !result.isDraw ? result.loser : null;
 
@@ -409,7 +449,12 @@ export default function MatchBanner({ match, result }: MatchBannerProps) {
                 isWinner={winner === match.teamA}
                 dimmed={loser === match.teamA}
               />
-              <CenterColumn match={match} result={result} clock={clock} />
+              <CenterColumn
+                match={match}
+                result={result}
+                clock={clock}
+                score={score}
+              />
               <TeamSide
                 ticker={match.teamB}
                 align="right"

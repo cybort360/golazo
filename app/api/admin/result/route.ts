@@ -29,6 +29,10 @@ export async function POST(request: Request) {
     );
   }
 
+  // Optional non-negative integer scores. Anything else is treated as absent.
+  const score = (v: unknown): number | null =>
+    typeof v === "number" && Number.isInteger(v) && v >= 0 ? v : null;
+
   const result: MatchResult = {
     matchId: body.matchId,
     winner: body.winner,
@@ -36,10 +40,10 @@ export async function POST(request: Request) {
     isDraw: body.isDraw,
     timestamp:
       typeof body.timestamp === "number" ? body.timestamp : Date.now(),
-    buybackTxUrl:
-      typeof body.buybackTxUrl === "string" && body.buybackTxUrl.length > 0
-        ? body.buybackTxUrl
-        : null,
+    goalsWinner: score(body.goalsWinner),
+    goalsLoser: score(body.goalsLoser),
+    // A result entered here is a human action and must survive API syncs.
+    source: "manual",
   };
 
   try {

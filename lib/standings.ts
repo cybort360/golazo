@@ -18,6 +18,9 @@ export interface Standing {
   draws: number;
   losses: number;
   points: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDiff: number;
   rank: number;
 }
 
@@ -28,13 +31,45 @@ export interface DerivedStandings {
   best8Thirds: Set<string>;
 }
 
+/**
+ * FIFA group ordering: points, then goal difference, then goals scored. We
+ * stop short of head-to-head and the drawing of lots (which need fixture-level
+ * detail we don't model), falling back to wins and then ticker for a stable,
+ * deterministic order.
+ */
+function compareStandings(a: Standing, b: Standing): number {
+  return (
+    b.points - a.points ||
+    b.goalDiff - a.goalDiff ||
+    b.goalsFor - a.goalsFor ||
+    b.wins - a.wins ||
+    a.team.ticker.localeCompare(b.team.ticker)
+  );
+}
+
 export function computeStandings(results: MatchResult[]): DerivedStandings {
   const recs = new Map<
     string,
-    { team: Team; played: number; wins: number; draws: number; losses: number }
+    {
+      team: Team;
+      played: number;
+      wins: number;
+      draws: number;
+      losses: number;
+      goalsFor: number;
+      goalsAgainst: number;
+    }
   >();
   for (const t of TEAMS) {
-    recs.set(t.ticker, { team: t, played: 0, wins: 0, draws: 0, losses: 0 });
+    recs.set(t.ticker, {
+      team: t,
+      played: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+    });
   }
 
   const groupResultCount = new Map<string, number>();
@@ -58,6 +93,16 @@ export function computeStandings(results: MatchResult[]): DerivedStandings {
     }
     w.played++;
     l.played++;
+
+    // Goals feed the goal-difference tiebreaker. Score-less results (older
+    // records or manual entries without a score) contribute 0, so they're
+    // simply neutral rather than breaking the tally.
+    const gw = r.goalsWinner ?? 0;
+    const gl = r.goalsLoser ?? 0;
+    w.goalsFor += gw;
+    w.goalsAgainst += gl;
+    l.goalsFor += gl;
+    l.goalsAgainst += gw;
   }
 
   const byGroup = new Map<string, Standing[]>();
@@ -67,6 +112,8 @@ export function computeStandings(results: MatchResult[]): DerivedStandings {
         const rec = recs.get(t.ticker);
         const wins = rec?.wins ?? 0;
         const draws = rec?.draws ?? 0;
+        const goalsFor = rec?.goalsFor ?? 0;
+        const goalsAgainst = rec?.goalsAgainst ?? 0;
         return {
           team: t,
           played: rec?.played ?? 0,
@@ -74,15 +121,13 @@ export function computeStandings(results: MatchResult[]): DerivedStandings {
           draws,
           losses: rec?.losses ?? 0,
           points: wins * 3 + draws,
+          goalsFor,
+          goalsAgainst,
+          goalDiff: goalsFor - goalsAgainst,
           rank: 0,
         };
       })
-      .sort(
-        (a, b) =>
-          b.points - a.points ||
-          b.wins - a.wins ||
-          a.team.ticker.localeCompare(b.team.ticker),
-      );
+      .sort(compareStandings);
     standings.forEach((s, i) => (s.rank = i + 1));
     byGroup.set(letter, standings);
   }
@@ -100,12 +145,7 @@ export function computeStandings(results: MatchResult[]): DerivedStandings {
   );
   const best8Thirds = new Set(
     [...thirds]
-      .sort(
-        (a, b) =>
-          b.points - a.points ||
-          b.wins - a.wins ||
-          a.team.ticker.localeCompare(b.team.ticker),
-      )
+      .sort(compareStandings)
       .slice(0, 8)
       .map((s) => s.team.ticker),
   );
@@ -132,11 +172,20 @@ export function deriveTeamStatuses(
 
   const { byGroup, groupComplete, best8Thirds } = computeStandings(results);
 
+  // The 8 best third-placed teams advance, but which thirds qualify can only be
+  // ranked once every group has finished — comparing thirds across groups while
+  // some are mid-play uses incomplete records. So a 3rd-place team is only
+  // eliminated after all groups are complete; a 4th-place team can never qualify
+  // and is out as soon as its own group finishes.
+  const allGroupsComplete = GROUP_LETTERS.every((l) => groupComplete.get(l));
+
   // Group-stage elimination (only once a group is fully played).
   for (const letter of GROUP_LETTERS) {
     if (!groupComplete.get(letter)) continue;
     for (const s of byGroup.get(letter) ?? []) {
-      if (s.rank === 4 || (s.rank === 3 && !best8Thirds.has(s.team.ticker))) {
+      const thirdEliminated =
+        s.rank === 3 && allGroupsComplete && !best8Thirds.has(s.team.ticker);
+      if (s.rank === 4 || thirdEliminated) {
         status.set(s.team.ticker, "eliminated");
       }
     }

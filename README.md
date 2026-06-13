@@ -11,6 +11,7 @@ The main site is read-only and wallet-free. Anyone can browse live prices, volum
 - **Next.js 14** (App Router) + **React 18**, **TypeScript** (strict)
 - **Tailwind CSS**
 - **Vercel KV** for tournament state (results, champion, featured match, announcements)
+- **football-data.org** (free tier) for live scores and results, polled server-side and fanned out via KV; standings auto-populate, with manual override in admin
 - **DexScreener API** for token price data
 - **Public Solana RPC** for wallet balances
 - **Helius API** for the champion holder snapshot (server-side)

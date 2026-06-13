@@ -18,9 +18,21 @@ const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 const MS_PER_MINUTE = 60_000;
 
-/** Today's date as YYYY-MM-DD in UTC. */
-function todayUtc(): string {
-  return new Date().toISOString().slice(0, 10);
+/**
+ * Today's date as YYYY-MM-DD in US Eastern Time — the time zone every kickoff
+ * (and therefore every `match.date`) is expressed in. Using UTC here is wrong:
+ * a late ET match (e.g. "22:00 ET") still carries its ET calendar date, so near
+ * the UTC/ET boundary a UTC "today" would either surface the next day's
+ * fixtures early or hide an ET match that is still in progress. en-CA formats
+ * as YYYY-MM-DD, which sorts/compares directly against `match.date`.
+ */
+function todayEt(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: ET_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 }
 
 /** Minutes-since-midnight for a "HH:MM ET" time string. */
@@ -107,9 +119,9 @@ export function resultForMatch<T extends { matchId: string }>(
   return results.find((r) => r.matchId === match.id);
 }
 
-/** Matches scheduled for today (UTC), sorted by kickoff time ascending. */
+/** Matches scheduled for today (ET), sorted by kickoff time ascending. */
 export function getTodaysMatches(): ScheduledMatch[] {
-  const today = todayUtc();
+  const today = todayEt();
   return SCHEDULE.filter((m) => m.date === today).sort(
     (a, b) => timeToMinutes(a.time) - timeToMinutes(b.time),
   );
@@ -128,7 +140,7 @@ export function getUpcomingMatches(
   results: MatchResult[] = [],
 ): ScheduledMatch[] {
   if (limit <= 0) return [];
-  const today = todayUtc();
+  const today = todayEt();
   return SCHEDULE.filter(
     (m) => m.date >= today && !resultForMatch(m, results),
   )
