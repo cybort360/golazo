@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   composeBroadcasts,
   applyEvent,
@@ -100,6 +100,18 @@ describe("composeBroadcasts — diffing", () => {
     const { events } = composeBroadcasts(state({ buybacks: [sneaky] }), emptyPosted());
     expect(events[0].text).toContain("&lt;b&gt;");
     expect(events[0].text).not.toContain("1M <b>x</b>");
+  });
+
+  it("appends a predict CTA link when the site URL is set", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://golazo.fun");
+    const { events } = composeBroadcasts(state({ results: [braResult] }), emptyPosted());
+    expect(events[0].text).toContain("https://golazo.fun/predict");
+    vi.unstubAllEnvs();
+  });
+
+  it("omits the CTA when no site URL is set", () => {
+    const { events } = composeBroadcasts(state({ results: [braResult] }), emptyPosted());
+    expect(events[0].text).not.toContain("/predict");
   });
 });
 

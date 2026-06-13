@@ -97,6 +97,16 @@ function formatChampion(ticker: string): string {
   );
 }
 
+// CTA back to the prediction game, appended to every post. Read at call time
+// (not module load) so it picks up the env and stays testable. Omitted if
+// NEXT_PUBLIC_SITE_URL isn't set, since a relative link isn't clickable in TG.
+function predictCta(): string {
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  return site
+    ? `\n\n🔮 <a href="${site}/predict">Predict &amp; win SOL</a>`
+    : "";
+}
+
 // ── Pure diff ─────────────────────────────────────────────────────────────────
 
 function baselineFrom(state: BroadcastState): PostedRecord {
@@ -150,7 +160,12 @@ export function composeBroadcasts(
     });
   }
 
-  return { events, baseline };
+  // Append the predict CTA to every post.
+  const cta = predictCta();
+  return {
+    events: cta ? events.map((e) => ({ ...e, text: e.text + cta })) : events,
+    baseline,
+  };
 }
 
 /** Apply one successfully-sent event to the posted record (immutably). */
