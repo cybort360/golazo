@@ -7,7 +7,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
 import { TEAMS } from "@/constants/teams";
 import { ALL_TOKENS } from "@/constants/tokens";
@@ -1509,7 +1508,6 @@ function PredictionPayoutsSection({ ui }: { ui: AdminUI }) {
 export default function AdminPage() {
   const { results, champion, reload: reloadResults } = useMatchResults();
   const { balanceSOL } = usePrizePool();
-  const { publicKey } = useWallet();
 
   const [toast, setToast] = useState<{ kind: ToastKind; message: string } | null>(
     null,
@@ -1578,18 +1576,9 @@ export default function AdminPage() {
         <h1 className="text-2xl font-semibold uppercase tracking-tight text-slate-900">
           Control Panel
         </h1>
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-xs text-slate-400">
-            {publicKey
-              ? `Connected: ${publicKey.toBase58().slice(0, 4)}…${publicKey
-                  .toBase58()
-                  .slice(-4)}`
-              : "Wallet not connected"}
-          </span>
-          <button onClick={logout} className={btnGhost}>
-            Log out
-          </button>
-        </div>
+        <button onClick={logout} className={btnGhost}>
+          Log out
+        </button>
       </header>
 
       <ResultsSection ui={ui} results={results} reload={reloadAll} />

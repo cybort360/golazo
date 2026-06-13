@@ -25,7 +25,9 @@ export default function PredictLayout({
   const wallets = useMemo<Adapter[]>(() => [new PhantomWalletAdapter()], []);
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
+      {/* autoConnect off: a wallet connection only happens on explicit user
+          action, never silently on page load. */}
+      <WalletProvider wallets={wallets} autoConnect={false}>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
