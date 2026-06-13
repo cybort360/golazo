@@ -156,6 +156,40 @@ describe("mapExternalMatches — knockouts", () => {
     expect(finals.find((f) => f.matchId === r32[0].id)?.winner).toBe("BRA");
     expect(finals.find((f) => f.matchId === r32[1].id)?.winner).toBe("POR");
   });
+
+  it("refuses to map a knockout match whose date is far from the fixture", () => {
+    // A LAST_32 match dated months away can't be the first R32 fixture; the
+    // proximity guard leaves it unmapped rather than attributing a wrong score.
+    const stray = ext({
+      stage: "LAST_32",
+      group: null,
+      utcDate: "2026-09-01T19:00:00Z",
+      homeName: "Brazil",
+      awayName: "Argentina",
+      status: "finished",
+      winner: "home",
+      homeScore: 1,
+      awayScore: 0,
+    });
+    const { live, finals, unmapped } = mapExternalMatches([stray]);
+    expect(live).toHaveLength(0);
+    expect(finals).toHaveLength(0);
+    expect(unmapped).toHaveLength(1);
+  });
+
+  it("ignores knockout matches with an unrecognized stage", () => {
+    const { unmapped } = mapExternalMatches([
+      ext({
+        stage: "PRELIMINARY_ROUND",
+        group: null,
+        homeName: "Brazil",
+        awayName: "Argentina",
+        status: "finished",
+        winner: "home",
+      }),
+    ]);
+    expect(unmapped).toHaveLength(1);
+  });
 });
 
 describe("mergeResults", () => {

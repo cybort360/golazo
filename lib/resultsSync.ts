@@ -10,7 +10,13 @@
 
 import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
 import { TEAMS } from "@/constants/teams";
+import { getKickoffMs } from "@/lib/schedule";
 import type { MatchResult } from "@/hooks/useMatchResults";
+
+// A knockout fixture's date is fixed, so a correctly-mapped external match must
+// kick off within this much of our scheduled time. Beyond it, the positional
+// assignment is untrustworthy and the match is left for manual entry.
+const KNOCKOUT_MAX_GAP_MS = 48 * 60 * 60 * 1000;
 
 export type LiveStatus =
   | "scheduled"
@@ -293,6 +299,17 @@ export function mapExternalMatches(
       const fixture = fixtures[i];
       if (!fixture) {
         unmapped.push(r.ext); // more external matches than we have slots for
+        return;
+      }
+      // Sanity-check the positional assignment against the calendar: our
+      // knockout dates are fixed, so the Nth-by-date external match should fall
+      // near the Nth fixture's kickoff. If the gap is large the ordering has
+      // drifted (a postponement, a count mismatch, an unexpected stage label) —
+      // refuse to map rather than attribute a score to the wrong fixture.
+      const extMs = Date.parse(r.ext.utcDate);
+      const gap = Math.abs(getKickoffMs(fixture) - extMs);
+      if (!Number.isFinite(gap) || gap > KNOCKOUT_MAX_GAP_MS) {
+        unmapped.push(r.ext);
         return;
       }
       live.push(toLiveMatch(fixture.id, r));
