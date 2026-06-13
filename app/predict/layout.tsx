@@ -25,9 +25,11 @@ export default function PredictLayout({
   const wallets = useMemo<Adapter[]>(() => [new PhantomWalletAdapter()], []);
   return (
     <ConnectionProvider endpoint={endpoint}>
-      {/* autoConnect off: a wallet connection only happens on explicit user
-          action, never silently on page load. */}
-      <WalletProvider wallets={wallets} autoConnect={false}>
+      {/* autoConnect is required for the modal's wallet-select to actually
+          connect with our custom trigger. It only re-establishes a connection
+          the user has already approved, and the app can only ever sign a
+          message (never a transaction), so there's no drain risk. */}
+      <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
