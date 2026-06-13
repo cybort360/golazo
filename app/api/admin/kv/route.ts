@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { isAdminRequest } from "@/lib/adminAuth";
+import { broadcastPending } from "@/lib/broadcast";
 
 export const dynamic = "force-dynamic";
+
+// Writing one of these may produce a new Telegram announcement.
+const BROADCAST_KEYS = new Set(["buyback_history", "weekly_prize", "champion"]);
 
 // Only these keys may be written/cleared through the admin panel.
 const PERMITTED_KEYS = new Set([
@@ -45,6 +49,8 @@ export async function POST(request: Request) {
     } else {
       await kv.set(key, value);
     }
+    // A new buyback / prize match / champion may warrant a broadcast.
+    if (BROADCAST_KEYS.has(key)) await broadcastPending();
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: false, error: "KV error" }, { status: 500 });

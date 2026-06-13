@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { isAdminRequest } from "@/lib/adminAuth";
+import { broadcastPending } from "@/lib/broadcast";
 import type { MatchResult } from "@/hooks/useMatchResults";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +53,8 @@ export async function POST(request: Request) {
     const next = existing.filter((r) => r.matchId !== result.matchId);
     next.push(result);
     await kv.set("match_results", next);
+    // Announce a newly-recorded result (no-op if Telegram is unconfigured).
+    await broadcastPending();
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: false, error: "KV error" }, { status: 500 });

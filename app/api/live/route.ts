@@ -7,6 +7,7 @@ import {
   mergeResults,
   type LiveMatch,
 } from "@/lib/resultsSync";
+import { broadcastPending } from "@/lib/broadcast";
 import type { MatchResult } from "@/hooks/useMatchResults";
 
 // Live scores are read every request and refreshed on demand; never prerender.
@@ -65,6 +66,8 @@ async function refresh(now: number): Promise<LiveSnapshot | null> {
       const existing = (await kv.get<MatchResult[]>(RESULTS_KEY)) ?? [];
       const merged = mergeResults(existing, finals);
       await kv.set(RESULTS_KEY, merged);
+      // Announce the freshly-finished matches (no-op if Telegram is unconfigured).
+      await broadcastPending();
     }
 
     return snapshot;
