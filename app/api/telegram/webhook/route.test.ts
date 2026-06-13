@@ -45,4 +45,11 @@ describe("POST /api/telegram/webhook", () => {
     await POST(req({ message: { text: "hello", chat: { id: 1 } } }, "s3cret"));
     expect(h.send).not.toHaveBeenCalled();
   });
+
+  it("fails closed when no secret is configured", async () => {
+    vi.stubEnv("TELEGRAM_WEBHOOK_SECRET", "");
+    const res = await POST(req({ message: { text: "/start", chat: { id: 1 } } }, ""));
+    expect(res.status).toBe(401);
+    expect(h.send).not.toHaveBeenCalled();
+  });
 });

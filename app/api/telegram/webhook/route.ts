@@ -1,6 +1,14 @@
+import { timingSafeEqual } from "crypto";
 import { sendTelegramTo } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
+
+/** Constant-time string compare; false on length mismatch (never throws). */
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  return ab.length === bb.length && timingSafeEqual(ab, bb);
+}
 
 // Receives Telegram bot updates (set via setWebhook). Today it just answers
 // /start with a Play button that opens the Mini App, so DMing the bot isn't a
@@ -26,11 +34,11 @@ const WELCOME =
   "No wallet needed — your Telegram is your login. Tap below to play 👇";
 
 export async function POST(request: Request) {
+  // Fail closed: no secret configured → reject (don't run an open endpoint that
+  // could be driven to spam arbitrary chats through our bot).
   const expected = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (
-    expected &&
-    request.headers.get("x-telegram-bot-api-secret-token") !== expected
-  ) {
+  const got = request.headers.get("x-telegram-bot-api-secret-token") ?? "";
+  if (!expected || !safeEqual(got, expected)) {
     return Response.json({ ok: false }, { status: 401 });
   }
 
