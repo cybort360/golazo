@@ -150,20 +150,31 @@ export function getUpcomingMatches(
 
 /**
  * The single match to feature as "next": the earliest fixture (chronologically)
- * that has no recorded result yet — deliberately ignoring the calendar date.
+ * that is not yet settled. A fixture is settled when it has a recorded result
+ * OR — once `now` is known — its live window has fully elapsed.
  *
- * The banner must not skip a game just because the viewer's clock rolled to a
- * new day in their time zone; a match that has kicked off (or even finished) but
- * isn't recorded yet is still "next" until its result is entered. It advances
- * only when a result lands, never on the wall clock alone.
+ * Folding in the clock is what stops the banner from sticking on the opening
+ * fixtures: a game that finished days ago but hasn't had its result recorded
+ * (KV not yet populated, or the results fetch hasn't landed) is treated as
+ * settled and skipped, so the banner lands on the genuine next match on first
+ * paint instead of forcing a reload. A match still inside its live window is
+ * never skipped — so an in-progress or just-finished game keeps the spotlight
+ * even before its result is entered.
+ *
+ * `now` is optional and defaults to null (SSR / pre-mount), where behavior
+ * falls back to results-only so server and client render identically.
  */
 export function getNextUnplayedMatch<T extends { matchId: string }>(
   results: T[] = [],
+  now: number | null = null,
 ): ScheduledMatch | null {
   return (
-    [...SCHEDULE]
-      .sort(compareByDateTime)
-      .find((m) => !resultForMatch(m, results)) ?? null
+    [...SCHEDULE].sort(compareByDateTime).find((m) => {
+      if (resultForMatch(m, results)) return false; // settled: result recorded
+      // settled: kicked off long enough ago that it's certainly over
+      if (now !== null && now >= getKickoffMs(m) + LIVE_WINDOW_MS) return false;
+      return true;
+    }) ?? null
   );
 }
 

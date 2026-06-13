@@ -24,6 +24,19 @@ describe("getNextUnplayedMatch", () => {
   it("advances past fixtures that have a recorded result", () => {
     expect(getNextUnplayedMatch([result("GM001")])?.id).toBe("GM002");
   });
+
+  it("skips matches whose live window has elapsed when now is provided", () => {
+    // Midday June 13: the June 11-12 fixtures are long over even with no result
+    // recorded, so the banner should land on the first June 13 match (GM005),
+    // not stick on the opener.
+    const now = Date.UTC(2026, 5, 13, 12, 0, 0);
+    expect(getNextUnplayedMatch([], now)?.id).toBe("GM005");
+  });
+
+  it("keeps an in-progress match featured even without a result", () => {
+    const now = GM001_KICKOFF_UTC + 30 * 60 * 1000; // 30 min into GM001
+    expect(getNextUnplayedMatch([], now)?.id).toBe("GM001");
+  });
 });
 
 describe("getTodaysMatches (Eastern Time)", () => {

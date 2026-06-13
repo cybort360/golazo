@@ -404,14 +404,14 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
-  // Feature the earliest match without a recorded result — ignoring the calendar
-  // date so the banner never jumps to a later day's game while an earlier one is
-  // still unrecorded (e.g. a match in progress when the viewer's clock has
-  // already rolled to the next day in their time zone). Advances only when a
-  // result is recorded.
+  // Feature the earliest match that isn't settled yet. Passing `now` lets the
+  // clock retire matches that finished long ago but have no recorded result,
+  // so the banner lands on the real next match on first paint instead of
+  // sticking on the opening fixtures until a reload. A match still inside its
+  // live window is kept, so an in-progress game keeps the spotlight.
   const featuredMatch = useMemo<ScheduledMatch | null>(
-    () => getNextUnplayedMatch(results),
-    [results],
+    () => getNextUnplayedMatch(results, now),
+    [results, now],
   );
 
   const featuredResult = useMemo<MatchResult | null>(
