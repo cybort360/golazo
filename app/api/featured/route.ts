@@ -5,11 +5,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const matchId = (await kv.get<string>("featured_match_id")) ?? null;
     const announcement =
       (await kv.get<string>("featured_announcement")) ?? null;
-    return Response.json({ matchId, announcement });
+    return Response.json({ announcement });
   } catch {
-    return Response.json({ matchId: null, announcement: null });
+    return Response.json({ announcement: null });
   }
 }

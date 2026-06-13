@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import type { ScheduledMatch } from "@/constants/schedule";
 import { TEAMS } from "@/constants/teams";
@@ -310,15 +309,6 @@ export default function LivePanel() {
                 </div>
               );
             })}
-            {today.length > 4 && (
-              <Link
-                href="/schedule"
-                className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-700"
-              >
-                View all
-                <Icon name="right" size={13} />
-              </Link>
-            )}
           </div>
         )}
       </Card>

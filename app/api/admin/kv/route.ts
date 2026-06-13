@@ -6,7 +6,6 @@ export const dynamic = "force-dynamic";
 
 // Only these keys may be written/cleared through the admin panel.
 const PERMITTED_KEYS = new Set([
-  "featured_match_id",
   "featured_announcement",
   "champion",
   "match_results",

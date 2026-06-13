@@ -137,100 +137,7 @@ const btnDanger = `${btn} bg-red-50 text-red-600 ring-1 ring-red-200 hover:bg-re
 const input =
   "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-green-500/40 placeholder:text-slate-400 focus:ring-2";
 
-// ── Section 1: Featured Match ────────────────────────────────────────────────
-
-function FeaturedSection({
-  ui,
-  featured,
-  results,
-  reload,
-}: {
-  ui: AdminUI;
-  featured: { matchId: string | null; announcement: string | null };
-  results: MatchResult[];
-  reload: () => void;
-}) {
-  const [selectedId, setSelectedId] = useState("");
-
-  // Don't surface a pin whose match is already decided. Recording a result
-  // auto-clears the pin server-side, but a result that lands by any other path
-  // (or a pin set before this behavior existed) shouldn't strand a finished
-  // game here either — mirror the homepage, which advances past decided pins.
-  const pinnedMatch = featured.matchId
-    ? SCHEDULE.find((m) => m.id === featured.matchId)
-    : undefined;
-  const pinDecided =
-    pinnedMatch && results.some((r) => r.matchId === pinnedMatch.id);
-  const pinned = pinDecided ? undefined : pinnedMatch;
-
-  const pin = () => {
-    if (!selectedId) {
-      ui.showToast("error", "Select a valid match first");
-      return;
-    }
-    // A decided match would be skipped by both the panel and the homepage, so
-    // pinning one looks like the button did nothing. Refuse it up front.
-    if (results.some((r) => r.matchId === selectedId)) {
-      ui.showToast("error", "That match already has a result — pick another");
-      return;
-    }
-    ui.requestConfirm(`Pin ${selectedId} to the homepage?`, async () => {
-      const { ok, status } = await saveKv("featured_match_id", selectedId);
-      if (ok) {
-        ui.showToast("success", "Match pinned");
-        reload();
-      } else {
-        onWriteError(ui, status, "Failed to pin");
-      }
-    });
-  };
-
-  const clear = () => {
-    ui.requestConfirm("Remove the pinned featured match?", async () => {
-      const { ok, status } = await saveKv("featured_match_id", null);
-      if (ok) {
-        ui.showToast("success", "Cleared");
-        reload();
-      } else {
-        onWriteError(ui, status, "Failed to clear");
-      }
-    });
-  };
-
-  return (
-    <Panel n={1} title="Featured Match">
-      {pinned && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm">
-          <span className="text-slate-700">
-            Pinned: {flag(pinned.teamA)} {pinned.teamA} vs {flag(pinned.teamB)}{" "}
-            {pinned.teamB}{" "}
-            <span className="text-slate-400">
-              ({pinned.date} {pinned.time})
-            </span>
-          </span>
-          <button onClick={clear} className={btnDanger}>
-            Clear
-          </button>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-        <div className="flex-1">
-          <MatchSelect
-            matches={SCHEDULE}
-            value={selectedId}
-            onChange={setSelectedId}
-          />
-        </div>
-        <button onClick={pin} className={btnPrimary}>
-          Pin to Homepage
-        </button>
-      </div>
-    </Panel>
-  );
-}
-
-// ── Section 2: Submit Match Result ───────────────────────────────────────────
+// ── Section 1: Submit Match Result ───────────────────────────────────────────
 
 interface Draft {
   outcome: "A" | "B" | "draw" | "";
@@ -463,7 +370,7 @@ function ResultsSection({
   };
 
   return (
-    <Panel n={2} title="Submit Match Result">
+    <Panel n={1} title="Submit Match Result">
       {pending.length === 0 ? (
         <p className="text-sm text-slate-400">No matches to record yet.</p>
       ) : (
@@ -623,7 +530,7 @@ function TokenAddressSection({ ui }: { ui: AdminUI }) {
   };
 
   return (
-    <Panel n={3} title="Token Addresses">
+    <Panel n={2} title="Token Addresses">
       <p className="text-xs text-slate-400">
         Changes here update the site without redeploying.
       </p>
@@ -763,7 +670,7 @@ function ChampionSection({
   };
 
   return (
-    <Panel n={4} title="Champion + Prize Distribution">
+    <Panel n={3} title="Champion + Prize Distribution">
       {/* Set champion */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
         <div className="flex-1">
@@ -893,7 +800,7 @@ function AnnouncementSection({
   };
 
   return (
-    <Panel n={5} title="Announcement Banner">
+    <Panel n={4} title="Announcement Banner">
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -1127,7 +1034,7 @@ function WeeklySection({
   };
 
   return (
-    <Panel n={6} title="Weekly Prize">
+    <Panel n={5} title="Weekly Prize">
       {/* Current week status */}
       {current && match && (
         <div className="flex flex-col gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5 text-sm">
@@ -1321,20 +1228,15 @@ export default function AdminPage() {
   } | null>(null);
 
   const [featured, setFeatured] = useState<{
-    matchId: string | null;
     announcement: string | null;
-  }>({ matchId: null, announcement: null });
+  }>({ announcement: null });
 
   const reloadFeatured = useCallback(async () => {
     try {
       const res = await fetch("/api/featured", { cache: "no-store" });
       if (!res.ok) return;
-      const d = (await res.json()) as {
-        matchId?: unknown;
-        announcement?: unknown;
-      };
+      const d = (await res.json()) as { announcement?: unknown };
       setFeatured({
-        matchId: typeof d.matchId === "string" ? d.matchId : null,
         announcement: typeof d.announcement === "string" ? d.announcement : null,
       });
     } catch {
@@ -1346,7 +1248,7 @@ export default function AdminPage() {
     void reloadFeatured();
   }, [reloadFeatured]);
 
-  // Refresh everything the panels read after a write: the featured pin/banner
+  // Refresh everything the panels read after a write: the announcement banner
   // and the match results + champion. Submitting a result must re-pull results
   // so the saved win shows immediately (and unlocks the Log Buyback form).
   const reloadAll = useCallback(() => {
@@ -1398,12 +1300,6 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <FeaturedSection
-        ui={ui}
-        featured={featured}
-        results={results}
-        reload={reloadFeatured}
-      />
       <ResultsSection ui={ui} results={results} reload={reloadAll} />
       <TokenAddressSection ui={ui} />
       <ChampionSection

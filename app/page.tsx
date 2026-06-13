@@ -10,14 +10,13 @@ import GroupTable from "@/components/GroupTable";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 import { LocalTime } from "@/components/LocalTime";
-import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
+import { type ScheduledMatch } from "@/constants/schedule";
 import { TEAMS, type Team } from "@/constants/teams";
 import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import {
   getNextUnplayedMatch,
   getTodaysMatches,
   getMatchStatus,
-  getKickoffMs,
   resultForMatch,
 } from "@/lib/schedule";
 import { GROUP_LETTERS } from "@/lib/standings";
@@ -31,11 +30,6 @@ import {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const TEAM_BY_TICKER = new Map(TEAMS.map((t) => [t.ticker, t]));
-
-// How long after kickoff a manual pin keeps featuring its match — 2 hours, i.e.
-// roughly when the match ends. After that an un-recorded pin is considered stale
-// and the banner advances to the next match on its own.
-const PIN_STALE_AFTER_KICKOFF_MS = 2 * 60 * 60 * 1000;
 
 function teamFor(ticker: string): Team | undefined {
   return TEAM_BY_TICKER.get(ticker);
@@ -333,19 +327,11 @@ function GolazoCard() {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-interface Featured {
-  matchId: string | null;
-  announcement: string | null;
-}
-
 export default function Home() {
   const { results, champion } = useMatchResults();
   const { teams: liveTeams } = useTokenAddresses();
 
-  const [featured, setFeatured] = useState<Featured>({
-    matchId: null,
-    announcement: null,
-  });
+  const [announcement, setAnnouncement] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [now, setNow] = useState<number | null>(null);
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
@@ -361,18 +347,16 @@ export default function Home() {
   const collapseAll = () => setOpenGroups(new Set());
   const allOpen = openGroups.size === GROUP_LETTERS.length;
 
-  // Featured match / announcement from KV.
+  // Site-wide announcement banner from KV.
   useEffect(() => {
     let cancelled = false;
     fetch("/api/featured", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : { matchId: null, announcement: null }))
-      .then((d: Partial<Featured>) => {
+      .then((r) => (r.ok ? r.json() : { announcement: null }))
+      .then((d: { announcement?: unknown }) => {
         if (cancelled) return;
-        setFeatured({
-          matchId: typeof d.matchId === "string" ? d.matchId : null,
-          announcement:
-            typeof d.announcement === "string" ? d.announcement : null,
-        });
+        setAnnouncement(
+          typeof d.announcement === "string" ? d.announcement : null,
+        );
       })
       .catch(() => {});
     return () => {
@@ -388,27 +372,15 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
-  const featuredMatch = useMemo<ScheduledMatch | null>(() => {
-    // A manual pin wins, but only while that match is still the relevant one:
-    //  - not yet decided (once a result is in, advance off the finished game),
-    //  - and not already well past kickoff. A pin for a match that came and
-    //    went without a result must not stick on the banner forever; treat it
-    //    as stale a few hours after kickoff and fall through to the next match.
-    if (featured.matchId) {
-      const pinned = SCHEDULE.find((m) => m.id === featured.matchId);
-      const decided = pinned && results.some((r) => r.matchId === pinned.id);
-      const reference = now ?? Date.now();
-      const stale =
-        pinned &&
-        reference > getKickoffMs(pinned) + PIN_STALE_AFTER_KICKOFF_MS;
-      if (pinned && !decided && !stale) return pinned;
-    }
-    // Auto-pick the earliest match without a recorded result — ignoring the
-    // calendar date so the banner never jumps to a later day's game while an
-    // earlier one is still unrecorded (e.g. a match in progress when the
-    // viewer's clock has already rolled to the next day in their time zone).
-    return getNextUnplayedMatch(results);
-  }, [featured.matchId, results, now]);
+  // Feature the earliest match without a recorded result — ignoring the calendar
+  // date so the banner never jumps to a later day's game while an earlier one is
+  // still unrecorded (e.g. a match in progress when the viewer's clock has
+  // already rolled to the next day in their time zone). Advances only when a
+  // result is recorded.
+  const featuredMatch = useMemo<ScheduledMatch | null>(
+    () => getNextUnplayedMatch(results),
+    [results],
+  );
 
   const featuredResult = useMemo<MatchResult | null>(
     () =>
@@ -463,13 +435,13 @@ export default function Home() {
     };
   }, [launchedTeams]);
 
-  const showAnnouncement = featured.announcement !== null && !dismissed;
+  const showAnnouncement = announcement !== null && !dismissed;
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
       {showAnnouncement && (
         <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900 shadow-card">
-          <span>{featured.announcement}</span>
+          <span>{announcement}</span>
           <button
             type="button"
             onClick={() => setDismissed(true)}
