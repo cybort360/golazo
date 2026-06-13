@@ -24,6 +24,9 @@ function solscanAccount(address: string): string {
   return `https://solscan.io/account/${address}`;
 }
 
+// How long a finished match stays in the Recent Results feed before it drops off.
+const RESULT_FEED_TTL_MS = 24 * 60 * 60 * 1000;
+
 function flagCodeFor(ticker: string): string | null {
   return TEAMS.find((t) => t.ticker === ticker)?.flagCode ?? null;
 }
@@ -153,10 +156,10 @@ function MatchStatusBadge({
       </span>
     );
   }
-  if (status === "completed" && result) {
+  if (status === "completed") {
     return (
       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
-        {result.winner} wins
+        {result ? `${result.winner} wins` : "Full time"}
       </span>
     );
   }
@@ -207,7 +210,13 @@ export default function LivePanel() {
   const nextMatch =
     today.length === 0 ? (getUpcomingMatches(1, results)[0] ?? null) : null;
 
+  // Recent Results only surfaces the last 24h, so a finished match drops off on
+  // its own a day later instead of lingering as "stale" on the panel.
   const recent = [...results]
+    .filter(
+      (r) =>
+        now === null || now - normalizeTs(r.timestamp) < RESULT_FEED_TTL_MS,
+    )
     .sort((a, b) => normalizeTs(b.timestamp) - normalizeTs(a.timestamp))
     .slice(0, 3);
 

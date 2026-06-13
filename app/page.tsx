@@ -32,10 +32,10 @@ import {
 
 const TEAM_BY_TICKER = new Map(TEAMS.map((t) => [t.ticker, t]));
 
-// How long after kickoff a manual pin keeps featuring its match. Long enough to
-// cover a full game + stoppage/extra time, after which an un-recorded pin is
-// considered stale and the banner advances to the next match on its own.
-const PIN_STALE_AFTER_KICKOFF_MS = 3 * 60 * 60 * 1000;
+// How long after kickoff a manual pin keeps featuring its match — 2 hours, i.e.
+// roughly when the match ends. After that an un-recorded pin is considered stale
+// and the banner advances to the next match on its own.
+const PIN_STALE_AFTER_KICKOFF_MS = 2 * 60 * 60 * 1000;
 
 function teamFor(ticker: string): Team | undefined {
   return TEAM_BY_TICKER.get(ticker);

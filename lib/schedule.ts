@@ -149,11 +149,13 @@ export function getMatchStatus(
   const result = resultForMatch(match, results);
   if (result) return result.isDraw ? "draw" : "completed";
 
-  if (match.date === todayUtc()) {
-    const kickoff = kickoffUtc(match).getTime();
-    const now = Date.now();
-    if (now >= kickoff && now <= kickoff + LIVE_WINDOW_MS) return "live";
-  }
+  // No result recorded yet: derive state from the clock so a match that has
+  // already kicked off and finished reads as full time, instead of showing its
+  // kickoff time forever while the admin hasn't entered the result.
+  const kickoff = kickoffUtc(match).getTime();
+  const now = Date.now();
+  if (now >= kickoff + LIVE_WINDOW_MS) return "completed"; // full time, result pending
+  if (now >= kickoff) return "live";
   return "upcoming";
 }
 
