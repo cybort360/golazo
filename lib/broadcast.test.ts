@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   composeBroadcasts,
   applyEvent,
+  predictButton,
   type BroadcastState,
   type PostedRecord,
 } from "@/lib/broadcast";
@@ -112,6 +113,25 @@ describe("composeBroadcasts — diffing", () => {
   it("omits the CTA when no site URL is set", () => {
     const { events } = composeBroadcasts(state({ results: [braResult] }), emptyPosted());
     expect(events[0].text).not.toContain("/predict");
+  });
+
+  it("suppresses the text CTA when a Mini App link is set (button is used)", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://golazo.fun");
+    vi.stubEnv("NEXT_PUBLIC_TELEGRAM_APP_URL", "https://t.me/golazo_feed_bot/predict");
+    const { events } = composeBroadcasts(state({ results: [braResult] }), emptyPosted());
+    expect(events[0].text).not.toContain("/predict");
+    vi.unstubAllEnvs();
+  });
+});
+
+describe("predictButton", () => {
+  it("is an inline button to the Mini App when configured, else undefined", () => {
+    vi.stubEnv("NEXT_PUBLIC_TELEGRAM_APP_URL", "https://t.me/golazo_feed_bot/predict");
+    expect(predictButton()).toMatchObject({
+      inline_keyboard: [[{ url: "https://t.me/golazo_feed_bot/predict" }]],
+    });
+    vi.unstubAllEnvs();
+    expect(predictButton()).toBeUndefined();
   });
 });
 

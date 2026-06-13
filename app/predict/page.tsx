@@ -289,6 +289,17 @@ export default function PredictPage() {
           Call the result of each match — 1 point per correct pick. Top the
           weekly board to win SOL. Picks lock at kickoff.
         </p>
+        {process.env.NEXT_PUBLIC_TELEGRAM_APP_URL && (
+          <a
+            href={process.env.NEXT_PUBLIC_TELEGRAM_APP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#229ED9] px-4 py-2 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
+          >
+            Play on Telegram
+            <Icon name="right" size={15} strokeWidth={2.5} />
+          </a>
+        )}
       </header>
 
       {!loaded ? (

@@ -16,7 +16,10 @@ export function telegramConfigured(): boolean {
  * false on any failure (unconfigured, network, non-OK) — never throws, so a
  * broadcast attempt can never break the caller's main work.
  */
-export async function sendTelegramMessage(text: string): Promise<boolean> {
+export async function sendTelegramMessage(
+  text: string,
+  replyMarkup?: unknown,
+): Promise<boolean> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHANNEL_ID;
   if (!token || !chatId) return false;
@@ -30,6 +33,7 @@ export async function sendTelegramMessage(text: string): Promise<boolean> {
         text,
         parse_mode: "HTML",
         disable_web_page_preview: true,
+        ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
       }),
       cache: "no-store",
     });

@@ -97,14 +97,25 @@ function formatChampion(ticker: string): string {
   );
 }
 
-// CTA back to the prediction game, appended to every post. Read at call time
-// (not module load) so it picks up the env and stays testable. Omitted if
-// NEXT_PUBLIC_SITE_URL isn't set, since a relative link isn't clickable in TG.
+// CTA back to the prediction game, appended to every post. When the Mini App
+// link is set we use an inline button instead (see predictButton) — better than
+// a web link that opens Telegram's in-app browser. Falls back to a web link to
+// /predict otherwise. Read at call time so it stays testable.
 function predictCta(): string {
+  if (process.env.NEXT_PUBLIC_TELEGRAM_APP_URL) return ""; // button handles it
   const site = process.env.NEXT_PUBLIC_SITE_URL;
   return site
     ? `\n\n🔮 <a href="${site}/predict">Predict &amp; win SOL</a>`
     : "";
+}
+
+// Inline keyboard button that opens the Telegram Mini App natively. Undefined
+// when no Mini App link is configured.
+export function predictButton(): unknown {
+  const url = process.env.NEXT_PUBLIC_TELEGRAM_APP_URL;
+  return url
+    ? { inline_keyboard: [[{ text: "🔮 Predict & win", url }]] }
+    : undefined;
 }
 
 // ── Pure diff ─────────────────────────────────────────────────────────────────
@@ -234,9 +245,10 @@ export async function broadcastPending(): Promise<void> {
       return;
     }
 
+    const button = predictButton();
     let current = posted;
     for (const event of events) {
-      const sent = await sendTelegramMessage(event.text);
+      const sent = await sendTelegramMessage(event.text, button);
       if (!sent) break; // stop; unsent events retry on the next trigger
       current = applyEvent(current, event);
       await kv.set(POSTED_KEY, current); // persist progress after each send
