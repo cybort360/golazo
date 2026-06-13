@@ -4,7 +4,7 @@ import { SCHEDULE } from "@/constants/schedule";
 import { TEAMS } from "@/constants/teams";
 import { getKickoffMs } from "@/lib/schedule";
 import { DRAW } from "@/lib/predictions";
-import { picksKey, resolvePlayerId } from "@/lib/predictionStore";
+import { picksKey, lockedKey, resolvePlayerId } from "@/lib/predictionStore";
 import type { LiveMatch } from "@/lib/resultsSync";
 
 export const dynamic = "force-dynamic";
@@ -67,6 +67,15 @@ export async function POST(request: Request) {
     const id = await resolvePlayerId(request);
     if (!id) {
       return NextResponse.json({ ok: false, error: "Not registered" }, { status: 401 });
+    }
+
+    // A locked pick can't be changed.
+    const locked = (await kv.get<string[]>(lockedKey(id))) ?? [];
+    if (locked.includes(body.matchId)) {
+      return NextResponse.json(
+        { ok: false, error: "This pick is locked" },
+        { status: 409 },
+      );
     }
 
     const allowed = await allowedPicks(body.matchId);

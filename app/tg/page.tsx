@@ -8,6 +8,7 @@ import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { usePredictionLeaderboard } from "@/hooks/usePredictionLeaderboard";
 import { Flag } from "@/components/Flag";
 import { LocalTime } from "@/components/LocalTime";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 // Minimal typing for the bits of the Telegram WebApp SDK we touch.
 interface TgWebApp {
@@ -46,10 +47,12 @@ export default function TelegramMiniApp() {
   const [status, setStatus] = useState<"loading" | "register" | "ready">("loading");
   const [nickname, setNickname] = useState("");
   const [picks, setPicks] = useState<Record<string, string>>({});
+  const [locked, setLocked] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState<number | null>(null);
   const [tab, setTab] = useState<"week" | "season">("week");
+  const [confirmLock, setConfirmLock] = useState<string | null>(null);
 
   const { liveByMatchId } = useLiveMatches();
   const { data: leaderboard } = usePredictionLeaderboard();
@@ -100,15 +103,22 @@ export default function TelegramMiniApp() {
       headers: { "X-Telegram-Init-Data": initData },
     })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { player?: { nickname?: string } | null; picks?: Record<string, string> } | null) => {
-        if (cancelled) return;
-        if (d?.player) {
-          setPicks(d.picks ?? {});
-          setStatus("ready");
-        } else {
-          setStatus("register");
-        }
-      })
+      .then(
+        (d: {
+          player?: { nickname?: string } | null;
+          picks?: Record<string, string>;
+          locked?: string[];
+        } | null) => {
+          if (cancelled) return;
+          if (d?.player) {
+            setPicks(d.picks ?? {});
+            setLocked(d.locked ?? []);
+            setStatus("ready");
+          } else {
+            setStatus("register");
+          }
+        },
+      )
       .catch(() => !cancelled && setStatus("register"));
     return () => {
       cancelled = true;
@@ -135,6 +145,7 @@ export default function TelegramMiniApp() {
   };
 
   const pick = async (matchId: string, value: string) => {
+    if (locked.includes(matchId)) return;
     setPicks((p) => ({ ...p, [matchId]: value })); // optimistic
     try {
       const res = await fetch("/api/predict/submit", {
@@ -145,6 +156,27 @@ export default function TelegramMiniApp() {
       if (!res.ok) {
         const d = (await res.json()) as { error?: string };
         setError(d.error ?? "Could not save pick");
+      }
+    } catch {
+      setError("Network error");
+    }
+  };
+
+  const doLock = async () => {
+    if (!confirmLock) return;
+    const matchId = confirmLock;
+    setConfirmLock(null);
+    try {
+      const res = await fetch("/api/predict/lock", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ matchId }),
+      });
+      if (res.ok) {
+        setLocked((prev) => (prev.includes(matchId) ? prev : [...prev, matchId]));
+      } else {
+        const d = (await res.json()) as { error?: string };
+        setError(d.error ?? "Could not lock pick");
       }
     } catch {
       setError("Network error");
@@ -218,42 +250,59 @@ export default function TelegramMiniApp() {
               No open matches right now. Check back before the next kickoff.
             </p>
           ) : (
-            slate.map((entry) => (
-              <div
-                key={entry.match.id}
-                className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-card"
-              >
-                <div className="flex items-center justify-between text-[11px] text-slate-400">
-                  <span>
-                    {entry.match.groupOrRound} ·{" "}
-                    <LocalTime date={entry.match.date} time={entry.match.time} />
-                  </span>
-                  <LockCountdown kickoffMs={getKickoffMs(entry.match)} />
+            slate.map((entry) => {
+              const isLocked = locked.includes(entry.match.id);
+              return (
+                <div
+                  key={entry.match.id}
+                  className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-card"
+                >
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
+                    <span>
+                      {entry.match.groupOrRound} ·{" "}
+                      <LocalTime date={entry.match.date} time={entry.match.time} />
+                    </span>
+                    {isLocked ? (
+                      <span className="font-semibold text-green-600">🔒 Locked</span>
+                    ) : (
+                      <LockCountdown kickoffMs={getKickoffMs(entry.match)} />
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {entry.options.map((o) => {
+                      const active = picks[entry.match.id] === o.value;
+                      return (
+                        <button
+                          key={o.value}
+                          type="button"
+                          disabled={isLocked}
+                          onClick={() => pick(entry.match.id, o.value)}
+                          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-sm font-semibold ${
+                            active
+                              ? "border-green-600 bg-green-50 text-green-700"
+                              : "border-slate-200 text-slate-700"
+                          } ${isLocked && !active ? "opacity-40" : ""}`}
+                        >
+                          {o.flagCode !== null && (
+                            <Flag code={o.flagCode} className="text-sm" />
+                          )}
+                          {o.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {picks[entry.match.id] && !isLocked && (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmLock(entry.match.id)}
+                      className="self-end text-xs font-semibold text-slate-500 underline underline-offset-2"
+                    >
+                      Lock this pick
+                    </button>
+                  )}
                 </div>
-                <div className="flex gap-2">
-                  {entry.options.map((o) => {
-                    const active = picks[entry.match.id] === o.value;
-                    return (
-                      <button
-                        key={o.value}
-                        type="button"
-                        onClick={() => pick(entry.match.id, o.value)}
-                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-sm font-semibold ${
-                          active
-                            ? "border-green-600 bg-green-50 text-green-700"
-                            : "border-slate-200 text-slate-700"
-                        }`}
-                      >
-                        {o.flagCode !== null && (
-                          <Flag code={o.flagCode} className="text-sm" />
-                        )}
-                        {o.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </section>
       )}
@@ -306,6 +355,15 @@ export default function TelegramMiniApp() {
           {error}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmLock !== null}
+        title="Lock this pick?"
+        body="Once locked, you can't change this pick — even before kickoff."
+        confirmLabel="Lock it"
+        onConfirm={doLock}
+        onCancel={() => setConfirmLock(null)}
+      />
     </div>
   );
 }

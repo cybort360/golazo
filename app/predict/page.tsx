@@ -18,6 +18,7 @@ import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 import { LocalTime } from "@/components/LocalTime";
 import ShareButtons from "@/components/ShareButtons";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 /** base64-encode a signature byte array in the browser (no Buffer). */
 function toBase64(bytes: Uint8Array): string {
@@ -144,11 +145,15 @@ function LockCountdown({ kickoffMs }: { kickoffMs: number }) {
 function SlateRow({
   entry,
   pick,
+  locked,
   onPick,
+  onLock,
 }: {
   entry: SlateEntry;
   pick: string | undefined;
+  locked: boolean;
   onPick: (matchId: string, value: string) => void;
+  onLock: (matchId: string) => void;
 }) {
   const { match, options } = entry;
   return (
@@ -157,7 +162,13 @@ function SlateRow({
         <span>
           {match.groupOrRound} · <LocalTime date={match.date} time={match.time} />
         </span>
-        <LockCountdown kickoffMs={getKickoffMs(match)} />
+        {locked ? (
+          <span className="inline-flex items-center gap-1 font-semibold text-green-600">
+            <Icon name="check" size={12} /> Locked
+          </span>
+        ) : (
+          <LockCountdown kickoffMs={getKickoffMs(match)} />
+        )}
       </div>
       <div className="flex gap-2">
         {options.map((o) => {
@@ -166,12 +177,13 @@ function SlateRow({
             <button
               key={o.value}
               type="button"
+              disabled={locked}
               onClick={() => onPick(match.id, o.value)}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-sm font-semibold transition-colors ${
                 active
                   ? "border-green-600 bg-green-50 text-green-700"
                   : "border-slate-200 text-slate-700 hover:bg-slate-50"
-              }`}
+              } ${locked && !active ? "opacity-40" : ""} ${locked ? "cursor-default" : ""}`}
             >
               {o.flagCode !== null && <Flag code={o.flagCode} className="text-sm" />}
               {o.label}
@@ -179,6 +191,15 @@ function SlateRow({
           );
         })}
       </div>
+      {pick && !locked && (
+        <button
+          type="button"
+          onClick={() => onLock(match.id)}
+          className="self-end text-xs font-semibold text-slate-500 underline underline-offset-2 hover:text-slate-800"
+        >
+          Lock this pick
+        </button>
+      )}
     </div>
   );
 }
@@ -239,7 +260,8 @@ function LeaderboardTable({
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function PredictPage() {
-  const { reg, picks, eligibility, loaded, register, submitPick } = usePrediction();
+  const { reg, picks, locked, eligibility, loaded, register, submitPick, lockPick } =
+    usePrediction();
   const { liveByMatchId } = useLiveMatches();
   const { data: leaderboard } = usePredictionLeaderboard();
   const { golazo } = useTokenAddresses();
@@ -247,6 +269,7 @@ export default function PredictPage() {
   const [now, setNow] = useState<number | null>(null);
   const [tab, setTab] = useState<"week" | "season">("week");
   const [toast, setToast] = useState<string | null>(null);
+  const [confirmLock, setConfirmLock] = useState<string | null>(null);
 
   useEffect(() => {
     const tick = () => setNow(Date.now());
@@ -269,6 +292,13 @@ export default function PredictPage() {
   const onPick = async (matchId: string, value: string) => {
     const res = await submitPick(matchId, value);
     if (!res.ok) setToast(res.error ?? "Could not save pick");
+  };
+
+  const doLock = async () => {
+    if (!confirmLock) return;
+    const res = await lockPick(confirmLock);
+    setConfirmLock(null);
+    if (!res.ok) setToast(res.error ?? "Could not lock pick");
   };
 
   const rows = tab === "week" ? leaderboard?.week ?? [] : leaderboard?.season ?? [];
@@ -378,7 +408,9 @@ export default function PredictPage() {
                     key={entry.match.id}
                     entry={entry}
                     pick={picks[entry.match.id]}
+                    locked={locked.includes(entry.match.id)}
                     onPick={onPick}
+                    onLock={setConfirmLock}
                   />
                 ))}
               </div>
@@ -415,6 +447,15 @@ export default function PredictPage() {
           {toast}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmLock !== null}
+        title="Lock this pick?"
+        body="Once locked, you can't change this pick — even before kickoff."
+        confirmLabel="Lock it"
+        onConfirm={doLock}
+        onCancel={() => setConfirmLock(null)}
+      />
     </div>
   );
 }

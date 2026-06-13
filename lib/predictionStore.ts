@@ -20,6 +20,8 @@ export const nickKey = (nickname: string) =>
   `pred:nick:${nickname.toLowerCase()}`;
 export const tokenKey = (token: string) => `pred:token:${token}`;
 export const picksKey = (id: string) => `pred:picks:${id}`;
+// Match ids the player has locked: those picks can no longer be changed.
+export const lockedKey = (id: string) => `pred:locked:${id}`;
 
 /**
  * Resolve the player making a write request, accepting either auth scheme:

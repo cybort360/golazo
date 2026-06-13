@@ -19,6 +19,7 @@ export interface Eligibility {
 interface Stored {
   reg: Registration | null;
   picks: Record<string, string>;
+  locked?: string[];
 }
 
 type ActionResult = { ok: true } | { ok: false; error: string };
@@ -50,6 +51,7 @@ function write(stored: Stored): void {
 export function usePrediction() {
   const [reg, setReg] = useState<Registration | null>(null);
   const [picks, setPicks] = useState<Record<string, string>>({});
+  const [locked, setLocked] = useState<string[]>([]);
   const [eligibility, setEligibility] = useState<Eligibility | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -57,10 +59,16 @@ export function usePrediction() {
     const stored = read();
     setReg(stored.reg);
     setPicks(stored.picks);
+    setLocked(stored.locked ?? []);
     setLoaded(true);
   }, []);
 
-  // Authoritative picks from the server (in case localStorage was cleared).
+  // Persist registration + picks + locks once loaded (single source of truth).
+  useEffect(() => {
+    if (loaded) write({ reg, picks, locked });
+  }, [reg, picks, locked, loaded]);
+
+  // Authoritative state from the server (in case localStorage was cleared).
   useEffect(() => {
     if (!reg?.token) return;
     let cancelled = false;
@@ -73,16 +81,16 @@ export function usePrediction() {
         (d: {
           player?: unknown;
           picks?: Record<string, string>;
+          locked?: string[];
           golazoBalance?: number | null;
           threshold?: number;
           eligible?: boolean;
         } | null) => {
-          // Only adopt the server's picks when it actually recognized the
-          // player. An error / unknown-token response returns player:null with
-          // empty picks — don't let that blank out the device's local picks.
+          // Only adopt the server's state when it recognized the player; an
+          // error / unknown-token response shouldn't blank local picks.
           if (cancelled || !d?.player || !d.picks) return;
           setPicks(d.picks);
-          write({ reg, picks: d.picks });
+          setLocked(d.locked ?? []);
           setEligibility({
             golazoBalance: d.golazoBalance ?? null,
             threshold: d.threshold ?? 0,
@@ -119,24 +127,23 @@ export function usePrediction() {
         if (!res.ok || !data.ok || !data.token) {
           return { ok: false, error: data.error ?? "Registration failed" };
         }
-        const next: Registration = {
+        setReg({
           nickname: data.nickname!,
           wallet: data.wallet!,
           token: data.token,
-        };
-        setReg(next);
-        write({ reg: next, picks });
+        });
         return { ok: true };
       } catch {
         return { ok: false, error: "Network error" };
       }
     },
-    [picks],
+    [],
   );
 
   const submitPick = useCallback(
     async (matchId: string, pick: string): Promise<ActionResult> => {
       if (!reg?.token) return { ok: false, error: "Not registered" };
+      if (locked.includes(matchId)) return { ok: false, error: "This pick is locked" };
       try {
         const res = await fetch("/api/predict/submit", {
           method: "POST",
@@ -150,16 +157,39 @@ export function usePrediction() {
         if (!res.ok || !data.ok) {
           return { ok: false, error: data.error ?? "Could not save pick" };
         }
-        const nextPicks = { ...picks, [matchId]: pick };
-        setPicks(nextPicks);
-        write({ reg, picks: nextPicks });
+        setPicks((prev) => ({ ...prev, [matchId]: pick }));
         return { ok: true };
       } catch {
         return { ok: false, error: "Network error" };
       }
     },
-    [reg, picks],
+    [reg, locked],
   );
 
-  return { reg, picks, eligibility, loaded, register, submitPick };
+  const lockPick = useCallback(
+    async (matchId: string): Promise<ActionResult> => {
+      if (!reg?.token) return { ok: false, error: "Not registered" };
+      try {
+        const res = await fetch("/api/predict/lock", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `Bearer ${reg.token}`,
+          },
+          body: JSON.stringify({ matchId }),
+        });
+        const data = (await res.json()) as { ok?: boolean; error?: string };
+        if (!res.ok || !data.ok) {
+          return { ok: false, error: data.error ?? "Could not lock pick" };
+        }
+        setLocked((prev) => (prev.includes(matchId) ? prev : [...prev, matchId]));
+        return { ok: true };
+      } catch {
+        return { ok: false, error: "Network error" };
+      }
+    },
+    [reg],
+  );
+
+  return { reg, picks, locked, eligibility, loaded, register, submitPick, lockPick };
 }
