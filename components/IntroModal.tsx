@@ -37,6 +37,11 @@ const SLIDES: Slide[] = [
     body: "35% of all trading fees fund a SOL prize pool. When the final whistle blows, champion-token holders split it.",
   },
   {
+    icon: "sparkles",
+    title: "Predict & win SOL",
+    body: "Call the result of every match. Top the weekly leaderboard to win a SOL bounty — and once $GOLAZO launches, hold it to be eligible for the pot.",
+  },
+  {
     icon: "chart",
     title: "Follow every game",
     body: "Live match banners, standings and brackets, updated automatically as results come in.",

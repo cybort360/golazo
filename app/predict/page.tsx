@@ -12,7 +12,7 @@ import {
 } from "@/hooks/usePredictionLeaderboard";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { registerMessage } from "@/lib/predictAuth";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
@@ -90,7 +90,8 @@ function RegistrationForm({
     ts: number;
   }) => Promise<{ ok: boolean; error?: string }>;
 }) {
-  const { publicKey, signMessage, connected } = useWallet();
+  const { publicKey, signMessage, connected, disconnect } = useWallet();
+  const { setVisible } = useWalletModal();
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -126,7 +127,30 @@ function RegistrationForm({
         message to prove the wallet is yours — it becomes your identity, where
         prizes pay out, and how pot eligibility is checked. One-time, no edits.
       </p>
-      <WalletMultiButton style={{ width: "fit-content" }} />
+      {connected && publicKey ? (
+        <div className="flex w-fit items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1.5">
+          <span className="h-2 w-2 rounded-full bg-green-500" />
+          <span className="font-mono text-xs text-slate-700">
+            {publicKey.toBase58().slice(0, 4)}…{publicKey.toBase58().slice(-4)}
+          </span>
+          <button
+            type="button"
+            onClick={() => void disconnect()}
+            className="text-xs font-medium text-slate-400 transition-colors hover:text-slate-600"
+          >
+            Disconnect
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setVisible(true)}
+          className="inline-flex w-fit items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5"
+        >
+          <Icon name="coins" size={16} />
+          Connect wallet
+        </button>
+      )}
       <input
         value={nickname}
         onChange={(e) => setNickname(e.target.value)}
