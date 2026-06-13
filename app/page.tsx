@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import MatchBanner from "@/components/MatchBanner";
-import BuybackFeed from "@/components/BuybackFeed";
-import BurnTracker from "@/components/BurnTracker";
+import BurnsFeed from "@/components/BurnsFeed";
 import ShareButtons from "@/components/ShareButtons";
 import LivePanel from "@/components/LivePanel";
 import StatsCard from "@/components/StatsCard";
@@ -285,7 +284,7 @@ function GolazoCard() {
   const launched = address !== null;
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-green-200 bg-green-50 p-5 shadow-card">
+    <section className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-green-200 bg-green-50 p-5 shadow-card">
       <div
         className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full"
         style={{
@@ -293,7 +292,7 @@ function GolazoCard() {
             "radial-gradient(circle, rgba(22,163,74,0.15), transparent 70%)",
         }}
       />
-      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative flex flex-1 flex-col justify-between gap-4">
         <div className="flex flex-col gap-1">
           <span className="text-xs font-semibold uppercase tracking-widest text-green-600">
             Platform Token
@@ -324,7 +323,7 @@ function GolazoCard() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-2 sm:items-end">
+        <div className="flex flex-col gap-2">
           {golazo.meteoraUrl ? (
             <a
               href={golazo.meteoraUrl}
@@ -502,37 +501,44 @@ export default function Home() {
       )}
 
       <div className="reveal" style={{ animationDelay: "60ms" }}>
-        <BuybackFeed />
+        <BurnsFeed />
       </div>
 
-      <div className="reveal" style={{ animationDelay: "75ms" }}>
-        <BurnTracker />
-      </div>
-
-      <Link
-        href="/predict"
-        className="reveal group flex items-center justify-between gap-3 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-4 shadow-card transition-transform hover:-translate-y-0.5"
+      {/* Predict CTA + platform token, side by side near the top so the
+          $GOLAZO card is visible without scrolling to the bottom. */}
+      <div
+        className="reveal grid gap-6 md:grid-cols-2"
         style={{ animationDelay: "82ms" }}
       >
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
-            <Icon name="trophy" size={20} />
-          </span>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-slate-900">
-              Predict &amp; win SOL
+        <Link
+          href="/predict"
+          className="group flex h-full flex-col justify-between gap-4 rounded-2xl border border-violet-200 bg-violet-50 p-5 shadow-card transition-transform hover:-translate-y-0.5"
+        >
+          <div className="flex flex-col gap-3">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+              <Icon name="trophy" size={22} />
             </span>
-            <span className="text-xs text-slate-500">
-              Call each match. Top the weekly board to win the bounty.
-            </span>
+            <div className="flex flex-col gap-1">
+              <span className="text-lg font-bold tracking-tight text-slate-900">
+                Predict &amp; win SOL
+              </span>
+              <span className="text-sm text-slate-500">
+                Call each match. Top the weekly board to win the bounty.
+              </span>
+            </div>
           </div>
-        </div>
-        <Icon
-          name="right"
-          size={18}
-          className="shrink-0 text-violet-400 transition-transform group-hover:translate-x-0.5"
-        />
-      </Link>
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-violet-600">
+            Play now
+            <Icon
+              name="right"
+              size={15}
+              className="transition-transform group-hover:translate-x-0.5"
+            />
+          </span>
+        </Link>
+
+        <GolazoCard />
+      </div>
 
       <div
         className="reveal grid grid-cols-1 gap-6 lg:grid-cols-[7fr_3fr]"
@@ -616,9 +622,6 @@ export default function Home() {
 
           {/* Section 4: Why Golazo */}
           <WhyGolazo />
-
-          {/* Section 5: $GOLAZO Platform Token */}
-          <GolazoCard />
         </div>
 
         {/* Right: live panel */}
