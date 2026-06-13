@@ -284,7 +284,7 @@ function GolazoCard() {
   const launched = address !== null;
 
   return (
-    <section className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-green-200 bg-green-50 p-5 shadow-card">
+    <section className="relative flex h-full items-center justify-between gap-3 overflow-hidden rounded-2xl border border-green-200 bg-green-50 p-4 shadow-card">
       <div
         className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full"
         style={{
@@ -292,66 +292,63 @@ function GolazoCard() {
             "radial-gradient(circle, rgba(22,163,74,0.15), transparent 70%)",
         }}
       />
-      <div className="relative flex flex-1 flex-col justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-semibold uppercase tracking-widest text-green-600">
-            Platform Token
+      <div className="relative flex min-w-0 flex-col gap-0.5">
+        <span className="text-[11px] font-semibold uppercase tracking-widest text-green-600">
+          Platform Token
+        </span>
+        <div className="flex items-baseline gap-2">
+          <span className="text-xl font-bold tracking-tight text-slate-900">
+            $GOLAZO
           </span>
-          <div className="flex items-baseline gap-3">
-            <span className="text-2xl font-bold tracking-tight text-slate-900">
-              $GOLAZO
-            </span>
-            {launched ? (
-              loading && !price ? (
-                <span className="inline-block h-7 w-24 animate-pulse rounded bg-green-100" />
-              ) : (
-                <span className="text-2xl font-bold tabular-nums text-slate-900">
-                  {price ? formatPrice(price.priceUsd) : "—"}
-                </span>
-              )
+          {launched ? (
+            loading && !price ? (
+              <span className="inline-block h-6 w-20 animate-pulse rounded bg-green-100" />
             ) : (
-              <span className="text-base font-medium text-slate-500">
-                Launching soon…
+              <span className="text-xl font-bold tabular-nums text-slate-900">
+                {price ? formatPrice(price.priceUsd) : "—"}
               </span>
-            )}
-          </div>
-          <div className="text-xs text-slate-500">
-            MCap {price ? compactUsd(price.marketCap) : "—"}
-          </div>
-          <p className="mt-1 max-w-md text-sm text-slate-600">
-            Hold $GOLAZO to earn from every future tournament.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          {golazo.meteoraUrl ? (
-            <a
-              href={golazo.meteoraUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex w-fit items-center gap-1.5 rounded-full bg-green-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5"
-            >
-              Buy $GOLAZO
-              <Icon name="right" size={15} strokeWidth={2.5} />
-            </a>
+            )
           ) : (
-            <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-400 ring-1 ring-slate-200">
-              Buy $GOLAZO
-              <Icon name="right" size={15} strokeWidth={2.5} />
+            <span className="text-sm font-medium text-slate-500">
+              Launching soon…
             </span>
           )}
-          {golazo.axiomUrl && (
-            <a
-              href={golazo.axiomUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50"
-            >
-              Trade on Axiom
-              <Icon name="right" size={15} strokeWidth={2.5} />
-            </a>
-          )}
         </div>
+        <span className="truncate text-xs text-slate-500">
+          {launched
+            ? `MCap ${price ? compactUsd(price.marketCap) : "—"}`
+            : "Hold to earn from every future tournament."}
+        </span>
+      </div>
+
+      <div className="relative flex shrink-0 flex-col items-end gap-2">
+        {golazo.meteoraUrl ? (
+          <a
+            href={golazo.meteoraUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex w-fit items-center gap-1.5 rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5"
+          >
+            Buy $GOLAZO
+            <Icon name="right" size={15} strokeWidth={2.5} />
+          </a>
+        ) : (
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-400 ring-1 ring-slate-200">
+            Buy $GOLAZO
+            <Icon name="right" size={15} strokeWidth={2.5} />
+          </span>
+        )}
+        {golazo.axiomUrl && (
+          <a
+            href={golazo.axiomUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50"
+          >
+            Trade on Axiom
+            <Icon name="right" size={15} strokeWidth={2.5} />
+          </a>
+        )}
       </div>
     </section>
   );
@@ -512,29 +509,24 @@ export default function Home() {
       >
         <Link
           href="/predict"
-          className="group flex h-full flex-col justify-between gap-4 rounded-2xl border border-violet-200 bg-violet-50 p-5 shadow-card transition-transform hover:-translate-y-0.5"
+          className="group flex h-full items-center gap-3 rounded-2xl border border-violet-200 bg-violet-50 p-4 shadow-card transition-transform hover:-translate-y-0.5"
         >
-          <div className="flex flex-col gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
-              <Icon name="trophy" size={22} />
-            </span>
-            <div className="flex flex-col gap-1">
-              <span className="text-lg font-bold tracking-tight text-slate-900">
-                Predict &amp; win SOL
-              </span>
-              <span className="text-sm text-slate-500">
-                Call each match. Top the weekly board to win the bounty.
-              </span>
-            </div>
-          </div>
-          <span className="inline-flex items-center gap-1 text-sm font-semibold text-violet-600">
-            Play now
-            <Icon
-              name="right"
-              size={15}
-              className="transition-transform group-hover:translate-x-0.5"
-            />
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+            <Icon name="trophy" size={20} />
           </span>
+          <div className="flex min-w-0 flex-col">
+            <span className="text-base font-bold tracking-tight text-slate-900">
+              Predict &amp; win SOL
+            </span>
+            <span className="text-xs text-slate-500">
+              Call each match. Top the weekly board to win the bounty.
+            </span>
+          </div>
+          <Icon
+            name="right"
+            size={18}
+            className="ml-auto shrink-0 text-violet-400 transition-transform group-hover:translate-x-0.5"
+          />
         </Link>
 
         <GolazoCard />
