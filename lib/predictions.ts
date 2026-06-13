@@ -10,8 +10,12 @@ import { SCHEDULE } from "@/constants/schedule";
 import type { MatchResult } from "@/hooks/useMatchResults";
 
 export interface Player {
+  // Stable player id: a wallet address (web) or "tg:<telegram-id>" (Telegram).
+  id: string;
   nickname: string;
-  wallet: string;
+  // Payout / gate wallet. Set for web players; null for Telegram players until
+  // they link one (Part 2).
+  wallet: string | null;
   createdAt: number;
 }
 
@@ -19,8 +23,9 @@ export interface Player {
 export const DRAW = "draw";
 
 export interface LeaderRow {
+  id: string;
   nickname: string;
-  wallet: string;
+  wallet: string | null; // null for Telegram players without a linked wallet
   points: number;
   correct: number;
   played: number; // settled predictions (matches with a result)
@@ -114,16 +119,16 @@ function sortRows(rows: LeaderRow[]): LeaderRow[] {
  */
 export function buildLeaderboards(
   players: Player[],
-  picksByWallet: Record<string, Record<string, string>>,
+  picksById: Record<string, Record<string, string>>,
   results: MatchResult[],
 ): Leaderboards {
   const resultByMatch = new Map(results.map((r) => [r.matchId, r]));
 
   const season: LeaderRow[] = [];
-  const weekTallies = new Map<string, Map<string, Tally>>(); // week -> wallet -> tally
+  const weekTallies = new Map<string, Map<string, Tally>>(); // week -> playerId -> tally
 
   for (const player of players) {
-    const picks = picksByWallet[player.wallet] ?? {};
+    const picks = picksById[player.id] ?? {};
     const seasonTally = emptyTally();
 
     for (const [matchId, pick] of Object.entries(picks)) {
@@ -138,21 +143,22 @@ export function buildLeaderboards(
 
       const week = WEEK_BY_MATCH.get(matchId);
       if (!week) continue;
-      let byWallet = weekTallies.get(week);
-      if (!byWallet) {
-        byWallet = new Map();
-        weekTallies.set(week, byWallet);
+      let byId = weekTallies.get(week);
+      if (!byId) {
+        byId = new Map();
+        weekTallies.set(week, byId);
       }
-      const wt = byWallet.get(player.wallet) ?? emptyTally();
+      const wt = byId.get(player.id) ?? emptyTally();
       wt.played++;
       if (correct) {
         wt.correct++;
         wt.points++;
       }
-      byWallet.set(player.wallet, wt);
+      byId.set(player.id, wt);
     }
 
     season.push({
+      id: player.id,
       nickname: player.nickname,
       wallet: player.wallet,
       points: seasonTally.points,
@@ -161,16 +167,17 @@ export function buildLeaderboards(
     });
   }
 
-  const playerByWallet = new Map(players.map((p) => [p.wallet, p]));
+  const playerById = new Map(players.map((p) => [p.id, p]));
   const weeks: Record<string, LeaderRow[]> = {};
-  for (const [week, byWallet] of Array.from(weekTallies.entries())) {
+  for (const [week, byId] of Array.from(weekTallies.entries())) {
     const rows: LeaderRow[] = [];
-    for (const [wallet, t] of Array.from(byWallet.entries())) {
-      const p = playerByWallet.get(wallet);
+    for (const [id, t] of Array.from(byId.entries())) {
+      const p = playerById.get(id);
       if (!p) continue;
       rows.push({
+        id,
         nickname: p.nickname,
-        wallet,
+        wallet: p.wallet,
         points: t.points,
         correct: t.correct,
         played: t.played,

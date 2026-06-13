@@ -6,12 +6,13 @@ export const dynamic = "force-dynamic";
 
 const TOP_N = 100;
 
-/** Public rows: truncate the wallet so the board doesn't fully dox players. */
+/** Public rows: truncate the wallet so the board doesn't fully dox players;
+ *  Telegram players have no wallet, so show nothing there. */
 function publicRow(r: LeaderRow) {
   const w = r.wallet;
   return {
     nickname: r.nickname,
-    wallet: w.length > 8 ? `${w.slice(0, 4)}…${w.slice(-4)}` : w,
+    wallet: w ? (w.length > 8 ? `${w.slice(0, 4)}…${w.slice(-4)}` : w) : "",
     points: r.points,
     correct: r.correct,
     played: r.played,

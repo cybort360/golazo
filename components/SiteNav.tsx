@@ -66,7 +66,7 @@ export default function SiteNav() {
     return () => clearInterval(id);
   }, []);
 
-  if (pathname?.startsWith("/admin")) return null;
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/tg")) return null;
 
   const liveNow =
     now !== null &&

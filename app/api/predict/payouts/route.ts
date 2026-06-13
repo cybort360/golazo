@@ -30,9 +30,14 @@ export async function GET() {
   const weekTop = lb.weeks[currentWeek]?.slice(0, TOP_N) ?? [];
   const seasonTop = lb.season.slice(0, TOP_N);
 
-  // One balance read per distinct wallet across both lists.
+  // One balance read per distinct wallet across both lists (Telegram players
+  // without a linked wallet are skipped — they're ineligible until they link).
   const wallets = Array.from(
-    new Set([...weekTop, ...seasonTop].map((r) => r.wallet)),
+    new Set(
+      [...weekTop, ...seasonTop]
+        .map((r) => r.wallet)
+        .filter((w): w is string => w !== null),
+    ),
   );
   const balances = new Map<string, number | null>();
   await Promise.all(
@@ -40,7 +45,7 @@ export async function GET() {
   );
 
   const annotate = (r: LeaderRow): PayoutRow => {
-    const golazo = balances.get(r.wallet) ?? null;
+    const golazo = r.wallet ? (balances.get(r.wallet) ?? null) : null;
     return { ...r, golazo, eligible: isPotEligible(golazo, threshold) };
   };
 

@@ -15,10 +15,13 @@ vi.mock("@vercel/kv", () => ({
 
 import { POST } from "@/app/api/predict/submit/route";
 
-function req(body: unknown): Request {
+function req(body: unknown, token = "tok"): Request {
   return new Request("http://x/api/predict/submit", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(body),
   });
 }
@@ -50,7 +53,7 @@ describe("POST /api/predict/submit", () => {
   });
 
   it("rejects an unregistered token", async () => {
-    const res = await POST(req({ token: "nope", matchId: "GM005", pick: "QAT" }));
+    const res = await POST(req({ matchId: "GM005", pick: "QAT" }, "nope"));
     expect(res.status).toBe(401);
   });
 

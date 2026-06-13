@@ -140,8 +140,11 @@ export function usePrediction() {
       try {
         const res = await fetch("/api/predict/submit", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: reg.token, matchId, pick }),
+          headers: {
+            "Content-Type": "application/json",
+            authorization: `Bearer ${reg.token}`,
+          },
+          body: JSON.stringify({ matchId, pick }),
         });
         const data = (await res.json()) as { ok?: boolean; error?: string };
         if (!res.ok || !data.ok) {

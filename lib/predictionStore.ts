@@ -9,14 +9,42 @@ import {
   type Leaderboards,
   type Player,
 } from "@/lib/predictions";
+import { verifyInitData, telegramPlayerId } from "@/lib/telegramAuth";
 import type { MatchResult } from "@/hooks/useMatchResults";
 
+// A player id is a wallet address (web) or "tg:<id>" (Telegram). The KV key
+// functions take that id; the param name is generic.
 export const PLAYERS_KEY = "pred:players";
-export const playerKey = (wallet: string) => `pred:player:${wallet}`;
+export const playerKey = (id: string) => `pred:player:${id}`;
 export const nickKey = (nickname: string) =>
   `pred:nick:${nickname.toLowerCase()}`;
 export const tokenKey = (token: string) => `pred:token:${token}`;
-export const picksKey = (wallet: string) => `pred:picks:${wallet}`;
+export const picksKey = (id: string) => `pred:picks:${id}`;
+
+/**
+ * Resolve the player making a write request, accepting either auth scheme:
+ * a web registration token (Authorization: Bearer) or a Telegram Mini App
+ * payload (X-Telegram-Init-Data). Returns the player id, or null if neither
+ * verifies.
+ */
+export async function resolvePlayerId(request: Request): Promise<string | null> {
+  const initData = request.headers.get("x-telegram-init-data");
+  if (initData) {
+    const user = verifyInitData(initData);
+    return user ? telegramPlayerId(user.id) : null;
+  }
+  const token = request.headers
+    .get("authorization")
+    ?.replace(/^Bearer\s+/i, "");
+  if (token) {
+    try {
+      return (await kv.get<string>(tokenKey(token))) ?? null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
 
 const CACHE_KEY = "pred_leaderboard";
 const LOCK_KEY = "pred_lb_lock";
@@ -38,27 +66,33 @@ async function rebuild(now: number): Promise<LeaderboardCache | null> {
   if (gotLock !== "OK") return null;
 
   try {
-    const wallets = (await kv.get<string[]>(PLAYERS_KEY)) ?? [];
+    const ids = (await kv.get<string[]>(PLAYERS_KEY)) ?? [];
     const entries = await Promise.all(
-      wallets.map(async (w) => {
+      ids.map(async (id) => {
         const [player, picks] = await Promise.all([
-          kv.get<Player>(playerKey(w)),
-          kv.get<Record<string, string>>(picksKey(w)),
+          kv.get<Player>(playerKey(id)),
+          kv.get<Record<string, string>>(picksKey(id)),
         ]);
-        return { wallet: w, player, picks };
+        return { id, player, picks };
       }),
     );
 
     const players: Player[] = [];
-    const picksByWallet: Record<string, Record<string, string>> = {};
+    const picksById: Record<string, Record<string, string>> = {};
     for (const e of entries) {
       if (!e.player) continue;
-      players.push(e.player);
-      picksByWallet[e.wallet] = e.picks ?? {};
+      // Backfill id/wallet for records written before the unified-id change:
+      // a web player's id is its wallet; a Telegram player has no wallet yet.
+      players.push({
+        ...e.player,
+        id: e.id,
+        wallet: e.player.wallet ?? (e.id.startsWith("tg:") ? null : e.id),
+      });
+      picksById[e.id] = e.picks ?? {};
     }
 
     const results = (await kv.get<MatchResult[]>("match_results")) ?? [];
-    const built = buildLeaderboards(players, picksByWallet, results);
+    const built = buildLeaderboards(players, picksById, results);
     const cache: LeaderboardCache = { ...built, fetchedAt: now };
     await kv.set(CACHE_KEY, cache);
     return cache;

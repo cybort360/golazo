@@ -57,7 +57,8 @@ export default function IntroModal() {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
-  const isAdmin = pathname?.startsWith("/admin");
+  // Suppressed on admin and the Telegram Mini App (their own chrome).
+  const isAdmin = pathname?.startsWith("/admin") || pathname?.startsWith("/tg");
 
   // First-visit check (client only). Never block the first paint.
   useEffect(() => {

@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
-import { TEAMS } from "@/constants/teams";
 import { getKickoffMs } from "@/lib/schedule";
 import { formatCountdownPrecise } from "@/lib/time";
-import { DRAW } from "@/lib/predictions";
+import { buildSlate, type SlateEntry } from "@/lib/predictSlate";
 import { usePrediction } from "@/hooks/usePrediction";
 import {
   usePredictionLeaderboard,
@@ -26,58 +24,6 @@ function toBase64(bytes: Uint8Array): string {
   let s = "";
   for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
   return btoa(s);
-}
-
-const TICKERS = new Set(TEAMS.map((t) => t.ticker));
-const TEAM_BY_TICKER = new Map(TEAMS.map((t) => [t.ticker, t]));
-
-interface PickOption {
-  value: string; // ticker or DRAW
-  label: string;
-  flagCode: string | null;
-}
-
-interface SlateEntry {
-  match: ScheduledMatch;
-  options: PickOption[];
-}
-
-function teamOption(ticker: string): PickOption {
-  const t = TEAM_BY_TICKER.get(ticker);
-  return { value: ticker, label: ticker, flagCode: t?.flagCode ?? null };
-}
-
-/** Upcoming matches with known participants, soonest first. */
-function buildSlate(
-  now: number | null,
-  liveByMatchId: Record<string, { homeTicker: string; awayTicker: string }>,
-): SlateEntry[] {
-  if (now === null) return [];
-  const entries: SlateEntry[] = [];
-  for (const m of SCHEDULE) {
-    if (getKickoffMs(m) <= now) continue; // already kicked off / locked
-    if (TICKERS.has(m.teamA) && TICKERS.has(m.teamB)) {
-      entries.push({
-        match: m,
-        options: [
-          teamOption(m.teamA),
-          { value: DRAW, label: "Draw", flagCode: null },
-          teamOption(m.teamB),
-        ],
-      });
-    } else {
-      const live = liveByMatchId[m.id];
-      if (live && TICKERS.has(live.homeTicker) && TICKERS.has(live.awayTicker)) {
-        entries.push({
-          match: m,
-          options: [teamOption(live.homeTicker), teamOption(live.awayTicker)],
-        });
-      }
-    }
-  }
-  return entries
-    .sort((a, b) => getKickoffMs(a.match) - getKickoffMs(b.match))
-    .slice(0, 12);
 }
 
 // ── Registration ──────────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@ import { SCHEDULE } from "@/constants/schedule";
 import { TEAMS } from "@/constants/teams";
 import { getKickoffMs } from "@/lib/schedule";
 import { DRAW } from "@/lib/predictions";
-import { tokenKey, picksKey } from "@/lib/predictionStore";
+import { picksKey, resolvePlayerId } from "@/lib/predictionStore";
 import type { LiveMatch } from "@/lib/resultsSync";
 
 export const dynamic = "force-dynamic";
@@ -40,18 +40,14 @@ async function allowedPicks(matchId: string): Promise<Set<string> | null> {
 }
 
 export async function POST(request: Request) {
-  let body: { token?: unknown; matchId?: unknown; pick?: unknown };
+  let body: { matchId?: unknown; pick?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid body" }, { status: 400 });
   }
 
-  if (
-    typeof body.token !== "string" ||
-    typeof body.matchId !== "string" ||
-    typeof body.pick !== "string"
-  ) {
+  if (typeof body.matchId !== "string" || typeof body.pick !== "string") {
     return NextResponse.json({ ok: false, error: "Invalid request" }, { status: 400 });
   }
 
@@ -67,8 +63,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const wallet = await kv.get<string>(tokenKey(body.token));
-    if (!wallet) {
+    // Web (Bearer token) or Telegram (initData) — both resolve to a player id.
+    const id = await resolvePlayerId(request);
+    if (!id) {
       return NextResponse.json({ ok: false, error: "Not registered" }, { status: 401 });
     }
 
@@ -83,9 +80,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Invalid pick" }, { status: 400 });
     }
 
-    const picks = (await kv.get<Record<string, string>>(picksKey(wallet))) ?? {};
+    const picks = (await kv.get<Record<string, string>>(picksKey(id))) ?? {};
     picks[body.matchId] = body.pick;
-    await kv.set(picksKey(wallet), picks);
+    await kv.set(picksKey(id), picks);
 
     return NextResponse.json({ ok: true });
   } catch {

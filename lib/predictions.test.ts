@@ -59,8 +59,8 @@ function result(matchId: string, winner: string, loser: string, isDraw = false):
 }
 
 const players: Player[] = [
-  { nickname: "alice", wallet: "WALLET_A", createdAt: 0 },
-  { nickname: "bob", wallet: "WALLET_B", createdAt: 0 },
+  { id: "WALLET_A", nickname: "alice", wallet: "WALLET_A", createdAt: 0 },
+  { id: "WALLET_B", nickname: "bob", wallet: "WALLET_B", createdAt: 0 },
 ];
 
 describe("buildLeaderboards", () => {

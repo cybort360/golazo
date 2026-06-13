@@ -7,7 +7,7 @@ import {
 import type { Leaderboards, LeaderRow } from "@/lib/predictions";
 
 function row(nickname: string, points: number, correct: number, played: number): LeaderRow {
-  return { nickname, wallet: `W_${nickname}`, points, correct, played };
+  return { id: `W_${nickname}`, nickname, wallet: `W_${nickname}`, points, correct, played };
 }
 
 const WK = "2026-W24";
