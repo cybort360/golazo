@@ -14,6 +14,7 @@ import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 import { LocalTime } from "@/components/LocalTime";
+import ShareButtons from "@/components/ShareButtons";
 
 const TICKERS = new Set(TEAMS.map((t) => t.ticker));
 const TEAM_BY_TICKER = new Map(TEAMS.map((t) => [t.ticker, t]));
@@ -252,6 +253,12 @@ export default function PredictPage() {
 
   const rows = tab === "week" ? leaderboard?.week ?? [] : leaderboard?.season ?? [];
 
+  const topThisWeek = leaderboard?.week?.[0];
+  const isWeekWinner =
+    reg !== null &&
+    (topThisWeek?.played ?? 0) > 0 &&
+    topThisWeek?.nickname === reg.nickname;
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 md:py-8">
       <header className="flex flex-col gap-1">
@@ -273,6 +280,27 @@ export default function PredictPage() {
           <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-800">
             <Icon name="check" size={15} className="text-green-600" />
             Playing as <span className="font-bold">{reg.nickname}</span>
+          </div>
+
+          <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-card">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm text-slate-600">Flex your standing</span>
+              <ShareButtons
+                text="I'm predicting the World Cup on Golazo ⚽ Beat my picks?"
+                path={`/s/predictor/${encodeURIComponent(reg.nickname)}`}
+              />
+            </div>
+            {isWeekWinner && (
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2">
+                <span className="text-sm font-semibold text-amber-600">
+                  🏆 You&apos;re #1 this week
+                </span>
+                <ShareButtons
+                  text="Just won this week's SOL bounty on Golazo 🏆 Think you can beat me?"
+                  path={`/s/winner/${encodeURIComponent(reg.nickname)}`}
+                />
+              </div>
+            )}
           </div>
 
           <section className="flex flex-col gap-3">

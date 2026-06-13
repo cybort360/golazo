@@ -5,6 +5,7 @@ import Link from "next/link";
 import MatchBanner from "@/components/MatchBanner";
 import BuybackFeed from "@/components/BuybackFeed";
 import BurnTracker from "@/components/BurnTracker";
+import ShareButtons from "@/components/ShareButtons";
 import LivePanel from "@/components/LivePanel";
 import StatsCard from "@/components/StatsCard";
 import GroupTable from "@/components/GroupTable";
@@ -489,6 +490,16 @@ export default function Home() {
       <div className="reveal">
         <MatchBanner match={featuredMatch} result={featuredResult} />
       </div>
+
+      {featuredMatch && featuredResult && (
+        <div className="reveal -mt-2 flex items-center justify-end gap-2">
+          <span className="text-xs text-slate-400">Share the result</span>
+          <ShareButtons
+            text="Full time at the World Cup ⚽ Follow it on Golazo"
+            path={`/s/result/${featuredMatch.id}`}
+          />
+        </div>
+      )}
 
       <div className="reveal" style={{ animationDelay: "60ms" }}>
         <BuybackFeed />
