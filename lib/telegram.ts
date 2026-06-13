@@ -16,14 +16,14 @@ export function telegramConfigured(): boolean {
  * false on any failure (unconfigured, network, non-OK) — never throws, so a
  * broadcast attempt can never break the caller's main work.
  */
-export async function sendTelegramMessage(
+/** Send to any chat id (DMs, the channel, …). Returns false on any failure. */
+export async function sendTelegramTo(
+  chatId: number | string,
   text: string,
   replyMarkup?: unknown,
 ): Promise<boolean> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHANNEL_ID;
-  if (!token || !chatId) return false;
-
+  if (!token) return false;
   try {
     const res = await fetch(`${API_BASE}/bot${token}/sendMessage`, {
       method: "POST",
@@ -41,4 +41,14 @@ export async function sendTelegramMessage(
   } catch {
     return false;
   }
+}
+
+/** Post to the configured channel. No-op when the bot/channel isn't set up. */
+export async function sendTelegramMessage(
+  text: string,
+  replyMarkup?: unknown,
+): Promise<boolean> {
+  const chatId = process.env.TELEGRAM_CHANNEL_ID;
+  if (!chatId) return false;
+  return sendTelegramTo(chatId, text, replyMarkup);
 }
