@@ -8,7 +8,9 @@ export const dynamic = "force-dynamic";
 // localStorage). Lets a returning device confirm registration and show its
 // existing picks. Returns nulls rather than erroring on an unknown token.
 export async function GET(request: Request) {
-  const token = new URL(request.url).searchParams.get("token");
+  // Token comes in the Authorization header (not the URL) so it can't leak via
+  // server/proxy logs, browser history, or Referer.
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!token) return Response.json({ player: null, picks: {} });
 
   try {

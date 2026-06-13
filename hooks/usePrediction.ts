@@ -57,8 +57,9 @@ export function usePrediction() {
   useEffect(() => {
     if (!reg?.token) return;
     let cancelled = false;
-    fetch(`/api/predict/mine?token=${encodeURIComponent(reg.token)}`, {
+    fetch("/api/predict/mine", {
       cache: "no-store",
+      headers: { authorization: `Bearer ${reg.token}` },
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { picks?: Record<string, string> } | null) => {
