@@ -17,11 +17,17 @@ export default function TeamSelect({
   value,
   onChange,
   placeholder = "Select a team…",
+  allLabel,
+  showTicker = true,
 }: {
   teams: Team[];
   value: string;
   onChange: (ticker: string) => void;
   placeholder?: string;
+  // When set, adds a top "clear" row (value "") — used as a filter's "All teams".
+  allLabel?: string;
+  // Show the "$TICKER" hint next to each name. Off where only the country matters.
+  showTicker?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -108,6 +114,8 @@ export default function TeamSelect({
               <Flag code={selected.flagCode} className="shrink-0 text-base" />
               <span className="truncate text-slate-900">{selected.name}</span>
             </>
+          ) : allLabel ? (
+            <span className="truncate text-slate-700">{allLabel}</span>
           ) : (
             <span className="text-slate-400">{placeholder}</span>
           )}
@@ -134,6 +142,20 @@ export default function TeamSelect({
               className="w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-green-500 focus:bg-white"
             />
           </div>
+          {allLabel && q === "" && (
+            <button
+              type="button"
+              onClick={() => choose("")}
+              className={cx(
+                "flex w-full items-center gap-2.5 border-b border-slate-100 px-3 py-2 text-sm transition-colors hover:bg-green-50",
+                value === "" ? "font-semibold text-slate-900" : "text-slate-700",
+              )}
+            >
+              <Flag code={null} className="shrink-0 text-base opacity-40" />
+              <span className="flex-1 text-left">{allLabel}</span>
+              {value === "" && <Icon name="check" size={15} className="text-green-600" />}
+            </button>
+          )}
           <ul ref={listRef} role="listbox" className="max-h-64 overflow-auto p-1">
             {filtered.length === 0 ? (
               <li className="px-3 py-6 text-center text-sm text-slate-400">
@@ -158,7 +180,9 @@ export default function TeamSelect({
                   >
                     <Flag code={t.flagCode} className="shrink-0 text-base" />
                     <span className="flex-1 truncate">{t.name}</span>
-                    <span className="text-xs text-slate-400">${t.ticker}</span>
+                    {showTicker && (
+                      <span className="text-xs text-slate-400">${t.ticker}</span>
+                    )}
                     {isSel && (
                       <Icon name="check" size={15} className="text-green-600" />
                     )}
