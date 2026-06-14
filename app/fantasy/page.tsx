@@ -697,6 +697,9 @@ export default function FantasyPage() {
   const { pool, mine, loaded, createTeam, setLineup, transfer } = useFantasy(token);
 
   const upcoming = mine?.gw.upcoming ?? null;
+  const activeGw = mine?.gw.active ?? null;
+  // The matchday we're "on": the one in play, or the next one before kickoff.
+  const currentGw = activeGw ?? upcoming;
   const lookup = useMemo(() => lookupFrom(pool), [pool]);
 
   // Create flow: pick 15 → set the XI on the pitch → save squad + lineup.
@@ -753,6 +756,13 @@ export default function FantasyPage() {
               ),
             )}
           </div>
+
+          {currentGw && (
+            <div className="flex w-fit items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+              <Icon name="football" size={13} />
+              {activeGw ? currentGw.label : `Up next · ${currentGw.label}`}
+            </div>
+          )}
 
           {tab === "team" &&
             (pool.length === 0 ? (
