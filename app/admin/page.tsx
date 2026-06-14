@@ -339,6 +339,15 @@ function ResultsSection({
 }) {
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [sync, setSync] = useState<LiveSyncStatus | null>(null);
+  // Recorded matches the operator has expanded to override.
+  const [editing, setEditing] = useState<Set<string>>(new Set());
+  const toggleEditing = (id: string) =>
+    setEditing((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const draftFor = (id: string): Draft => drafts[id] ?? EMPTY_DRAFT;
   const patch = (id: string, p: Partial<Draft>) =>
@@ -402,15 +411,24 @@ function ResultsSection({
     });
   }, [results]);
 
-  // Fixtures worth showing: kicking off soon (next 24h) through recently played
-  // (last 72h), so the operator can pre-fill, record, or correct an auto result.
+  // "To record": fixtures kicking off soon (next 24h) or recently played
+  // (last 72h) that DON'T have a result yet — the operator's actual to-do list.
+  // Everything already recorded moves into the collapsed "Recorded" accordion so
+  // the panel stays short as the tournament fills up.
   const WINDOW_FUTURE_MS = 24 * 60 * 60 * 1000;
   const WINDOW_PAST_MS = 72 * 60 * 60 * 1000;
   const now = Date.now();
-  const shown = SCHEDULE.filter((m) => {
+  const toRecord = SCHEDULE.filter((m) => {
+    if (resultFor(m)) return false;
     const kickoff = getKickoffMs(m);
     return kickoff - WINDOW_FUTURE_MS <= now && now <= kickoff + WINDOW_PAST_MS;
   }).sort((a, b) => getKickoffMs(a) - getKickoffMs(b));
+
+  // Every recorded result, latest match first — collapsed by default, override
+  // any of them on demand.
+  const recorded = SCHEDULE.filter((m) => resultFor(m)).sort(
+    (a, b) => getKickoffMs(b) - getKickoffMs(a),
+  );
 
   const parseScore = (s: string): number | null => {
     if (s.trim() === "") return null;
@@ -487,129 +505,158 @@ function ResultsSection({
     });
   };
 
+  // The score inputs + save button for one fixture, reused by the "to record"
+  // cards and the inline override under a recorded row.
+  const matchEditor = (m: ScheduledMatch, saveLabel: string) => {
+    const d = draftFor(m.id);
+    return (
+      <>
+        {isResolvedFixture(m) ? (
+          <div className="flex items-center gap-2 text-sm text-slate-700">
+            <span className="w-12 shrink-0 text-right">{m.teamA}</span>
+            <input
+              inputMode="numeric"
+              value={d.scoreA}
+              onChange={(e) => patch(m.id, { scoreA: e.target.value })}
+              placeholder="0"
+              className={`${input} w-16 text-center`}
+            />
+            <span className="text-slate-300">–</span>
+            <input
+              inputMode="numeric"
+              value={d.scoreB}
+              onChange={(e) => patch(m.id, { scoreB: e.target.value })}
+              placeholder="0"
+              className={`${input} w-16 text-center`}
+            />
+            <span className="w-12 shrink-0">{m.teamB}</span>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="flex-1">
+                <TeamSelect
+                  teams={TEAMS_BY_NAME}
+                  value={d.koWinner}
+                  onChange={(t) => patch(m.id, { koWinner: t })}
+                  placeholder="Winner…"
+                />
+              </div>
+              <div className="flex-1">
+                <TeamSelect
+                  teams={TEAMS_BY_NAME}
+                  value={d.koLoser}
+                  onChange={(t) => patch(m.id, { koLoser: t })}
+                  placeholder="Loser…"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <span className="text-xs">Score (optional)</span>
+              <input
+                inputMode="numeric"
+                value={d.koWinnerGoals}
+                onChange={(e) => patch(m.id, { koWinnerGoals: e.target.value })}
+                placeholder="W"
+                className={`${input} w-16 text-center`}
+              />
+              <span className="text-slate-300">–</span>
+              <input
+                inputMode="numeric"
+                value={d.koLoserGoals}
+                onChange={(e) => patch(m.id, { koLoserGoals: e.target.value })}
+                placeholder="L"
+                className={`${input} w-16 text-center`}
+              />
+            </div>
+          </div>
+        )}
+        <div>
+          <button onClick={() => submit(m)} className={btnPrimary}>
+            {saveLabel}
+          </button>
+        </div>
+      </>
+    );
+  };
+
   return (
     <Panel n={1} title="Match Results (auto + override)">
       <LiveSyncLine status={sync} />
-      {shown.length === 0 ? (
-        <p className="text-sm text-slate-400">No matches in the recording window.</p>
+
+      {toRecord.length === 0 ? (
+        <p className="text-sm text-slate-400">
+          Nothing to record right now — recent matches are all in.
+        </p>
       ) : (
         <div className="flex flex-col gap-3">
-          {shown.map((m) => {
-            const existing = resultFor(m);
-            const d = draftFor(m.id);
-            return (
-              <div
-                key={m.id}
-                className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3"
-              >
-                <div className="flex items-center justify-between gap-2 text-sm">
-                  <span className="font-semibold text-slate-900">
-                    {flag(m.teamA)} {m.teamA} vs {flag(m.teamB)} {m.teamB}
-                  </span>
-                  <span className="text-xs text-slate-400">
-                    {m.groupOrRound} · {m.time} · {m.venue}
-                  </span>
-                </div>
-
-                {existing && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-semibold text-green-600">
-                      {existing.isDraw
-                        ? "Draw"
-                        : `${flag(existing.winner)} ${existing.winner} won`}
-                      {existing.goalsWinner != null &&
-                        existing.goalsLoser != null && (
-                          <span className="ml-1 tabular-nums text-slate-500">
-                            ({existing.goalsWinner}–{existing.goalsLoser})
-                          </span>
-                        )}
-                    </span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                        existing.source === "api"
-                          ? "bg-blue-50 text-blue-600"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {sourceLabel(existing)}
-                    </span>
-                  </div>
-                )}
-
-                {isResolvedFixture(m) ? (
-                  <div className="flex items-center gap-2 text-sm text-slate-700">
-                    <span className="w-12 shrink-0 text-right">{m.teamA}</span>
-                    <input
-                      inputMode="numeric"
-                      value={d.scoreA}
-                      onChange={(e) => patch(m.id, { scoreA: e.target.value })}
-                      placeholder="0"
-                      className={`${input} w-16 text-center`}
-                    />
-                    <span className="text-slate-300">–</span>
-                    <input
-                      inputMode="numeric"
-                      value={d.scoreB}
-                      onChange={(e) => patch(m.id, { scoreB: e.target.value })}
-                      placeholder="0"
-                      className={`${input} w-16 text-center`}
-                    />
-                    <span className="w-12 shrink-0">{m.teamB}</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <div className="flex-1">
-                        <TeamSelect
-                          teams={TEAMS_BY_NAME}
-                          value={d.koWinner}
-                          onChange={(t) => patch(m.id, { koWinner: t })}
-                          placeholder="Winner…"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <TeamSelect
-                          teams={TEAMS_BY_NAME}
-                          value={d.koLoser}
-                          onChange={(t) => patch(m.id, { koLoser: t })}
-                          placeholder="Loser…"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                      <span className="text-xs">Score (optional)</span>
-                      <input
-                        inputMode="numeric"
-                        value={d.koWinnerGoals}
-                        onChange={(e) =>
-                          patch(m.id, { koWinnerGoals: e.target.value })
-                        }
-                        placeholder="W"
-                        className={`${input} w-16 text-center`}
-                      />
-                      <span className="text-slate-300">–</span>
-                      <input
-                        inputMode="numeric"
-                        value={d.koLoserGoals}
-                        onChange={(e) =>
-                          patch(m.id, { koLoserGoals: e.target.value })
-                        }
-                        placeholder="L"
-                        className={`${input} w-16 text-center`}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <button onClick={() => submit(m)} className={btnPrimary}>
-                    {existing ? "Override" : "Save"}
-                  </button>
-                </div>
+          {toRecord.map((m) => (
+            <div
+              key={m.id}
+              className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3"
+            >
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="font-semibold text-slate-900">
+                  {flag(m.teamA)} {m.teamA} vs {flag(m.teamB)} {m.teamB}
+                </span>
+                <span className="text-xs text-slate-400">
+                  {m.groupOrRound} · {m.time} · {m.venue}
+                </span>
               </div>
-            );
-          })}
+              {matchEditor(m, "Save")}
+            </div>
+          ))}
         </div>
+      )}
+
+      {recorded.length > 0 && (
+        <details className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-slate-600">
+            Recorded results ({recorded.length})
+          </summary>
+          <div className="flex flex-col divide-y divide-slate-100 border-t border-slate-100">
+            {recorded.map((m) => {
+              const r = resultFor(m)!;
+              const open = editing.has(m.id);
+              return (
+                <div key={m.id} className="flex flex-col gap-2 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="min-w-0 truncate text-slate-700">
+                      {flag(r.winner)} {r.winner}{" "}
+                      <span className="italic text-slate-400">
+                        {r.isDraw ? "drew" : "def."}
+                      </span>{" "}
+                      {flag(r.loser)} {r.loser}
+                      {r.goalsWinner != null && r.goalsLoser != null && (
+                        <span className="ml-1 tabular-nums text-slate-500">
+                          ({r.goalsWinner}–{r.goalsLoser})
+                        </span>
+                      )}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          r.source === "api"
+                            ? "bg-blue-50 text-blue-600"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {sourceLabel(r)}
+                      </span>
+                      <button
+                        onClick={() => toggleEditing(m.id)}
+                        className="text-xs font-semibold text-slate-500 hover:text-slate-800"
+                      >
+                        {open ? "Close" : "Override"}
+                      </button>
+                    </span>
+                  </div>
+                  {open && matchEditor(m, "Save override")}
+                </div>
+              );
+            })}
+          </div>
+        </details>
       )}
     </Panel>
   );
