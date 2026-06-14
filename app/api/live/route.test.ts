@@ -29,8 +29,13 @@ vi.mock("@vercel/kv", () => ({
   },
 }));
 
+// ESPN is the primary live source; football-data is the fallback. h.fetch is the
+// primary so the existing assertions track the refresh path.
+vi.mock("@/lib/espnLive", () => ({
+  fetchWorldCupMatchesEspn: h.fetch,
+}));
 vi.mock("@/lib/footballData", () => ({
-  fetchWorldCupMatches: h.fetch,
+  fetchWorldCupMatches: vi.fn(async () => []),
 }));
 
 import { GET } from "@/app/api/live/route";

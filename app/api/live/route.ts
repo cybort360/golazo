@@ -2,9 +2,11 @@ import { kv } from "@vercel/kv";
 import { SCHEDULE } from "@/constants/schedule";
 import { getKickoffMs } from "@/lib/schedule";
 import { fetchWorldCupMatches } from "@/lib/footballData";
+import { fetchWorldCupMatchesEspn } from "@/lib/espnLive";
 import {
   mapExternalMatches,
   mergeResults,
+  type ExternalMatch,
   type LiveMatch,
 } from "@/lib/resultsSync";
 import { broadcastPending } from "@/lib/broadcast";
@@ -52,7 +54,17 @@ async function refresh(now: number): Promise<LiveSnapshot | null> {
   if (gotLock !== "OK") return null;
 
   try {
-    const external = await fetchWorldCupMatches();
+    // ESPN's free scoreboard is near-real-time; football-data (delayed free
+    // tier) is the fallback if ESPN is down or returns nothing.
+    let external: ExternalMatch[] = [];
+    try {
+      external = await fetchWorldCupMatchesEspn();
+    } catch {
+      external = [];
+    }
+    if (external.length === 0) {
+      external = await fetchWorldCupMatches();
+    }
     const { live, finals, unmapped } = mapExternalMatches(external, now);
 
     const snapshot: LiveSnapshot = {
