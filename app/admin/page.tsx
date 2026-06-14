@@ -1542,7 +1542,7 @@ function PredictionPayoutsSection({ ui }: { ui: AdminUI }) {
       ) : (
         <div className="flex flex-col gap-4">
           <PayoutTable
-            title={`This matchday (${data.currentWeekLabel ?? data.currentWeek})`}
+            title={`This matchweek (${data.currentWeekLabel ?? data.currentWeek})`}
             rows={data.weekTop}
             gated={gated}
           />
