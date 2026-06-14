@@ -10,6 +10,7 @@ import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import { usePrizePool } from "@/hooks/usePrizePool";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
 import type { LiveMatch } from "@/lib/resultsSync";
+import type { MatchGoal } from "@/lib/espnMatchStats";
 import { getMatchStatus, getKickoffMs } from "@/lib/schedule";
 import { formatCountdown, formatCountdownPrecise } from "@/lib/time";
 import { Flag } from "@/components/Flag";
@@ -414,6 +415,61 @@ function PrizeStrip() {
   );
 }
 
+// Goal scorers under the pitch (broadcast lower-third). Home left, away right.
+// Polls while the match is live; own goals marked (OG), penalties (P).
+function ScorersStrip({ match, show }: { match: ScheduledMatch; show: boolean }) {
+  const [goals, setGoals] = useState<MatchGoal[]>([]);
+
+  useEffect(() => {
+    if (!show) {
+      setGoals([]);
+      return;
+    }
+    let cancelled = false;
+    const load = () =>
+      fetch(`/api/live/scorers?matchId=${match.id}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: { goals?: MatchGoal[] } | null) => {
+          if (!cancelled && d) setGoals(d.goals ?? []);
+        })
+        .catch(() => {});
+    load();
+    const id = setInterval(load, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [match.id, show]);
+
+  if (goals.length === 0) return null;
+
+  const fmt = (g: MatchGoal) =>
+    `${g.scorer} ${g.minute}${g.penalty ? " (P)" : ""}${g.ownGoal ? " (OG)" : ""}`;
+  const left = goals.filter((g) => g.team === match.teamA);
+  const right = goals.filter((g) => g.team === match.teamB);
+
+  return (
+    <div className="flex items-start justify-between gap-4 border-t border-slate-200 bg-white px-4 py-2 text-xs text-slate-600 md:px-6">
+      <ul className="flex flex-col gap-0.5">
+        {left.map((g, i) => (
+          <li key={i} className="flex items-center gap-1.5">
+            <Icon name="football" size={11} className="shrink-0 text-slate-400" />
+            <span>{fmt(g)}</span>
+          </li>
+        ))}
+      </ul>
+      <ul className="flex flex-col items-end gap-0.5 text-right">
+        {right.map((g, i) => (
+          <li key={i} className="flex flex-row-reverse items-center gap-1.5">
+            <Icon name="football" size={11} className="shrink-0 text-slate-400" />
+            <span>{fmt(g)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // ── Banner ────────────────────────────────────────────────────────────────────
 
 export default function MatchBanner({ match, result }: MatchBannerProps) {
@@ -468,6 +524,14 @@ export default function MatchBanner({ match, result }: MatchBannerProps) {
           )}
         </div>
       </div>
+
+      {/* Goal scorers (live or finished featured match) */}
+      {match && (
+        <ScorersStrip
+          match={match}
+          show={clock.kind === "live" || clock.kind === "completed" || clock.kind === "draw"}
+        />
+      )}
 
       {/* Prize strip */}
       <PrizeStrip />

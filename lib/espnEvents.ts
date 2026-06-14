@@ -76,3 +76,16 @@ export async function mapFinishedFixturesToEspn(
   }
   return map;
 }
+
+/** ESPN event id for a single fixture (group-stage, real tickers), or null. */
+export async function espnEventIdForMatch(matchId: string): Promise<string | null> {
+  const f = SCHEDULE.find((m) => m.id === matchId);
+  if (!f || !TICKERS.has(f.teamA) || !TICKERS.has(f.teamB)) return null;
+  const want = pairKey(f.teamA, f.teamB);
+  for (const d of [f.date, plusOneDay(f.date)]) {
+    for (const ev of await eventsForDate(d)) {
+      if (ev.key === want) return ev.id;
+    }
+  }
+  return null;
+}
