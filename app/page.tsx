@@ -12,7 +12,7 @@ import GroupTable from "@/components/GroupTable";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 import { LocalTime } from "@/components/LocalTime";
-import { type ScheduledMatch } from "@/constants/schedule";
+import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
 import { TEAMS, type Team } from "@/constants/teams";
 import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import {
@@ -410,10 +410,23 @@ export default function Home() {
   // so the banner lands on the real next match on first paint instead of
   // sticking on the opening fixtures until a reload. A match still inside its
   // live window is kept, so an in-progress game keeps the spotlight.
-  const featuredMatch = useMemo<ScheduledMatch | null>(
-    () => getNextUnplayedMatch(results, now),
-    [results, now],
-  );
+  // Banner priority: a match that's actually live → the next unplayed match →
+  // (tournament over) the most recently played match.
+  const featuredMatch = useMemo<ScheduledMatch | null>(() => {
+    const live = SCHEDULE.find((m) => {
+      const lv = liveByMatchId[m.id];
+      return lv?.status === "live" || lv?.status === "paused";
+    });
+    if (live) return live;
+
+    const next = getNextUnplayedMatch(results, now);
+    if (next) return next;
+
+    for (let i = SCHEDULE.length - 1; i >= 0; i--) {
+      if (results.some((r) => r.matchId === SCHEDULE[i].id)) return SCHEDULE[i];
+    }
+    return null;
+  }, [results, now, liveByMatchId]);
 
   const featuredResult = useMemo<MatchResult | null>(
     () =>
@@ -428,8 +441,14 @@ export default function Home() {
   // keeping chronological order within each bucket.
   const sortedTodays = (() => {
     const rank = (m: ScheduledMatch) => {
+      // Use the live snapshot's status (what the cards/banner show), falling back
+      // to the clock-based status before the live feed has loaded.
+      const lv = liveByMatchId[m.id];
+      const liveNow = lv?.status === "live" || lv?.status === "paused";
       const s = todayMatchStatus(m, results, now);
-      return s === "live" ? 0 : s === "completed" || s === "draw" ? 2 : 1;
+      if (liveNow || s === "live") return 0;
+      if (s === "completed" || s === "draw") return 2;
+      return 1;
     };
     return todays
       .map((m, i) => ({ m, i }))
