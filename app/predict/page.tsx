@@ -13,7 +13,7 @@ import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { registerMessage } from "@/lib/predictAuth";
+import { registerMessage, loginMessage } from "@/lib/predictAuth";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 import { LocalTime } from "@/components/LocalTime";
@@ -29,36 +29,100 @@ function toBase64(bytes: Uint8Array): string {
 
 // ── Registration ──────────────────────────────────────────────────────────────
 
+type AuthResult = { ok: boolean; error?: string };
+
 function RegistrationForm({
   onRegister,
+  onLogin,
 }: {
   onRegister: (payload: {
     nickname: string;
     wallet: string;
     signature: string;
     ts: number;
-  }) => Promise<{ ok: boolean; error?: string }>;
+  }) => Promise<AuthResult>;
+  onLogin: (payload: {
+    wallet: string;
+    signature: string;
+    ts: number;
+  }) => Promise<AuthResult>;
 }) {
   const { publicKey, signMessage, connected, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
   const [nickname, setNickname] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // null = haven't checked this wallet yet; drives register-vs-sign-in.
+  const [known, setKnown] = useState<{ nickname: string } | null>(null);
+  const [checking, setChecking] = useState(false);
 
-  const submit = async () => {
+  const wallet = connected && publicKey ? publicKey.toBase58() : null;
+
+  // When a wallet connects, ask the server whether it's already registered so
+  // we can offer a one-tap sign-in instead of a dead-end re-register.
+  useEffect(() => {
+    if (!wallet) {
+      setKnown(null);
+      return;
+    }
+    let cancelled = false;
+    setChecking(true);
     setError(null);
-    if (!publicKey || !signMessage) {
+    fetch(`/api/predict/lookup?wallet=${encodeURIComponent(wallet)}`, {
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { registered?: boolean; nickname?: string } | null) => {
+        if (cancelled) return;
+        setKnown(d?.registered && d.nickname ? { nickname: d.nickname } : null);
+      })
+      .catch(() => {
+        if (!cancelled) setKnown(null);
+      })
+      .finally(() => {
+        if (!cancelled) setChecking(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [wallet]);
+
+  const sign = async (message: string): Promise<string> => {
+    if (!signMessage) throw new Error("no-signer");
+    return toBase64(await signMessage(new TextEncoder().encode(message)));
+  };
+
+  const doRegister = async () => {
+    setError(null);
+    if (!wallet || !signMessage) {
       setError("Connect a wallet that can sign messages (e.g. Phantom).");
       return;
     }
     setBusy(true);
     try {
-      const wallet = publicKey.toBase58();
       const ts = Date.now();
-      const message = registerMessage(wallet, ts);
-      const signature = toBase64(await signMessage(new TextEncoder().encode(message)));
+      const signature = await sign(registerMessage(wallet, ts));
       const res = await onRegister({ nickname, wallet, signature, ts });
       if (!res.ok) setError(res.error ?? "Registration failed");
+    } catch {
+      setError("Signature was rejected.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const doLogin = async () => {
+    setError(null);
+    if (!wallet || !signMessage) {
+      setError("Connect a wallet that can sign messages (e.g. Phantom).");
+      return;
+    }
+    setBusy(true);
+    try {
+      const ts = Date.now();
+      const signature = await sign(loginMessage(wallet, ts));
+      const res = await onLogin({ wallet, signature, ts });
+      if (!res.ok) setError(res.error ?? "Sign-in failed");
     } catch {
       setError("Signature was rejected.");
     } finally {
@@ -69,12 +133,23 @@ function RegistrationForm({
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
       <h2 className="text-base font-semibold tracking-tight text-slate-900">
-        Register to play
+        {known ? "Welcome back" : "Register to play"}
       </h2>
       <p className="text-sm text-slate-500">
-        Connect your Solana wallet and pick a nickname. You&apos;ll sign a
-        message to prove the wallet is yours — it becomes your identity, where
-        prizes pay out, and how pot eligibility is checked. One-time, no edits.
+        {known ? (
+          <>
+            This wallet is already registered as{" "}
+            <span className="font-semibold text-slate-700">{known.nickname}</span>.
+            Sign a message to prove it&apos;s you and pick up right where you left
+            off — your points and picks are safe.
+          </>
+        ) : (
+          <>
+            Connect your Solana wallet and pick a nickname. You&apos;ll sign a
+            message to prove the wallet is yours — it becomes your identity, where
+            prizes pay out, and how pot eligibility is checked. One-time, no edits.
+          </>
+        )}
       </p>
       {connected && publicKey ? (
         <div className="flex w-fit items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1.5">
@@ -100,21 +175,38 @@ function RegistrationForm({
           Connect wallet
         </button>
       )}
-      <input
-        value={nickname}
-        onChange={(e) => setNickname(e.target.value)}
-        placeholder="Nickname (3–20 chars)"
-        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-green-500/40 focus:ring-2"
-      />
+
       {error && <p className="text-sm font-medium text-red-600">{error}</p>}
-      <button
-        type="button"
-        onClick={submit}
-        disabled={busy || !connected}
-        className="w-fit rounded-full bg-green-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
-      >
-        {busy ? "Signing…" : connected ? "Sign & register" : "Connect wallet first"}
-      </button>
+
+      {checking ? (
+        <p className="text-sm text-slate-400">Checking this wallet…</p>
+      ) : known ? (
+        <button
+          type="button"
+          onClick={doLogin}
+          disabled={busy}
+          className="w-fit rounded-full bg-green-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+        >
+          {busy ? "Signing…" : `Sign in as ${known.nickname}`}
+        </button>
+      ) : (
+        <>
+          <input
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder="Nickname (3–20 chars)"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-green-500/40 focus:ring-2"
+          />
+          <button
+            type="button"
+            onClick={doRegister}
+            disabled={busy || !connected}
+            className="w-fit rounded-full bg-green-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+          >
+            {busy ? "Signing…" : connected ? "Sign & register" : "Connect wallet first"}
+          </button>
+        </>
+      )}
     </section>
   );
 }
@@ -260,7 +352,7 @@ function LeaderboardTable({
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function PredictPage() {
-  const { reg, picks, locked, eligibility, loaded, register, submitPick, lockPick } =
+  const { reg, picks, locked, eligibility, loaded, register, login, submitPick, lockPick } =
     usePrediction();
   const { liveByMatchId } = useLiveMatches();
   const { data: leaderboard } = usePredictionLeaderboard();
@@ -335,7 +427,7 @@ export default function PredictPage() {
       {!loaded ? (
         <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />
       ) : !reg ? (
-        <RegistrationForm onRegister={register} />
+        <RegistrationForm onRegister={register} onLogin={login} />
       ) : (
         <>
           <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-800">

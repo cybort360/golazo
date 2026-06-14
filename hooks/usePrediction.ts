@@ -140,6 +140,41 @@ export function usePrediction() {
     [],
   );
 
+  const login = useCallback(
+    async (payload: {
+      wallet: string;
+      signature: string;
+      ts: number;
+    }): Promise<ActionResult> => {
+      try {
+        const res = await fetch("/api/predict/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          error?: string;
+          nickname?: string;
+          wallet?: string;
+          token?: string;
+        };
+        if (!res.ok || !data.ok || !data.token) {
+          return { ok: false, error: data.error ?? "Sign-in failed" };
+        }
+        setReg({
+          nickname: data.nickname!,
+          wallet: data.wallet!,
+          token: data.token,
+        });
+        return { ok: true };
+      } catch {
+        return { ok: false, error: "Network error" };
+      }
+    },
+    [],
+  );
+
   const submitPick = useCallback(
     async (matchId: string, pick: string): Promise<ActionResult> => {
       if (!reg?.token) return { ok: false, error: "Not registered" };
@@ -191,5 +226,5 @@ export function usePrediction() {
     [reg],
   );
 
-  return { reg, picks, locked, eligibility, loaded, register, submitPick, lockPick };
+  return { reg, picks, locked, eligibility, loaded, register, login, submitPick, lockPick };
 }

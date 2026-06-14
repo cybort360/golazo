@@ -8,3 +8,9 @@ export const SIGN_FRESHNESS_MS = 5 * 60 * 1000;
 export function registerMessage(wallet: string, ts: number): string {
   return `Golazo predictions — sign to register\nWallet: ${wallet}\nTime: ${new Date(ts).toISOString()}`;
 }
+
+// Returning players re-authenticate (e.g. on a new device, browser, or domain)
+// by signing this instead — proves wallet ownership without creating an account.
+export function loginMessage(wallet: string, ts: number): string {
+  return `Golazo predictions — sign in\nWallet: ${wallet}\nTime: ${new Date(ts).toISOString()}`;
+}
