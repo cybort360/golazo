@@ -25,6 +25,7 @@ import type { WeeklyPrize } from "@/lib/weeklyPrize";
 import type { BuybackEntry } from "@/lib/buyback";
 import { safeHttpUrl } from "@/lib/url";
 import { getKickoffMs } from "@/lib/schedule";
+import { GAMEWEEKS } from "@/lib/fpl/gameweeks";
 import { stadiumName } from "@/lib/venues";
 import { formatCountdownPrecise } from "@/lib/time";
 import TeamSelect from "@/components/TeamSelect";
@@ -1614,6 +1615,153 @@ function FantasySection({ ui }: { ui: AdminUI }) {
   );
 }
 
+// ── Section 9: Fantasy prizes (Holders League) ───────────────────────────────
+
+interface FantasyPayoutRow {
+  playerId: string;
+  name: string;
+  points: number;
+  wallet: string | null;
+  golazo: number | null;
+  eligible: boolean;
+}
+interface FantasyPayouts {
+  gwLabel: string | null;
+  threshold: number;
+  seasonPot: number;
+  weeklyPot: number;
+  seasonTop: FantasyPayoutRow[];
+  weekTop: FantasyPayoutRow[];
+}
+
+function FantasyPrizeSection({ ui }: { ui: AdminUI }) {
+  const [seasonPot, setSeasonPotInput] = useState("");
+  const [weekGw, setWeekGw] = useState(GAMEWEEKS[0]?.id ?? "");
+  const [weekPot, setWeekPot] = useState("");
+  const [data, setData] = useState<FantasyPayouts | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const savePot = async (scope: "season" | "week", amount: string, gwId?: string) => {
+    const r = await postJson("/api/admin/fantasy-pot", { scope, gwId, amount: Number(amount) });
+    if (r.ok) {
+      ui.showToast("success", "Pot saved");
+      void load();
+    } else {
+      onWriteError(ui, r.status, "Pot");
+    }
+  };
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/fantasy-payouts?gw=${weekGw}`, { credentials: "same-origin" });
+      if (res.ok) setData((await res.json()) as FantasyPayouts);
+      else onWriteError(ui, res.status, "Payouts");
+    } catch {
+      onWriteError(ui, 0, "Payouts");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const short = (w: string | null) => (w ? `${w.slice(0, 4)}…${w.slice(-4)}` : "—");
+
+  const table = (title: string, rows: FantasyPayoutRow[]) => (
+    <div className="flex flex-col gap-1">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">{title}</h3>
+      <div className="overflow-hidden rounded-lg border border-slate-200">
+        {rows.length === 0 ? (
+          <p className="px-3 py-3 text-sm text-slate-400">No managers yet.</p>
+        ) : (
+          rows.map((r, i) => (
+            <div
+              key={r.playerId}
+              className={`flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-1.5 text-sm last:border-b-0 ${r.eligible ? "" : "opacity-50"}`}
+            >
+              <span className="flex items-center gap-2">
+                <span className="w-4 tabular-nums text-slate-400">{i + 1}</span>
+                <span className="font-semibold text-slate-800">{r.name}</span>
+                <span className="font-mono text-[11px] text-slate-400">{short(r.wallet)}</span>
+              </span>
+              <span className="flex items-center gap-3 tabular-nums">
+                <span className="text-slate-500">{(r.golazo ?? 0).toLocaleString()} $GZ</span>
+                <span className="font-bold text-green-600">{r.points} pts</span>
+                <span className={r.eligible ? "text-green-600" : "text-slate-400"}>
+                  {r.eligible ? "✓" : "—"}
+                </span>
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <Panel n={9} title="Fantasy prizes (Holders League)">
+      <p className="text-sm text-slate-500">
+        Platform-funded $GOLAZO pots. Set the amounts, load the standings, and pay the top
+        <span className="font-semibold"> eligible</span> (✓) managers from your own wallet.
+      </p>
+
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="flex flex-col gap-1 text-xs text-slate-500">
+          Season pot ($GOLAZO)
+          <input
+            value={seasonPot}
+            onChange={(e) => setSeasonPotInput(e.target.value)}
+            inputMode="numeric"
+            placeholder="0"
+            className={input}
+          />
+        </label>
+        <button type="button" onClick={() => savePot("season", seasonPot)} className={btnPrimary}>
+          Save season
+        </button>
+      </div>
+
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="flex flex-col gap-1 text-xs text-slate-500">
+          Gameweek
+          <select value={weekGw} onChange={(e) => setWeekGw(e.target.value)} className={input}>
+            {GAMEWEEKS.map((g) => (
+              <option key={g.id} value={g.id}>{g.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-slate-500">
+          Weekly pot ($GOLAZO)
+          <input
+            value={weekPot}
+            onChange={(e) => setWeekPot(e.target.value)}
+            inputMode="numeric"
+            placeholder="0"
+            className={input}
+          />
+        </label>
+        <button type="button" onClick={() => savePot("week", weekPot, weekGw)} className={btnPrimary}>
+          Save weekly
+        </button>
+      </div>
+
+      <button type="button" onClick={load} disabled={loading} className={btnGhost}>
+        {loading ? "Loading…" : "Load standings + eligibility"}
+      </button>
+
+      {data && (
+        <div className="flex flex-col gap-3">
+          <p className="text-xs text-slate-500">
+            Season pot {data.seasonPot.toLocaleString()} $GOLAZO · {data.gwLabel} pot{" "}
+            {data.weeklyPot.toLocaleString()} $GOLAZO · hold ≥ {data.threshold.toLocaleString()}
+          </p>
+          {table(`${data.gwLabel} — weekly`, data.weekTop)}
+          {table("Season", data.seasonTop)}
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
@@ -1706,6 +1854,7 @@ export default function AdminPage() {
       <BuybackSection ui={ui} results={results} />
       <PredictionPayoutsSection ui={ui} />
       <FantasySection ui={ui} />
+      <FantasyPrizeSection ui={ui} />
 
       {/* Toast */}
       {toast && (

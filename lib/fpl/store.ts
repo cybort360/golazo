@@ -148,3 +148,32 @@ export async function isEntryTxUsed(sig: string): Promise<boolean> {
 export async function markEntryTxUsed(sig: string): Promise<void> {
   await kv.set(usedSigKey(sig), Date.now());
 }
+
+// ── Holders League prize pots (platform-funded, in $GOLAZO) ──────────────────
+
+export const SEASON_POT_KEY = "fpl:pot:season";
+export const weeklyPotKey = (gwId: string) => `fpl:pot:gw:${gwId}`;
+
+export async function getSeasonPot(): Promise<number> {
+  try {
+    return (await kv.get<number>(SEASON_POT_KEY)) ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function getWeeklyPot(gwId: string): Promise<number> {
+  try {
+    return (await kv.get<number>(weeklyPotKey(gwId))) ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function setSeasonPot(amount: number): Promise<void> {
+  await kv.set(SEASON_POT_KEY, amount);
+}
+
+export async function setWeeklyPot(gwId: string, amount: number): Promise<void> {
+  await kv.set(weeklyPotKey(gwId), amount);
+}

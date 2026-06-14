@@ -381,6 +381,59 @@ interface FantasyRow {
   points: number;
 }
 
+// Holders League prize banner: shows the platform-funded $GOLAZO pots and the
+// viewer's hold-to-qualify status. Hidden until a pot is actually funded.
+function HoldersPrize({
+  eligible,
+  threshold,
+  balance,
+}: {
+  eligible: boolean;
+  threshold: number;
+  balance: number | null;
+}) {
+  const [pot, setPot] = useState<
+    { seasonPot: number; weeklyPot: number; gw: { label: string } | null } | null
+  >(null);
+  useEffect(() => {
+    fetch("/api/fantasy/holders", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setPot(d))
+      .catch(() => {});
+  }, []);
+  if (!pot || (pot.seasonPot <= 0 && pot.weeklyPot <= 0)) return null;
+
+  return (
+    <section className="flex flex-col gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+      <h3 className="flex items-center gap-1.5 text-sm font-bold text-amber-800">
+        🏆 Holders League — win $GOLAZO
+      </h3>
+      <p className="text-xs text-amber-800/80">
+        Top $GOLAZO holders on the board take the prize. Hold to qualify; finish high to win.
+      </p>
+      <div className="flex flex-wrap gap-2 text-sm font-semibold text-amber-900">
+        {pot.seasonPot > 0 && (
+          <span className="rounded-full bg-white/70 px-3 py-1">
+            Season pot · {pot.seasonPot.toLocaleString()} $GOLAZO
+          </span>
+        )}
+        {pot.weeklyPot > 0 && (
+          <span className="rounded-full bg-white/70 px-3 py-1">
+            {pot.gw?.label ?? "This week"} · {pot.weeklyPot.toLocaleString()} $GOLAZO
+          </span>
+        )}
+      </div>
+      {threshold > 0 && (
+        <p className={`text-xs font-medium ${eligible ? "text-green-700" : "text-amber-700"}`}>
+          {eligible
+            ? "✓ You qualify — holding enough $GOLAZO."
+            : `Hold ${threshold.toLocaleString()} $GOLAZO to qualify (you have ${(balance ?? 0).toLocaleString()}).`}
+        </p>
+      )}
+    </section>
+  );
+}
+
 function Leaderboard({ meName }: { meName: string | null }) {
   const [rows, setRows] = useState<FantasyRow[] | null>(null);
   useEffect(() => {
@@ -820,6 +873,11 @@ export default function FantasyPage() {
 
           {tab === "board" && (
             <section className="flex flex-col gap-3">
+              <HoldersPrize
+                eligible={mine?.eligible ?? false}
+                threshold={mine?.threshold ?? 0}
+                balance={mine?.golazoBalance ?? null}
+              />
               <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
                 Overall leaderboard
               </h2>
