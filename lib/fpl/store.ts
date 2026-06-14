@@ -3,8 +3,9 @@
 // one place that knows the key layout. Degrades rather than throwing where a
 // caller can sensibly continue.
 
+import { randomInt } from "crypto";
 import { kv } from "@vercel/kv";
-import type { FplPlayer, FplTeam, PlayerMatchStats } from "@/lib/fpl/types";
+import type { FplPlayer, FplTeam, League, PlayerMatchStats } from "@/lib/fpl/types";
 
 export const POOL_KEY = "fpl:players";
 export const TEAMS_INDEX_KEY = "fpl:teams"; // playerIds that have a team
@@ -12,13 +13,21 @@ export const teamKey = (playerId: string) => `fpl:team:${playerId}`;
 export const statsKey = (matchId: string) => `fpl:stats:${matchId}`;
 export const LEADERBOARD_KEY = "fpl:leaderboard";
 
-/** The priced player pool, or [] if it hasn't been synced yet. */
+/** The priced player pool, or [] if it hasn't been synced yet. With
+ *  FANTASY_DEV_POOL=1 (local only) falls back to a synthetic pool so the UI is
+ *  usable without the paid feed. */
 export async function getPool(): Promise<FplPlayer[]> {
+  let pool: FplPlayer[] = [];
   try {
-    return (await kv.get<FplPlayer[]>(POOL_KEY)) ?? [];
+    pool = (await kv.get<FplPlayer[]>(POOL_KEY)) ?? [];
   } catch {
-    return [];
+    pool = [];
   }
+  if (pool.length === 0 && process.env.FANTASY_DEV_POOL === "1") {
+    const { devPool } = await import("@/lib/fpl/devPool");
+    return devPool();
+  }
+  return pool;
 }
 
 export async function setPool(pool: FplPlayer[]): Promise<void> {
@@ -69,4 +78,73 @@ export async function setMatchStats(
   stats: PlayerMatchStats[],
 ): Promise<void> {
   await kv.set(statsKey(matchId), stats);
+}
+
+// ── Private leagues ─────────────────────────────────────────────────────────
+
+export const leagueKey = (code: string) => `fpl:league:${code}`;
+export const ALL_LEAGUES_KEY = "fpl:leagues:all";
+export const playerLeaguesKey = (playerId: string) => `fpl:leagues:${playerId}`;
+
+// Ambiguous-character-free alphabet for human-shareable codes.
+const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+export function generateLeagueCode(len = 6): string {
+  // CSPRNG (randomInt is unbiased) so private-league codes can't be predicted
+  // or enumerated to discover/peek at leagues.
+  let s = "";
+  for (let i = 0; i < len; i++) s += CODE_ALPHABET[randomInt(0, CODE_ALPHABET.length)];
+  return s;
+}
+
+export async function getLeague(code: string): Promise<League | null> {
+  try {
+    return (await kv.get<League>(leagueKey(code.toUpperCase()))) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveLeague(league: League): Promise<void> {
+  await kv.set(leagueKey(league.code), league);
+  const all = (await kv.get<string[]>(ALL_LEAGUES_KEY)) ?? [];
+  if (!all.includes(league.code)) await kv.set(ALL_LEAGUES_KEY, [...all, league.code]);
+}
+
+/** Record that a player belongs to a league (idempotent). */
+export async function indexPlayerLeague(playerId: string, code: string): Promise<void> {
+  const codes = (await kv.get<string[]>(playerLeaguesKey(playerId))) ?? [];
+  if (!codes.includes(code)) await kv.set(playerLeaguesKey(playerId), [...codes, code]);
+}
+
+export async function getPlayerLeagueCodes(playerId: string): Promise<string[]> {
+  try {
+    return (await kv.get<string[]>(playerLeaguesKey(playerId))) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getAllLeagueCodes(): Promise<string[]> {
+  try {
+    return (await kv.get<string[]>(ALL_LEAGUES_KEY)) ?? [];
+  } catch {
+    return [];
+  }
+}
+
+// One entry-payment signature can only ever be used once — across all leagues —
+// so a single on-chain payment can't buy multiple entries.
+const usedSigKey = (sig: string) => `fpl:usedsig:${sig}`;
+
+export async function isEntryTxUsed(sig: string): Promise<boolean> {
+  try {
+    return (await kv.get<number>(usedSigKey(sig))) !== null;
+  } catch {
+    return false;
+  }
+}
+
+export async function markEntryTxUsed(sig: string): Promise<void> {
+  await kv.set(usedSigKey(sig), Date.now());
 }

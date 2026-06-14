@@ -10,7 +10,7 @@ interface TokenOverride {
   address: string;
 }
 
-async function golazoMint(): Promise<string | null> {
+export async function golazoMint(): Promise<string | null> {
   try {
     const overrides =
       (await kv.get<Record<string, TokenOverride>>("token_addresses")) ?? {};

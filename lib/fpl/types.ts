@@ -57,3 +57,26 @@ export interface Gameweek {
   matchIds: string[];
   deadlineMs: number; // first kickoff in the gameweek; team locks at this point
 }
+
+// ── Private leagues ─────────────────────────────────────────────────────────
+
+export interface LeagueMember {
+  playerId: string;
+  wallet: string; // the wallet the entry fee was paid from
+  txSig: string; // on-chain proof of the $GOLAZO entry payment
+  paidAt: number;
+}
+
+export interface League {
+  code: string; // short shareable invite code
+  name: string;
+  creatorId: string;
+  entryFee: number; // $GOLAZO per entry
+  startGw: string; // gameweek id the league scores from; locks at its deadline
+  rakeBps: number; // platform fee in basis points (1000 = 10%)
+  status: "open" | "settled" | "void";
+  members: LeagueMember[];
+  createdAt: number;
+  winnerId?: string; // set on settlement
+  payoutTxSig?: string; // proof the winner was paid
+}
