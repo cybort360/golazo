@@ -2,12 +2,13 @@
 import { describe, it, expect } from "vitest";
 import nacl from "tweetnacl";
 import { PublicKey } from "@solana/web3.js";
-import { registerMessage, loginMessage } from "@/lib/predictAuth";
+import { registerMessage, loginMessage, linkMessage } from "@/lib/predictAuth";
 import { verifyWalletSignature } from "@/lib/verifyWalletSignature";
 
 const kp = nacl.sign.keyPair();
 const wallet = new PublicKey(kp.publicKey).toBase58();
 const ts = 1_700_000_000_000;
+const token = "11111111-2222-3333-4444-555555555555";
 
 function signedBy(message: string): string {
   return Buffer.from(
@@ -35,5 +36,24 @@ describe("predict auth messages", () => {
     const msg = loginMessage(wallet, ts);
     expect(msg).toContain(wallet);
     expect(msg).toContain(new Date(ts).toISOString());
+  });
+
+  it("a link signature verifies and binds the wallet, token, and time", () => {
+    const msg = linkMessage(wallet, token, ts);
+    const sig = signedBy(msg);
+    expect(verifyWalletSignature(wallet, msg, sig)).toBe(true);
+    expect(msg).toContain(wallet);
+    expect(msg).toContain(token);
+    expect(msg).toContain(new Date(ts).toISOString());
+  });
+
+  it("a link signature can't be replayed for a different token", () => {
+    const sig = signedBy(linkMessage(wallet, token, ts));
+    const other = linkMessage(wallet, "99999999-0000-0000-0000-000000000000", ts);
+    expect(verifyWalletSignature(wallet, other, sig)).toBe(false);
+  });
+
+  it("login and link messages are distinct", () => {
+    expect(loginMessage(wallet, ts)).not.toBe(linkMessage(wallet, token, ts));
   });
 });

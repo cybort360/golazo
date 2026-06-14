@@ -6,6 +6,7 @@ import { formatCountdownPrecise } from "@/lib/time";
 import { buildSlate } from "@/lib/predictSlate";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { usePredictionLeaderboard } from "@/hooks/usePredictionLeaderboard";
+import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import { Flag } from "@/components/Flag";
 import { LocalTime } from "@/components/LocalTime";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -15,7 +16,15 @@ interface TgWebApp {
   initData: string;
   ready: () => void;
   expand: () => void;
+  openLink?: (url: string) => void;
   initDataUnsafe?: { user?: { username?: string; first_name?: string } };
+}
+
+interface Eligibility {
+  wallet: string | null;
+  golazoBalance: number | null;
+  threshold: number;
+  eligible: boolean;
 }
 function tg(): TgWebApp | null {
   if (typeof window === "undefined") return null;
@@ -53,9 +62,12 @@ export default function TelegramMiniApp() {
   const [now, setNow] = useState<number | null>(null);
   const [tab, setTab] = useState<"week" | "season">("week");
   const [confirmLock, setConfirmLock] = useState<string | null>(null);
+  const [elig, setElig] = useState<Eligibility | null>(null);
+  const [linking, setLinking] = useState(false);
 
   const { liveByMatchId } = useLiveMatches();
   const { data: leaderboard } = usePredictionLeaderboard();
+  const { golazo } = useTokenAddresses();
 
   // Init the Telegram SDK and capture initData. The SDK script loads
   // asynchronously, so poll briefly for it before giving up.
@@ -94,36 +106,82 @@ export default function TelegramMiniApp() {
     [initData],
   );
 
-  // Load registration + picks once we have initData.
+  // Load registration + picks + pot eligibility for the Telegram player.
+  const loadMine = useCallback(async () => {
+    if (!initData) return;
+    try {
+      const res = await fetch("/api/predict/mine", {
+        cache: "no-store",
+        headers: { "X-Telegram-Init-Data": initData },
+      });
+      const d = res.ok
+        ? ((await res.json()) as {
+            player?: { nickname?: string; wallet?: string | null } | null;
+            picks?: Record<string, string>;
+            locked?: string[];
+            golazoBalance?: number | null;
+            threshold?: number;
+            eligible?: boolean;
+          } | null)
+        : null;
+      if (d?.player) {
+        setPicks(d.picks ?? {});
+        setLocked(d.locked ?? []);
+        setElig({
+          wallet: d.player.wallet ?? null,
+          golazoBalance: d.golazoBalance ?? null,
+          threshold: d.threshold ?? 0,
+          eligible: d.eligible ?? true,
+        });
+        setStatus("ready");
+      } else {
+        // Don't downgrade a ready player on a transient empty response.
+        setStatus((s) => (s === "ready" ? s : "register"));
+      }
+    } catch {
+      /* keep current status on a network blip */
+    }
+  }, [initData]);
+
   useEffect(() => {
     if (initData === null || initData === "") return;
-    let cancelled = false;
-    fetch("/api/predict/mine", {
-      cache: "no-store",
-      headers: { "X-Telegram-Init-Data": initData },
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then(
-        (d: {
-          player?: { nickname?: string } | null;
-          picks?: Record<string, string>;
-          locked?: string[];
-        } | null) => {
-          if (cancelled) return;
-          if (d?.player) {
-            setPicks(d.picks ?? {});
-            setLocked(d.locked ?? []);
-            setStatus("ready");
-          } else {
-            setStatus("register");
-          }
-        },
-      )
-      .catch(() => !cancelled && setStatus("register"));
-    return () => {
-      cancelled = true;
+    void loadMine();
+  }, [initData, loadMine]);
+
+  // Re-check when the user returns to the Mini App — e.g. after linking a wallet
+  // in the browser — so eligibility flips without a manual reload.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void loadMine();
     };
-  }, [initData]);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [loadMine]);
+
+  // Start the wallet-link hand-off: mint a token, then open the web link flow.
+  const startLink = async () => {
+    setLinking(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/predict/link/start", {
+        method: "POST",
+        headers: headers(),
+      });
+      const d = (await res.json()) as { ok?: boolean; token?: string; error?: string };
+      if (!res.ok || !d.ok || !d.token) {
+        setError(d.error ?? "Could not start linking");
+        return;
+      }
+      const url = `${window.location.origin}/predict?link=${encodeURIComponent(d.token)}`;
+      const w = tg();
+      if (w?.openLink) w.openLink(url);
+      else window.open(url, "_blank");
+    } catch {
+      setError("Network error");
+    } finally {
+      setLinking(false);
+    }
+  };
 
   const register = async () => {
     setError(null);
@@ -238,6 +296,45 @@ export default function TelegramMiniApp() {
             {busy ? "Registering…" : "Start playing"}
           </button>
         </section>
+      )}
+
+      {status === "ready" && elig && elig.threshold > 0 && (
+        !elig.wallet ? (
+          <section className="flex flex-col gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-medium text-amber-800">
+              Link a Solana wallet to qualify for the weekly SOL pot — it&apos;s
+              how the {elig.threshold.toLocaleString()} $GOLAZO hold is checked and
+              where prizes pay out. Your picks already count.
+            </p>
+            <button
+              type="button"
+              onClick={startLink}
+              disabled={linking}
+              className="w-fit rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {linking ? "Opening…" : "Link wallet"}
+            </button>
+          </section>
+        ) : elig.eligible ? (
+          <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700">
+            ✓ You&apos;re in for the weekly pot — holding enough $GOLAZO.
+          </p>
+        ) : (
+          <p className="flex flex-wrap items-center gap-1.5 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Hold {elig.threshold.toLocaleString()} $GOLAZO to qualify — you have{" "}
+            {(elig.golazoBalance ?? 0).toLocaleString()}.
+            {golazo.meteoraUrl && (
+              <a
+                href={golazo.meteoraUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-green-700 underline underline-offset-2"
+              >
+                Get $GOLAZO
+              </a>
+            )}
+          </p>
+        )
       )}
 
       {status === "ready" && (

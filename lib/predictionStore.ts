@@ -22,6 +22,11 @@ export const tokenKey = (token: string) => `pred:token:${token}`;
 export const picksKey = (id: string) => `pred:picks:${id}`;
 // Match ids the player has locked: those picks can no longer be changed.
 export const lockedKey = (id: string) => `pred:locked:${id}`;
+// Short-lived, single-use token minting a Telegram player's id for the
+// browser-side wallet-link hand-off: linkKey(token) -> player id.
+export const linkKey = (token: string) => `pred:link:${token}`;
+// Reverse index enforcing one wallet ↔ one account: walletLinkKey(wallet) -> id.
+export const walletLinkKey = (wallet: string) => `pred:wallet:${wallet}`;
 
 /**
  * Resolve the player making a write request, accepting either auth scheme:

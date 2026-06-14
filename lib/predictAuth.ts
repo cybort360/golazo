@@ -14,3 +14,11 @@ export function registerMessage(wallet: string, ts: number): string {
 export function loginMessage(wallet: string, ts: number): string {
   return `Golazo predictions — sign in\nWallet: ${wallet}\nTime: ${new Date(ts).toISOString()}`;
 }
+
+// A Telegram player links a wallet to their account by signing this. The token
+// (minted server-side, bound to their Telegram id) carries that identity to the
+// browser; the signature proves wallet ownership. Both are bound into one
+// message so neither can be replayed against a different link request.
+export function linkMessage(wallet: string, token: string, ts: number): string {
+  return `Golazo predictions — link wallet to Telegram\nWallet: ${wallet}\nLink: ${token}\nTime: ${new Date(ts).toISOString()}`;
+}

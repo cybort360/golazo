@@ -13,7 +13,7 @@ import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { registerMessage, loginMessage } from "@/lib/predictAuth";
+import { registerMessage, loginMessage, linkMessage } from "@/lib/predictAuth";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 import { LocalTime } from "@/components/LocalTime";
@@ -211,6 +211,109 @@ function RegistrationForm({
   );
 }
 
+// ── Telegram wallet link ───────────────────────────────────────────────────────
+
+// Shown when a Telegram player opens /predict?link=<token> from the Mini App.
+// They connect a wallet and sign to bind it to their Telegram account, which is
+// what makes them eligible for the $GOLAZO-gated pot.
+function LinkWalletPanel({ token }: { token: string }) {
+  const { publicKey, signMessage, connected, disconnect } = useWallet();
+  const { setVisible } = useWalletModal();
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
+
+  const submit = async () => {
+    setError(null);
+    if (!publicKey || !signMessage) {
+      setError("Connect a wallet that can sign messages (e.g. Phantom).");
+      return;
+    }
+    setBusy(true);
+    try {
+      const wallet = publicKey.toBase58();
+      const ts = Date.now();
+      const signature = toBase64(
+        await signMessage(new TextEncoder().encode(linkMessage(wallet, token, ts))),
+      );
+      const res = await fetch("/api/predict/link/finish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, wallet, signature, ts }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string; nickname?: string };
+      if (!res.ok || !data.ok) setError(data.error ?? "Linking failed");
+      else setDone(data.nickname ?? "");
+    } catch {
+      setError("Signature was rejected.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (done !== null) {
+    return (
+      <section className="flex flex-col gap-3 rounded-2xl border border-green-200 bg-green-50 p-5 shadow-card">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-green-800">
+          <Icon name="check" size={18} className="text-green-600" />
+          Wallet linked
+        </h2>
+        <p className="text-sm text-green-800">
+          {done ? <><span className="font-bold">{done}</span> is all set. </> : null}
+          Your wallet is now tied to your Telegram account — head back to Telegram
+          and your pot eligibility will show there.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+      <h2 className="text-base font-semibold tracking-tight text-slate-900">
+        Link a wallet to your Telegram account
+      </h2>
+      <p className="text-sm text-slate-500">
+        Connect your Solana wallet and sign once to prove it&apos;s yours. It
+        becomes how the weekly $GOLAZO pot checks eligibility and where prizes pay
+        out. One-time — your picks and points are unaffected.
+      </p>
+      {connected && publicKey ? (
+        <div className="flex w-fit items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1.5">
+          <span className="h-2 w-2 rounded-full bg-green-500" />
+          <span className="font-mono text-xs text-slate-700">
+            {publicKey.toBase58().slice(0, 4)}…{publicKey.toBase58().slice(-4)}
+          </span>
+          <button
+            type="button"
+            onClick={() => void disconnect()}
+            className="text-xs font-medium text-slate-400 transition-colors hover:text-slate-600"
+          >
+            Disconnect
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setVisible(true)}
+          className="inline-flex w-fit items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5"
+        >
+          <Icon name="coins" size={16} />
+          Connect wallet
+        </button>
+      )}
+      {error && <p className="text-sm font-medium text-red-600">{error}</p>}
+      <button
+        type="button"
+        onClick={submit}
+        disabled={busy || !connected}
+        className="w-fit rounded-full bg-green-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+      >
+        {busy ? "Signing…" : connected ? "Sign & link wallet" : "Connect wallet first"}
+      </button>
+    </section>
+  );
+}
+
 // ── Slate ─────────────────────────────────────────────────────────────────────
 
 // Live, per-second countdown to a match's kickoff (when picks lock). Isolated so
@@ -362,6 +465,14 @@ export default function PredictPage() {
   const [tab, setTab] = useState<"week" | "season">("week");
   const [toast, setToast] = useState<string | null>(null);
   const [confirmLock, setConfirmLock] = useState<string | null>(null);
+  // Telegram wallet-link hand-off: /predict?link=<token>. Read from the URL on
+  // the client (avoids a Suspense boundary for useSearchParams on a static page).
+  const [linkToken, setLinkToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("link");
+    if (t) setLinkToken(t);
+  }, []);
 
   useEffect(() => {
     const tick = () => setNow(Date.now());
@@ -424,7 +535,9 @@ export default function PredictPage() {
         )}
       </header>
 
-      {!loaded ? (
+      {linkToken ? (
+        <LinkWalletPanel token={linkToken} />
+      ) : !loaded ? (
         <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />
       ) : !reg ? (
         <RegistrationForm onRegister={register} onLogin={login} />
@@ -511,6 +624,7 @@ export default function PredictPage() {
         </>
       )}
 
+      {!linkToken && (
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
@@ -533,6 +647,7 @@ export default function PredictPage() {
         </div>
         <LeaderboardTable rows={rows} meNickname={reg?.nickname ?? null} />
       </section>
+      )}
 
       {toast && (
         <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-lg">
