@@ -17,6 +17,8 @@ import {
   HelpCircleIcon,
   SparklesIcon,
   Copy01Icon,
+  TelegramIcon,
+  NewTwitterIcon,
 } from "@hugeicons/core-free-icons";
 
 export const Icons = {
@@ -37,6 +39,8 @@ export const Icons = {
   help: HelpCircleIcon,
   sparkles: SparklesIcon,
   copy: Copy01Icon,
+  telegram: TelegramIcon,
+  x: NewTwitterIcon,
 } as const;
 
 export type IconName = keyof typeof Icons;

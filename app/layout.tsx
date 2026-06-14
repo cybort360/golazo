@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import SiteNav from "@/components/SiteNav";
+import SiteFooter from "@/components/SiteFooter";
 import IntroModal from "@/components/IntroModal";
 import "flag-icons/css/flag-icons.min.css";
 import "./globals.css";
@@ -52,6 +53,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-[#f8fafc] font-sans text-slate-900 antialiased">
         <SiteNav />
         <main>{children}</main>
+        <SiteFooter />
         <IntroModal />
       </body>
     </html>
