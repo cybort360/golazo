@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ScheduledMatch } from "@/constants/schedule";
 import { TEAMS } from "@/constants/teams";
+import { stadiumName } from "@/lib/venues";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 
@@ -16,7 +17,7 @@ const NAME_BY_TICKER = new Map(TEAMS.map((t) => [t.ticker, t.name]));
 function searchText(m: ScheduledMatch): string {
   const an = NAME_BY_TICKER.get(m.teamA) ?? "";
   const bn = NAME_BY_TICKER.get(m.teamB) ?? "";
-  return `${m.id} ${m.teamA} ${m.teamB} ${an} ${bn} ${m.date} ${m.time} ${m.groupOrRound} ${m.venue}`.toLowerCase();
+  return `${m.id} ${m.teamA} ${m.teamB} ${an} ${bn} ${m.date} ${m.time} ${m.groupOrRound} ${m.venue} ${stadiumName(m.venue)}`.toLowerCase();
 }
 
 function MatchTeams({ m }: { m: ScheduledMatch }) {

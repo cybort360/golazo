@@ -15,6 +15,7 @@ import { formatCountdown, formatCountdownPrecise } from "@/lib/time";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 import { LocalTime } from "@/components/LocalTime";
+import { stadiumName } from "@/lib/venues";
 
 export interface MatchBannerProps {
   match: ScheduledMatch | null;
@@ -349,7 +350,7 @@ function CenterColumn({
         </div>
       )}
       <div className="text-[10px] font-medium uppercase tracking-wider text-white/70 [text-shadow:0_1px_2px_rgba(0,0,0,0.35)] md:text-xs">
-        {match.groupOrRound} · {match.venue}
+        {match.groupOrRound} · {stadiumName(match.venue)}
       </div>
     </div>
   );

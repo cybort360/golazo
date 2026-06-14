@@ -25,6 +25,7 @@ import type { WeeklyPrize } from "@/lib/weeklyPrize";
 import type { BuybackEntry } from "@/lib/buyback";
 import { safeHttpUrl } from "@/lib/url";
 import { getKickoffMs } from "@/lib/schedule";
+import { stadiumName } from "@/lib/venues";
 import { formatCountdownPrecise } from "@/lib/time";
 import TeamSelect from "@/components/TeamSelect";
 import MatchSelect from "@/components/MatchSelect";
@@ -600,7 +601,7 @@ function ResultsSection({
                   {flag(m.teamA)} {m.teamA} vs {flag(m.teamB)} {m.teamB}
                 </span>
                 <span className="text-xs text-slate-400">
-                  {m.groupOrRound} · {m.time} · {m.venue}
+                  {m.groupOrRound} · {m.time} · {stadiumName(m.venue)}
                 </span>
               </div>
               {matchEditor(m, "Save")}

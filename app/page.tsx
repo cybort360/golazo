@@ -21,6 +21,7 @@ import {
   resultForMatch,
 } from "@/lib/schedule";
 import { GROUP_LETTERS } from "@/lib/standings";
+import { stadiumName } from "@/lib/venues";
 import { useMatchResults, type MatchResult } from "@/hooks/useMatchResults";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
 import type { LiveMatch } from "@/lib/resultsSync";
@@ -183,7 +184,8 @@ function TodayMatchCard({
         )}
       </div>
       <div className="text-xs text-slate-400">
-        <LocalTime date={match.date} time={match.time} /> · {match.venue}
+        <LocalTime date={match.date} time={match.time} /> ·{" "}
+        {stadiumName(match.venue)}
       </div>
       <div>
         <TodayCardBadge status={status} date={match.date} time={match.time} />
