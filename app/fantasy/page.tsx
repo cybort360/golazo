@@ -15,6 +15,7 @@ import { formatCountdownPrecise } from "@/lib/time";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 import TeamSelect from "@/components/TeamSelect";
+import Select from "@/components/Select";
 import LineupEditor from "@/components/LineupEditor";
 import { TEAMS } from "@/constants/teams";
 import type { FplPlayer, FplTeam, Gameweek, GameweekLineup, Position } from "@/lib/fpl/types";
@@ -579,15 +580,12 @@ function LeaguesSection({ token }: { token: string | null }) {
               placeholder="Entry fee ($GOLAZO)"
               className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-green-500/40 focus:ring-2"
             />
-            <select
+            <Select
               value={startGw}
-              onChange={(e) => setStartGw(e.target.value)}
-              className="rounded-lg border border-slate-300 px-2 text-sm"
-            >
-              {upcoming.map((g) => (
-                <option key={g.id} value={g.id}>{g.label}</option>
-              ))}
-            </select>
+              options={upcoming.map((g) => ({ value: g.id, label: g.label }))}
+              onChange={setStartGw}
+              className="w-44"
+            />
           </div>
           <p className="text-[11px] text-slate-400">
             90% of the pot goes to the winner; 10% platform fee. Runs from the

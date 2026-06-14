@@ -7,6 +7,7 @@
 import { useMemo, useState } from "react";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
+import Select from "@/components/Select";
 import { TEAMS } from "@/constants/teams";
 import { validateLineup } from "@/lib/fpl/squad";
 import { autoLineup } from "@/lib/fpl/autoLineup";
@@ -131,18 +132,15 @@ export default function LineupEditor({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <label className="flex items-center gap-2 text-sm text-slate-600">
           Formation
-          <select
+          <Select
             value={fmtLabel(formation)}
-            onChange={(e) => {
-              const [d, m, f] = e.target.value.split("-").map(Number);
+            options={FORMATIONS.map((f) => ({ value: fmtLabel(f), label: fmtLabel(f) }))}
+            onChange={(v) => {
+              const [d, m, f] = v.split("-").map(Number);
               changeFormation(d, m, f);
             }}
-            className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm font-semibold"
-          >
-            {FORMATIONS.map((f) => (
-              <option key={fmtLabel(f)} value={fmtLabel(f)}>{fmtLabel(f)}</option>
-            ))}
-          </select>
+            className="w-28"
+          />
         </label>
         <span className="text-xs text-slate-400 tabular-nums">{totalPicked}/11 on the pitch</span>
       </div>
