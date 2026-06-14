@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/adminAuth";
 import { setMatchStats } from "@/lib/fpl/store";
 import { fetchMatchStats } from "@/lib/footballDataMatchStats";
+import { fetchEspnMatchStats } from "@/lib/espnMatchStats";
 import type { PlayerMatchStats } from "@/lib/fpl/types";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { matchId?: unknown; stats?: unknown; fdMatchId?: unknown };
+  let body: { matchId?: unknown; stats?: unknown; espnEventId?: unknown; fdMatchId?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -29,6 +30,13 @@ export async function POST(request: Request) {
   let stats: PlayerMatchStats[];
   if (Array.isArray(body.stats)) {
     stats = body.stats as PlayerMatchStats[];
+  } else if (typeof body.espnEventId === "string" && body.espnEventId) {
+    try {
+      stats = await fetchEspnMatchStats(body.espnEventId);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Fetch failed";
+      return NextResponse.json({ ok: false, error: msg }, { status: 502 });
+    }
   } else if (typeof body.fdMatchId === "string" && body.fdMatchId) {
     try {
       stats = await fetchMatchStats(body.fdMatchId);
@@ -38,7 +46,7 @@ export async function POST(request: Request) {
     }
   } else {
     return NextResponse.json(
-      { ok: false, error: "Provide stats[] or fdMatchId" },
+      { ok: false, error: "Provide stats[], espnEventId, or fdMatchId" },
       { status: 400 },
     );
   }

@@ -5,8 +5,11 @@
 //
 // Requires the €29 "Free + Deep Data" tier — the free tier returns empty squads.
 
-import type { FplPlayer, Position } from "@/lib/fpl/types";
+import type { FplPlayer } from "@/lib/fpl/types";
 import { priceFor } from "@/lib/fpl/prices";
+import { mapPosition } from "@/lib/fpl/positions";
+
+export { mapPosition };
 
 const BASE_URL = "https://api.football-data.org/v4";
 const WORLD_CUP_CODE = "WC";
@@ -23,21 +26,6 @@ interface RawTeam {
 }
 interface RawTeamsResponse {
   teams?: RawTeam[];
-}
-
-/**
- * Map football-data's position string to a fantasy bucket. Order matters:
- * "Defensive Midfield" / "Attacking Midfield" are midfielders, and wide players
- * ("winger") count as midfielders the way FPL classes them. Unknown/blank
- * defaults to MID so a player is never dropped from the pool.
- */
-export function mapPosition(raw: string | null): Position {
-  const p = (raw ?? "").toLowerCase();
-  if (/keeper|goalkeeper/.test(p)) return "GK";
-  if (/midfield|winger|wing/.test(p)) return "MID";
-  if (/back|defence|defender/.test(p)) return "DEF";
-  if (/forward|striker|offence|attack/.test(p)) return "FWD";
-  return "MID";
 }
 
 /** Fetch all squads and build the priced player pool. Throws on auth/HTTP error. */

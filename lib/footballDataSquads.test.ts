@@ -19,6 +19,13 @@ describe("mapPosition", () => {
     expect(mapPosition("Left Winger")).toBe("MID");
   });
 
+  it("handles ESPN's plain labels too", () => {
+    expect(mapPosition("Goalkeeper")).toBe("GK");
+    expect(mapPosition("Defender")).toBe("DEF");
+    expect(mapPosition("Midfielder")).toBe("MID");
+    expect(mapPosition("Forward")).toBe("FWD");
+  });
+
   it("maps forwards", () => {
     expect(mapPosition("Centre-Forward")).toBe("FWD");
     expect(mapPosition("Striker")).toBe("FWD");
