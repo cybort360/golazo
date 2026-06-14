@@ -10,11 +10,18 @@ export interface LeaderboardRow {
   played: number;
 }
 
+export interface Matchweek {
+  id: string;
+  label: string;
+  rows: LeaderboardRow[];
+}
+
 export interface LeaderboardData {
   currentWeek: string;
   minGolazo?: number;
   season: LeaderboardRow[];
   week: LeaderboardRow[];
+  matchweeks?: Matchweek[];
 }
 
 const REFETCH_MS = 60_000;

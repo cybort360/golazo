@@ -1,6 +1,6 @@
 import { kv } from "@vercel/kv";
 import { getCachedLeaderboards, currentGameweekKey } from "@/lib/predictionStore";
-import { gameweekById } from "@/lib/fpl/gameweeks";
+import { gameweekById, GAMEWEEKS } from "@/lib/fpl/gameweeks";
 import type { LeaderRow } from "@/lib/predictions";
 
 export const dynamic = "force-dynamic";
@@ -30,11 +30,23 @@ export async function GET() {
   } catch {
     minGolazo = 0;
   }
+  // Every matchweek up to and including the current one, so past boards stay
+  // viewable after they roll over.
+  const currentIdx = GAMEWEEKS.findIndex((g) => g.id === currentWeek);
+  const matchweeks = (currentIdx >= 0 ? GAMEWEEKS.slice(0, currentIdx + 1) : []).map(
+    (g) => ({
+      id: g.id,
+      label: g.label,
+      rows: (lb.weeks[g.id] ?? []).slice(0, TOP_N).map(publicRow),
+    }),
+  );
+
   return Response.json({
     currentWeek,
     currentWeekLabel,
     minGolazo,
     season: lb.season.slice(0, TOP_N).map(publicRow),
     week: (lb.weeks[currentWeek] ?? []).slice(0, TOP_N).map(publicRow),
+    matchweeks,
   });
 }

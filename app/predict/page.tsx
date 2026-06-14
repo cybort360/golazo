@@ -17,6 +17,7 @@ import { registerMessage, loginMessage, linkMessage } from "@/lib/predictAuth";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 import { LocalTime } from "@/components/LocalTime";
+import Select from "@/components/Select";
 import ShareButtons from "@/components/ShareButtons";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
@@ -463,6 +464,7 @@ export default function PredictPage() {
 
   const [now, setNow] = useState<number | null>(null);
   const [tab, setTab] = useState<"week" | "season">("week");
+  const [selectedGw, setSelectedGw] = useState<string>("");
   const [toast, setToast] = useState<string | null>(null);
   const [confirmLock, setConfirmLock] = useState<string | null>(null);
   // Telegram wallet-link hand-off: /predict?link=<token>. Read from the URL on
@@ -504,7 +506,15 @@ export default function PredictPage() {
     if (!res.ok) setToast(res.error ?? "Could not lock pick");
   };
 
-  const rows = tab === "week" ? leaderboard?.week ?? [] : leaderboard?.season ?? [];
+  const matchweeks = leaderboard?.matchweeks ?? [];
+  // Default the matchweek selector to the current one once data arrives.
+  useEffect(() => {
+    if (leaderboard?.currentWeek && !selectedGw) setSelectedGw(leaderboard.currentWeek);
+  }, [leaderboard?.currentWeek, selectedGw]);
+
+  const selectedWeekRows =
+    matchweeks.find((m) => m.id === selectedGw)?.rows ?? leaderboard?.week ?? [];
+  const rows = tab === "week" ? selectedWeekRows : leaderboard?.season ?? [];
 
   const topThisWeek = leaderboard?.week?.[0];
   const isWeekWinner =
@@ -640,11 +650,19 @@ export default function PredictPage() {
                   tab === t ? "bg-white text-green-600 shadow-sm" : "text-slate-500"
                 }`}
               >
-                {t === "week" ? "This Matchweek" : "Season"}
+                {t === "week" ? "Matchweek" : "Season"}
               </button>
             ))}
           </div>
         </div>
+        {tab === "week" && matchweeks.length > 0 && (
+          <Select
+            value={selectedGw}
+            options={matchweeks.map((m) => ({ value: m.id, label: m.label }))}
+            onChange={setSelectedGw}
+            className="w-52 self-start"
+          />
+        )}
         <LeaderboardTable rows={rows} meNickname={reg?.nickname ?? null} />
       </section>
       )}
