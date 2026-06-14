@@ -79,13 +79,16 @@ export async function POST(request: Request) {
       );
     }
 
+    // A web player's id is its wallet. Use w.value rather than player.id, since
+    // records written before the unified-id change have no `id` field — and
+    // writing undefined to KV throws.
     const token = randomUUID();
-    await kv.set(tokenKey(token), player.id);
+    await kv.set(tokenKey(token), w.value);
 
     return NextResponse.json({
       ok: true,
       nickname: player.nickname,
-      wallet: player.wallet,
+      wallet: player.wallet ?? w.value,
       token,
     });
   } catch {
