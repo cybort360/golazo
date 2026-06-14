@@ -31,6 +31,41 @@ export function zeroStats(playerId: string): PlayerMatchStats {
   };
 }
 
+/** Combine a player's stat lines across several matches (e.g. a knockout
+ *  gameweek). For the common one-match-per-gameweek case this is identity. */
+export function combineStats(lines: PlayerMatchStats[]): PlayerMatchStats {
+  return lines.reduce((acc, s) => ({
+    playerId: s.playerId,
+    minutes: acc.minutes + s.minutes,
+    goals: acc.goals + s.goals,
+    assists: acc.assists + s.assists,
+    cleanSheet: acc.cleanSheet || s.cleanSheet,
+    goalsConceded: acc.goalsConceded + s.goalsConceded,
+    yellowCards: acc.yellowCards + s.yellowCards,
+    redCards: acc.redCards + s.redCards,
+    ownGoals: acc.ownGoals + s.ownGoals,
+  }), zeroStats(lines[0]?.playerId ?? ""));
+}
+
+/** Flatten many matches' stat arrays into one stat line per player. */
+export function aggregateByPlayer(
+  statLists: PlayerMatchStats[][],
+): Record<string, PlayerMatchStats> {
+  const byPlayer = new Map<string, PlayerMatchStats[]>();
+  for (const list of statLists) {
+    for (const s of list) {
+      const arr = byPlayer.get(s.playerId) ?? [];
+      arr.push(s);
+      byPlayer.set(s.playerId, arr);
+    }
+  }
+  const out: Record<string, PlayerMatchStats> = {};
+  for (const [id, lines] of Array.from(byPlayer.entries())) {
+    out[id] = combineStats(lines);
+  }
+  return out;
+}
+
 export interface ScoreBreakdown {
   appearance: number;
   goals: number;

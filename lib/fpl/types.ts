@@ -36,10 +36,12 @@ export interface FplTeam {
   createdAt: number;
   // Per-gameweek choices, keyed by gameweek id. Absent → not set yet.
   lineups: Record<string, GameweekLineup>;
-  // Transfers already made in each gameweek (to compute hits). Absent → 0.
+  // Transfers made in each gameweek, measured against that gameweek's baseline
+  // (to compute the -4 hits). Absent → 0.
   transfersByGw?: Record<string, number>;
-  // Free transfers were used setting up the initial squad? No — initial pick is free.
-  freeTransfersUsed?: Record<string, boolean>;
+  // The squad as it entered each gameweek, snapshotted on the first change of
+  // that gameweek so repeated edits are counted from a stable baseline.
+  baselineByGw?: Record<string, string[]>;
 }
 
 export interface GameweekLineup {
