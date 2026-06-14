@@ -1551,6 +1551,69 @@ function PredictionPayoutsSection({ ui }: { ui: AdminUI }) {
   );
 }
 
+// ── Section 8: Fantasy data ──────────────────────────────────────────────────
+
+// One-click ESPN syncs for the fantasy game: rebuild the player pool, and pull
+// player stats for every played group-stage fixture (auto-mapped to ESPN
+// events). Knockout fixtures use the manual stats route until their teams are
+// known.
+function FantasySection({ ui }: { ui: AdminUI }) {
+  const [busy, setBusy] = useState<"pool" | "stats" | null>(null);
+
+  const run = async (kind: "pool" | "stats") => {
+    setBusy(kind);
+    const url = kind === "pool" ? "/api/admin/fantasy-sync" : "/api/admin/fantasy-stats-sync";
+    try {
+      const res = await fetch(url, { method: "POST", credentials: "same-origin" });
+      const d = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        players?: number;
+        mapped?: number;
+        synced?: number;
+      };
+      if (!res.ok || !d.ok) {
+        onWriteError(ui, res.status, d.error ?? "Fantasy sync");
+      } else if (kind === "pool") {
+        ui.showToast("success", `Pool synced — ${d.players?.toLocaleString()} players`);
+      } else {
+        ui.showToast("success", `Stats synced — ${d.synced} of ${d.mapped} fixtures`);
+      }
+    } catch {
+      onWriteError(ui, 0, "Fantasy sync");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <Panel n={8} title="Fantasy data (ESPN)">
+      <p className="text-sm text-slate-500">
+        Rebuild the player pool, then pull match stats for played group-stage
+        fixtures. Re-runnable. Knockouts use the per-match route once teams are set.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => run("pool")}
+          disabled={busy !== null}
+          className={btnPrimary}
+        >
+          {busy === "pool" ? "Syncing pool…" : "Sync player pool"}
+        </button>
+        <button
+          type="button"
+          onClick={() => run("stats")}
+          disabled={busy !== null}
+          className={btnGhost}
+        >
+          {busy === "stats" ? "Syncing stats…" : "Sync match stats"}
+        </button>
+      </div>
+    </Panel>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
@@ -1642,6 +1705,7 @@ export default function AdminPage() {
       <WeeklySection ui={ui} results={results} />
       <BuybackSection ui={ui} results={results} />
       <PredictionPayoutsSection ui={ui} />
+      <FantasySection ui={ui} />
 
       {/* Toast */}
       {toast && (
