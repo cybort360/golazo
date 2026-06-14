@@ -424,6 +424,18 @@ export default function Home() {
   );
 
   const todays = getTodaysMatches();
+  // Order today's matches by state: live first, then upcoming, then played —
+  // keeping chronological order within each bucket.
+  const sortedTodays = (() => {
+    const rank = (m: ScheduledMatch) => {
+      const s = todayMatchStatus(m, results, now);
+      return s === "live" ? 0 : s === "completed" || s === "draw" ? 2 : 1;
+    };
+    return todays
+      .map((m, i) => ({ m, i }))
+      .sort((a, b) => rank(a.m) - rank(b.m) || a.i - b.i)
+      .map((x) => x.m);
+  })();
 
   // Top movers across all launched tokens (tokenAddress merged from admin data).
   const launchedTeams = useMemo(
@@ -550,7 +562,7 @@ export default function Home() {
             <section className="flex flex-col gap-3">
               <SectionHeading>Today&apos;s Matches</SectionHeading>
               <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2">
-                {todays.map((match) => (
+                {sortedTodays.map((match) => (
                   <TodayMatchCard
                     key={match.id}
                     match={match}
