@@ -5,10 +5,10 @@
 import { kv } from "@vercel/kv";
 import {
   buildLeaderboards,
-  weekOf,
   type Leaderboards,
   type Player,
 } from "@/lib/predictions";
+import { activeGameweek, upcomingGameweek } from "@/lib/fpl/gameweeks";
 import { verifyInitData, telegramPlayerId } from "@/lib/telegramAuth";
 import type { MatchResult } from "@/hooks/useMatchResults";
 
@@ -128,13 +128,9 @@ export async function getCachedLeaderboards(): Promise<Leaderboards> {
   return fresh ?? cache ?? { season: [], weeks: {} };
 }
 
-/** Today's ISO week key in Eastern Time (matches how fixtures are bucketed). */
-export function currentWeekKeyEt(): string {
-  const etDate = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-  return weekOf(etDate);
+/** The current matchweek (gameweek) id: the one in play, or the next upcoming. */
+export function currentGameweekKey(): string {
+  const now = Date.now();
+  const gw = activeGameweek(now) ?? upcomingGameweek(now);
+  return gw?.id ?? "";
 }

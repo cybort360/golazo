@@ -8,6 +8,7 @@ import {
   DRAW,
   type Player,
 } from "@/lib/predictions";
+import { gameweekForMatch } from "@/lib/fpl/gameweeks";
 import type { MatchResult } from "@/hooks/useMatchResults";
 
 describe("validateNickname", () => {
@@ -78,12 +79,13 @@ describe("buildLeaderboards", () => {
     expect(season[1]).toMatchObject({ nickname: "bob", points: 1, played: 2 });
   });
 
-  it("buckets points into the match's ISO week", () => {
-    const results = [result("GM001", "MEX", "RSA")]; // 2026-06-11
+  it("buckets points into the match's gameweek (matchday)", () => {
+    const results = [result("GM001", "MEX", "RSA")]; // opener → GW1
     const picks = { WALLET_A: { GM001: "MEX" } };
     const { weeks } = buildLeaderboards(players, picks, results);
-    const wk = weekOf("2026-06-11");
-    expect(weeks[wk][0]).toMatchObject({ nickname: "alice", points: 1 });
+    const gw = gameweekForMatch("GM001")!.id;
+    expect(gw).toBe("GW1");
+    expect(weeks[gw][0]).toMatchObject({ nickname: "alice", points: 1 });
   });
 
   it("gives a player with no settled picks zero points but still lists them", () => {

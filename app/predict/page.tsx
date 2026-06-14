@@ -640,7 +640,7 @@ export default function PredictPage() {
                   tab === t ? "bg-white text-green-600 shadow-sm" : "text-slate-500"
                 }`}
               >
-                {t === "week" ? "This Week" : "Season"}
+                {t === "week" ? "This Matchday" : "Season"}
               </button>
             ))}
           </div>

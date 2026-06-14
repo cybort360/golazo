@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { getCachedLeaderboards, currentWeekKeyEt } from "@/lib/predictionStore";
+import { getCachedLeaderboards, currentGameweekKey } from "@/lib/predictionStore";
 import { predictorCardData } from "@/lib/share";
 import { ogFrame, OG_SIZE, OG_CONTENT_TYPE } from "@/lib/ogCard";
 
@@ -14,7 +14,7 @@ export default async function Image({
 }) {
   const nickname = decodeURIComponent(params.nickname);
   const lb = await getCachedLeaderboards();
-  const card = predictorCardData(lb, currentWeekKeyEt(), nickname);
+  const card = predictorCardData(lb, currentGameweekKey(), nickname);
 
   const headline = card
     ? `#${card.rank} ${card.scope === "week" ? "this week" : "this season"}`

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
 import { isAdminRequest } from "@/lib/adminAuth";
-import { getCachedLeaderboards, currentWeekKeyEt } from "@/lib/predictionStore";
+import { getCachedLeaderboards, currentGameweekKey } from "@/lib/predictionStore";
+import { gameweekById } from "@/lib/fpl/gameweeks";
 import { golazoBalance } from "@/lib/golazoBalance";
 import { isPotEligible } from "@/lib/predictEligibility";
 import type { LeaderRow } from "@/lib/predictions";
@@ -24,7 +25,8 @@ export async function GET() {
   }
 
   const lb = await getCachedLeaderboards();
-  const currentWeek = currentWeekKeyEt();
+  const currentWeek = currentGameweekKey();
+  const currentWeekLabel = gameweekById(currentWeek)?.label ?? currentWeek;
   const threshold = (await kv.get<number>("pred_min_golazo")) ?? 0;
 
   const weekTop = lb.weeks[currentWeek]?.slice(0, TOP_N) ?? [];
@@ -52,6 +54,7 @@ export async function GET() {
   return NextResponse.json({
     ok: true,
     currentWeek,
+    currentWeekLabel,
     threshold,
     weekTop: weekTop.map(annotate),
     seasonTop: seasonTop.map(annotate),

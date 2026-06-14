@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getCachedLeaderboards, currentWeekKeyEt } from "@/lib/predictionStore";
+import { getCachedLeaderboards, currentGameweekKey } from "@/lib/predictionStore";
 import { isWeekWinner, predictorCardData } from "@/lib/share";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ export default async function Page({
 }) {
   const nickname = decodeURIComponent(params.nickname);
   const lb = await getCachedLeaderboards();
-  const weekKey = currentWeekKeyEt();
+  const weekKey = currentGameweekKey();
   const won = isWeekWinner(lb, weekKey, nickname);
   const card = predictorCardData(lb, weekKey, nickname);
 

@@ -1,5 +1,6 @@
 import { kv } from "@vercel/kv";
-import { getCachedLeaderboards, currentWeekKeyEt } from "@/lib/predictionStore";
+import { getCachedLeaderboards, currentGameweekKey } from "@/lib/predictionStore";
+import { gameweekById } from "@/lib/fpl/gameweeks";
 import type { LeaderRow } from "@/lib/predictions";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +22,8 @@ function publicRow(r: LeaderRow) {
 
 export async function GET() {
   const lb = await getCachedLeaderboards();
-  const currentWeek = currentWeekKeyEt();
+  const currentWeek = currentGameweekKey();
+  const currentWeekLabel = gameweekById(currentWeek)?.label ?? null;
   let minGolazo = 0;
   try {
     minGolazo = (await kv.get<number>("pred_min_golazo")) ?? 0;
@@ -30,6 +32,7 @@ export async function GET() {
   }
   return Response.json({
     currentWeek,
+    currentWeekLabel,
     minGolazo,
     season: lb.season.slice(0, TOP_N).map(publicRow),
     week: (lb.weeks[currentWeek] ?? []).slice(0, TOP_N).map(publicRow),

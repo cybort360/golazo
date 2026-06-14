@@ -7,6 +7,7 @@
 // KV wiring and the routes live alongside.
 
 import { SCHEDULE } from "@/constants/schedule";
+import { gameweekForMatch } from "@/lib/fpl/gameweeks";
 import type { MatchResult } from "@/hooks/useMatchResults";
 
 export interface Player {
@@ -91,7 +92,11 @@ export function weekOf(date: string): string {
   return `${isoYear}-W${String(week).padStart(2, "0")}`;
 }
 
-const WEEK_BY_MATCH = new Map(SCHEDULE.map((m) => [m.id, weekOf(m.date)]));
+// Predictions bucket by matchweek (gameweek), shared with fantasy, not ISO
+// calendar week — so "This Matchday" lines up with the tournament's rounds.
+const WEEK_BY_MATCH = new Map(
+  SCHEDULE.map((m) => [m.id, gameweekForMatch(m.id)?.id ?? weekOf(m.date)]),
+);
 
 interface Tally {
   points: number;

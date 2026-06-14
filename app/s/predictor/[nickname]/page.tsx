@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getCachedLeaderboards, currentWeekKeyEt } from "@/lib/predictionStore";
+import { getCachedLeaderboards, currentGameweekKey } from "@/lib/predictionStore";
 import { predictorCardData } from "@/lib/share";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export default async function Page({
   params: { nickname: string };
 }) {
   const nickname = decodeURIComponent(params.nickname);
-  const card = predictorCardData(await getCachedLeaderboards(), currentWeekKeyEt(), nickname);
+  const card = predictorCardData(await getCachedLeaderboards(), currentGameweekKey(), nickname);
 
   return (
     <div className="mx-auto flex max-w-xl flex-col items-center gap-4 px-4 py-16 text-center">

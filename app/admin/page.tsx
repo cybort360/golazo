@@ -1467,6 +1467,7 @@ function PayoutTable({
 function PredictionPayoutsSection({ ui }: { ui: AdminUI }) {
   const [data, setData] = useState<{
     currentWeek: string;
+    currentWeekLabel?: string;
     threshold: number;
     weekTop: PayoutRow[];
     seasonTop: PayoutRow[];
@@ -1541,7 +1542,7 @@ function PredictionPayoutsSection({ ui }: { ui: AdminUI }) {
       ) : (
         <div className="flex flex-col gap-4">
           <PayoutTable
-            title={`This week (${data.currentWeek})`}
+            title={`This matchday (${data.currentWeekLabel ?? data.currentWeek})`}
             rows={data.weekTop}
             gated={gated}
           />
