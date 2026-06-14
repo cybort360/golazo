@@ -12,9 +12,15 @@ import { getTodaysMatches, getMatchStatus } from "@/lib/schedule";
 // Global user-facing nav. Hidden on /admin routes, which have their own
 // wallet-enabled layout and header.
 
+// Fantasy is hidden from the nav until NEXT_PUBLIC_FANTASY_ENABLED is set, so we
+// can ship the routes, sync the pool, and verify before revealing it publicly.
+// (/fantasy stays directly reachable for testing in the meantime.)
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/predict", label: "Predict" },
+  ...(process.env.NEXT_PUBLIC_FANTASY_ENABLED
+    ? [{ href: "/fantasy", label: "Fantasy" }]
+    : []),
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/prize-pool", label: "Prize Pool" },
 ];
