@@ -188,7 +188,7 @@ export default function LeaderboardPage() {
                     Record
                   </span>
                   <span className="tabular-nums text-slate-600">
-                    {row.wins}-{row.losses}-{row.draws}
+                    {row.wins}-{row.draws}-{row.losses}
                   </span>
                 </div>
                 <div className="flex flex-col items-end">
@@ -228,7 +228,7 @@ export default function LeaderboardPage() {
             <tr className="border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-400">
               <th className="px-4 py-3 font-medium">#</th>
               <th className="px-4 py-3 font-medium">Team</th>
-              <th className="px-4 py-3 text-center font-medium">W-L-D</th>
+              <th className="px-4 py-3 text-center font-medium">W-D-L</th>
               <th className="px-4 py-3 text-right font-medium">Price</th>
               <th className="px-4 py-3 text-right font-medium">24h</th>
               <th className="px-4 py-3 text-right font-medium">Status</th>
@@ -272,7 +272,7 @@ export default function LeaderboardPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-center tabular-nums text-slate-500">
-                    {row.wins}-{row.losses}-{row.draws}
+                    {row.wins}-{row.draws}-{row.losses}
                   </td>
                   <td className="px-4 py-3 text-right font-medium tabular-nums text-slate-900">
                     {price ? formatPrice(price.priceUsd) : "—"}
