@@ -29,6 +29,11 @@ function solscanAccount(address: string): string {
 // Kickoff time per match id, so Recent Results can order by when a match was
 // actually played (not when its result happened to be recorded).
 const KICKOFF_BY_ID = new Map(SCHEDULE.map((m) => [m.id, getKickoffMs(m)]));
+// Schedule position per match id, used as a stable tiebreaker when several
+// fixtures share a kickoff time (concurrent group games) — otherwise the picked
+// three would depend on the order /api/results happens to return and reshuffle
+// between reloads.
+const ORDER_BY_ID = new Map(SCHEDULE.map((m, i) => [m.id, i]));
 
 function flagCodeFor(ticker: string): string | null {
   return TEAMS.find((t) => t.ticker === ticker)?.flagCode ?? null;
@@ -226,7 +231,9 @@ export default function LivePanel() {
   const recent = [...results]
     .sort(
       (a, b) =>
-        (KICKOFF_BY_ID.get(b.matchId) ?? 0) - (KICKOFF_BY_ID.get(a.matchId) ?? 0),
+        (KICKOFF_BY_ID.get(b.matchId) ?? 0) -
+          (KICKOFF_BY_ID.get(a.matchId) ?? 0) ||
+        (ORDER_BY_ID.get(b.matchId) ?? 0) - (ORDER_BY_ID.get(a.matchId) ?? 0),
     )
     .slice(0, 3);
 
