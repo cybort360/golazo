@@ -345,7 +345,13 @@ export default function LivePanel() {
                   <span className="text-xs italic text-slate-400">
                     {r.isDraw ? "drew" : "def."}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 text-sm text-slate-400 line-through">
+                  <span
+                    className={
+                      r.isDraw
+                        ? "inline-flex items-center gap-1.5 text-sm font-semibold text-slate-900"
+                        : "inline-flex items-center gap-1.5 text-sm text-slate-400 line-through"
+                    }
+                  >
                     <Flag
                       code={flagCodeFor(r.loser)}
                       className="text-sm no-underline"

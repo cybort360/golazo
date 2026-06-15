@@ -414,6 +414,11 @@ export default function Home() {
   // (tournament over) the most recently played match.
   const featuredMatch = useMemo<ScheduledMatch | null>(() => {
     const live = SCHEDULE.find((m) => {
+      // A recorded result settles the match: ignore the live feed, which can lag
+      // and keep reporting a just-finished game as "in" for a minute or two —
+      // otherwise that game wins the banner and renders as FINAL over the real
+      // live/next match until a reload.
+      if (resultForMatch(m, results)) return false;
       const lv = liveByMatchId[m.id];
       return lv?.status === "live" || lv?.status === "paused";
     });
@@ -444,7 +449,11 @@ export default function Home() {
       // Use the live snapshot's status (what the cards/banner show), falling back
       // to the clock-based status before the live feed has loaded.
       const lv = liveByMatchId[m.id];
-      const liveNow = lv?.status === "live" || lv?.status === "paused";
+      // Same as the banner: a recorded result wins over a lagging "still live"
+      // feed, so a finished game doesn't sort ahead of the actual live one.
+      const liveNow =
+        !resultForMatch(m, results) &&
+        (lv?.status === "live" || lv?.status === "paused");
       const s = todayMatchStatus(m, results, now);
       if (liveNow || s === "live") return 0;
       if (s === "completed" || s === "draw") return 2;
