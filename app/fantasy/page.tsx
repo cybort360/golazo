@@ -9,7 +9,7 @@ import { useFantasy } from "@/hooks/useFantasy";
 import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import { validateSquad, squadPrice, BUDGET } from "@/lib/fpl/squad";
 import { autoLineup } from "@/lib/fpl/autoLineup";
-import { GAMEWEEKS } from "@/lib/fpl/gameweeks";
+import { GAMEWEEKS, gameweekEndMs } from "@/lib/fpl/gameweeks";
 import { payGolazoEntry } from "@/lib/golazoPay";
 import { formatCountdownPrecise } from "@/lib/time";
 import { Flag } from "@/components/Flag";
@@ -224,7 +224,9 @@ function SquadBuilder({
 
 // ── Team view ──────────────────────────────────────────────────────────────────
 
-function Deadline({ ms }: { ms: number }) {
+// Per-second clock, null until mounted so server and client agree on first paint
+// (the countdowns below render only once `now` is set, dodging hydration drift).
+function useNow(): number | null {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     const t = () => setNow(Date.now());
@@ -232,12 +234,88 @@ function Deadline({ ms }: { ms: number }) {
     const id = setInterval(t, 1000);
     return () => clearInterval(id);
   }, []);
+  return now;
+}
+
+function Deadline({ ms }: { ms: number }) {
+  const now = useNow();
   if (now === null) return null;
   const diff = ms - now;
   return (
     <span suppressHydrationWarning className="tabular-nums">
       {diff <= 0 ? "locked" : `locks in ${formatCountdownPrecise(diff)}`}
     </span>
+  );
+}
+
+// One countdown figure: small uppercase label over a big tabular value.
+function ClockStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+        {label}
+      </span>
+      <span suppressHydrationWarning className="text-lg font-bold tabular-nums text-slate-900">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// Top-of-page gameweek clock: how long until the gameweek in play wraps up, and
+// how long the transfer window for the next one stays open. Display only — it
+// reads the same `active`/`upcoming` state the editor uses, it doesn't gate it.
+function GameweekClock({
+  active,
+  upcoming,
+}: {
+  active: Gameweek | null;
+  upcoming: Gameweek | null;
+}) {
+  const now = useNow();
+  if (now === null || (!active && !upcoming)) return null;
+
+  const endMs = active ? gameweekEndMs(active) : null;
+  const inPlay = endMs !== null && now < endMs;
+
+  const heading = inPlay
+    ? `${active!.label} · in play`
+    : upcoming
+      ? `Up next · ${upcoming.label}`
+      : active
+        ? `${active.label} · complete`
+        : "";
+
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
+      <div className="flex w-fit items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+        <Icon name="football" size={13} />
+        {heading}
+      </div>
+
+      <div className="flex flex-wrap gap-x-10 gap-y-3">
+        {inPlay && (
+          <ClockStat
+            label="Gameweek ends in"
+            value={formatCountdownPrecise(endMs! - now)}
+          />
+        )}
+        {upcoming && upcoming.deadlineMs > now && (
+          <ClockStat
+            label={inPlay ? `${upcoming.label} locks in` : "Transfers lock in"}
+            value={formatCountdownPrecise(upcoming.deadlineMs - now)}
+          />
+        )}
+      </div>
+
+      <p className="text-xs text-slate-500">
+        {!upcoming
+          ? "Final gameweek — transfers are closed for the season."
+          : inPlay
+            ? `Transfers for ${upcoming.label} are open now — get your squad in before it locks.`
+            : `Make your ${upcoming.label} transfers before the deadline.`}
+      </p>
+    </div>
   );
 }
 
@@ -751,8 +829,6 @@ export default function FantasyPage() {
 
   const upcoming = mine?.gw.upcoming ?? null;
   const activeGw = mine?.gw.active ?? null;
-  // The matchday we're "on": the one in play, or the next one before kickoff.
-  const currentGw = activeGw ?? upcoming;
   const lookup = useMemo(() => lookupFrom(pool), [pool]);
 
   // Create flow: pick 15 → set the XI on the pitch → save squad + lineup.
@@ -810,12 +886,7 @@ export default function FantasyPage() {
             )}
           </div>
 
-          {currentGw && (
-            <div className="flex w-fit items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
-              <Icon name="football" size={13} />
-              {activeGw ? currentGw.label : `Up next · ${currentGw.label}`}
-            </div>
-          )}
+          <GameweekClock active={activeGw} upcoming={upcoming} />
 
           {tab === "team" &&
             (pool.length === 0 ? (

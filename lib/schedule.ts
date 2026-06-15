@@ -14,7 +14,7 @@ export interface MatchResult {
 const ET_TIME_ZONE = "America/New_York";
 
 // A match is considered "live" for this long after kickoff.
-const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
+export const LIVE_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 const MS_PER_MINUTE = 60_000;
 

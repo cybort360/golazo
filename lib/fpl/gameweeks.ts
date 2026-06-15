@@ -5,7 +5,7 @@
 // teams lock then. Pure; takes the schedule as a parameter for testability.
 
 import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
-import { getKickoffMs } from "@/lib/schedule";
+import { getKickoffMs, LIVE_WINDOW_MS } from "@/lib/schedule";
 import type { Gameweek } from "@/lib/fpl/types";
 
 const KNOCKOUT_ROUNDS: { rounds: string[]; gw: number; label: string }[] = [
@@ -64,6 +64,26 @@ export function buildGameweeks(schedule: ScheduledMatch[] = SCHEDULE): Gameweek[
   }
 
   return gameweeks.sort((a, b) => a.deadlineMs - b.deadlineMs);
+}
+
+/**
+ * When the gameweek finishes — its last match reaching full time, treated as
+ * LIVE_WINDOW_MS after that match's kickoff (mirrors lib/schedule's notion of a
+ * match being "done"). The Gameweek only stores deadlineMs (the first kickoff,
+ * its lock point), so the end has to be derived from the fixtures. Powers the
+ * "gameweek ends in…" countdown. Falls back to the deadline for an empty week.
+ */
+export function gameweekEndMs(
+  gw: Gameweek,
+  schedule: ScheduledMatch[] = SCHEDULE,
+): number {
+  const byId = new Map(schedule.map((m) => [m.id, m]));
+  let end = gw.deadlineMs;
+  for (const id of gw.matchIds) {
+    const m = byId.get(id);
+    if (m) end = Math.max(end, getKickoffMs(m) + LIVE_WINDOW_MS);
+  }
+  return end;
 }
 
 /** Convenience snapshot for production callers; tests use buildGameweeks(). */
