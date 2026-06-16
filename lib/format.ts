@@ -19,11 +19,24 @@ export function compactUsd(n: number): string {
   return `$${n.toFixed(0)}`;
 }
 
+// Format a SOL amount with precision that scales to the size. Small balances
+// (an early prize pool of, say, 0.01 SOL) keep their cents instead of rounding
+// to "0.0 SOL"; larger amounts stay clean.
+export function formatSol(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return "0 SOL";
+  if (n < 1) return `${n.toFixed(2)} SOL`; // 0.01, 0.42
+  if (n < 1000) return `${n.toFixed(1)} SOL`; // 12.3
+  return `${Math.round(n).toLocaleString("en-US")} SOL`;
+}
+
 export function formatUsd(n: number): string {
+  if (!Number.isFinite(n)) return "—";
+  // Show cents for small amounts so a few-dollar pool doesn't round to "$0".
+  const maximumFractionDigits = Math.abs(n) < 100 ? 2 : 0;
   return n.toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
-    maximumFractionDigits: 0,
+    maximumFractionDigits,
   });
 }
 

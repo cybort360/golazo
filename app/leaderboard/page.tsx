@@ -11,7 +11,7 @@ import { TEAMS, type Team } from "@/constants/teams";
 import { getTeamRecord } from "@/lib/schedule";
 import { deriveTeamStatuses, type TeamStatus } from "@/lib/standings";
 import { getMultipleTokenPrices, type TokenPrice } from "@/lib/dexscreener";
-import { formatPrice, formatPct, formatUsd } from "@/lib/format";
+import { formatPrice, formatPct, formatSol, formatUsd } from "@/lib/format";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 
@@ -50,7 +50,7 @@ function PrizeBanner() {
         <div>
           <div className="label">Prize Pool</div>
           <div className="text-xl font-bold tabular-nums text-slate-900">
-            {balanceSOL !== null ? `${balanceSOL.toFixed(1)} SOL` : "—"}
+            {balanceSOL !== null ? formatSol(balanceSOL) : "—"}
             {balanceUSD !== null && (
               <span className="ml-2 text-sm font-normal text-slate-400">
                 ≈ {formatUsd(balanceUSD)}

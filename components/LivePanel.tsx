@@ -14,6 +14,8 @@ import {
   getKickoffMs,
   resultForMatch,
 } from "@/lib/schedule";
+import { formatSol, formatUsd } from "@/lib/format";
+import { prizePoolProgress } from "@/lib/fees";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
 import { LocalTime } from "@/components/LocalTime";
@@ -37,14 +39,6 @@ const ORDER_BY_ID = new Map(SCHEDULE.map((m, i) => [m.id, i]));
 
 function flagCodeFor(ticker: string): string | null {
   return TEAMS.find((t) => t.ticker === ticker)?.flagCode ?? null;
-}
-
-function formatUsd(n: number): string {
-  return n.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
 }
 
 function formatShortDate(date: string): string {
@@ -221,6 +215,10 @@ export default function LivePanel() {
   const { results } = useMatchResults();
   const { liveByMatchId } = useLiveMatches();
 
+  // Prize-pool bar: fills toward the next milestone above the live balance, so
+  // it actually grows as fees accrue (no hardcoded width).
+  const pool = prizePoolProgress(balanceSOL ?? 0);
+
   const today = getTodaysMatches();
   const shownToday = today.slice(0, 4);
   const nextMatch =
@@ -250,7 +248,7 @@ export default function LivePanel() {
       >
         {balanceSOL !== null ? (
           <div className="text-3xl font-bold tabular-nums text-slate-900">
-            {balanceSOL.toFixed(1)} SOL
+            {formatSol(balanceSOL)}
           </div>
         ) : (
           <div className="h-8 w-32 animate-pulse rounded bg-slate-100" />
@@ -260,11 +258,19 @@ export default function LivePanel() {
             ≈ {formatUsd(balanceUSD)} USD
           </div>
         )}
-        {/* decorative progress indicator */}
+        {/* Progress toward the next milestone — grows with the live balance. */}
         <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-          <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-green-500 to-green-400" />
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-green-500 to-green-400 transition-[width] duration-700 ease-out"
+            style={{ width: `${Math.max(2, Math.round(pool.ratio * 100))}%` }}
+          />
         </div>
-        <div className="mt-2 text-xs text-slate-400">35% of all trading fees</div>
+        <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-400">
+          <span>35% of all trading fees</span>
+          <span className="tabular-nums">
+            {Math.round(pool.ratio * 100)}% to {formatSol(pool.target)}
+          </span>
+        </div>
         {PRIZE_WALLET && (
           <div className="mt-3">
             <SolscanLink
@@ -389,7 +395,7 @@ export default function LivePanel() {
       >
         {futureFundSOL !== null ? (
           <div className="text-2xl font-bold tabular-nums text-slate-900">
-            {futureFundSOL.toFixed(1)} SOL
+            {formatSol(futureFundSOL)}
           </div>
         ) : (
           <div className="h-7 w-24 animate-pulse rounded bg-slate-100" />

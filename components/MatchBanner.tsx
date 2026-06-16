@@ -12,6 +12,7 @@ import { useLiveMatches } from "@/hooks/useLiveMatches";
 import type { LiveMatch } from "@/lib/resultsSync";
 import type { MatchGoal } from "@/lib/espnMatchStats";
 import { getMatchStatus, getKickoffMs } from "@/lib/schedule";
+import { formatSol, formatUsd } from "@/lib/format";
 import { formatCountdown, formatCountdownPrecise } from "@/lib/time";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
@@ -71,14 +72,6 @@ function formatUsdPrice(value: string): string {
   if (n >= 0.01) return `$${n.toFixed(4)}`;
   if (n > 0) return `$${n.toFixed(8).replace(/0+$/, "")}`;
   return "$0.00";
-}
-
-function formatUsd(n: number): string {
-  return n.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
 }
 
 function computeClock(
@@ -395,7 +388,7 @@ function PrizeStrip() {
         </span>
         <span className="label hidden sm:inline">Prize Pool</span>
         <span className="text-sm font-bold tabular-nums text-slate-900 md:text-base">
-          {balanceSOL !== null ? `${balanceSOL.toFixed(1)} SOL` : "—"}
+          {balanceSOL !== null ? formatSol(balanceSOL) : "—"}
         </span>
         {balanceUSD !== null && (
           <span className="text-xs tabular-nums text-slate-400 md:text-sm">

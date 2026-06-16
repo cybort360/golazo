@@ -7,7 +7,7 @@ import { useWeeklyPrize } from "@/hooks/useWeeklyPrize";
 import { useMatchResults } from "@/hooks/useMatchResults";
 import { useTokenAddresses } from "@/hooks/useTokenAddresses";
 import { FEE_SPLIT, FUTURE_FUND_SPLIT } from "@/lib/fees";
-import { formatUsd, shortenAddress } from "@/lib/format";
+import { formatSol, formatUsd, shortenAddress } from "@/lib/format";
 import { getKickoffMs } from "@/lib/schedule";
 import { formatCountdownPrecise } from "@/lib/time";
 import { safeHttpUrl } from "@/lib/url";
@@ -368,7 +368,7 @@ export default function PrizePoolPage() {
           Pool
         </h1>
         <div className="mt-2 text-4xl font-bold tabular-nums text-green-600 md:text-5xl">
-          {balanceSOL !== null ? `${balanceSOL.toFixed(1)} SOL` : "—"}
+          {balanceSOL !== null ? formatSol(balanceSOL) : "—"}
         </div>
         {balanceUSD !== null && (
           <div className="text-lg text-slate-400">≈ {formatUsd(balanceUSD)}</div>
@@ -441,7 +441,7 @@ export default function PrizePoolPage() {
             <Icon name="leaf" size={15} /> Future Fund
           </h2>
           <span className="text-2xl font-bold tabular-nums text-slate-900">
-            {futureFundSOL !== null ? `${futureFundSOL.toFixed(1)} SOL` : "—"}
+            {futureFundSOL !== null ? formatSol(futureFundSOL) : "—"}
           </span>
         </div>
         <p className="text-sm text-slate-600">
@@ -486,9 +486,7 @@ export default function PrizePoolPage() {
                       {w.address ? shortenAddress(w.address, 6, 6) : "Not configured"}
                     </td>
                     <td className="px-4 py-3 text-right font-medium tabular-nums text-slate-900">
-                      {bal !== null && bal !== undefined
-                        ? `${bal.toFixed(2)} SOL`
-                        : "—"}
+                      {bal !== null && bal !== undefined ? formatSol(bal) : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {w.address ? (

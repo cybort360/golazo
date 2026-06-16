@@ -8,6 +8,7 @@ import { openIntro } from "@/components/IntroModal";
 import { usePrizePool } from "@/hooks/usePrizePool";
 import { useMatchResults } from "@/hooks/useMatchResults";
 import { getTodaysMatches, getMatchStatus } from "@/lib/schedule";
+import { formatSol } from "@/lib/format";
 
 // Global user-facing nav. Hidden on /admin routes, which have their own
 // wallet-enabled layout and header.
@@ -127,7 +128,7 @@ export default function SiteNav() {
                 className="hidden items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-semibold text-green-700 transition-colors hover:bg-green-100 md:inline-flex"
               >
                 <Icon name="trophy" size={14} className="text-amber-500" />
-                <span className="tabular-nums">{balanceSOL.toFixed(0)} SOL</span>
+                <span className="tabular-nums">{formatSol(balanceSOL)}</span>
               </Link>
             )}
             <button
