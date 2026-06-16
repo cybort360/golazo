@@ -672,10 +672,15 @@ interface TokenEdit {
   axiomUrl: string;
 }
 
+// Only tokens we actually list get a form row — unlisted teams have no market,
+// so there's nothing to point a mint/pool at. GOLAZO has no `listed` flag (it's
+// the platform token), so it stays in.
+const LISTED_TOKENS = ALL_TOKENS.filter((t) => t.listed !== false);
+
 function TokenAddressSection({ ui }: { ui: AdminUI }) {
   const [edits, setEdits] = useState<Record<string, TokenEdit>>(() =>
     Object.fromEntries(
-      ALL_TOKENS.map((t) => [
+      LISTED_TOKENS.map((t) => [
         t.ticker,
         {
           address: t.address ?? "",
@@ -721,7 +726,7 @@ function TokenAddressSection({ ui }: { ui: AdminUI }) {
             </tr>
           </thead>
           <tbody>
-            {ALL_TOKENS.map((t) => {
+            {LISTED_TOKENS.map((t) => {
               const e = edits[t.ticker];
               return (
                 <tr key={t.ticker} className="border-t border-slate-100">

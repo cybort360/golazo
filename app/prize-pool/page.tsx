@@ -125,7 +125,11 @@ function WeeklyBuy({
         <Flag code={team.flagCode} className="text-base" />
         {team.name}
       </span>
-      {meteoraUrl ? (
+      {!team.listed ? (
+        <span className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-medium text-slate-400">
+          Not listed
+        </span>
+      ) : meteoraUrl ? (
         <a
           href={meteoraUrl}
           target="_blank"

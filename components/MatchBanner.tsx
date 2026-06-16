@@ -214,7 +214,7 @@ function TeamSide({
         {team?.name ?? ticker}
       </div>
 
-      {team ? (
+      {team && team.listed ? (
         <>
           <div className="text-xs font-medium text-white/70 md:text-sm">
             ${ticker}
@@ -249,6 +249,10 @@ function TeamSide({
             )}
           </div>
         </>
+      ) : team ? (
+        <div className="text-[10px] font-medium uppercase tracking-widest text-white/60">
+          Not listed
+        </div>
       ) : (
         <div className="text-[10px] uppercase tracking-widest text-white/70">
           To be decided

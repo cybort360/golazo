@@ -7,6 +7,7 @@ export interface TokenInfo {
   meteoraUrl: string | null;
   axiomUrl: string | null;
   isGolazo?: boolean;
+  listed?: boolean; // team tokens only; false = no market (omit from admin form)
 }
 
 // Platform token
@@ -19,7 +20,8 @@ export const GOLAZO_TOKEN: TokenInfo = {
   isGolazo: true,
 };
 
-// All 49 tokens (GOLAZO + 48 teams)
+// All 49 tokens (GOLAZO + 48 teams). Carries `listed` so consumers (e.g. the
+// admin form) can skip teams that have no market.
 export const ALL_TOKENS: TokenInfo[] = [
   GOLAZO_TOKEN,
   ...TEAMS.map((t) => ({
@@ -28,5 +30,6 @@ export const ALL_TOKENS: TokenInfo[] = [
     address: t.tokenAddress,
     meteoraUrl: t.meteoraUrl,
     axiomUrl: t.axiomUrl,
+    listed: t.listed,
   })),
 ];

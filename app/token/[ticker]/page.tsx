@@ -60,6 +60,79 @@ export default function TokenPage({
   const burn = burnByTicker[team.ticker];
   const up = priceChange24h !== null && priceChange24h >= 0;
 
+  const statusBadge =
+    status === "champion" ? (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-700">
+        <Icon name="trophy" size={12} /> Champion
+      </span>
+    ) : status === "eliminated" ? (
+      <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-red-500">
+        Eliminated
+      </span>
+    ) : (
+      <span className="rounded-full bg-green-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-green-600">
+        Active
+      </span>
+    );
+
+  // Info-only page for the teams we don't list a token for. They're still real
+  // World Cup participants — standings, fantasy and predictions all include them
+  // — so we show their record and a clear "not listed" note instead of a 404 or
+  // a misleading "launching soon" trading page.
+  if (!team.listed) {
+    return (
+      <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
+        <div className="flex items-center gap-4">
+          <TokenLogo imageUrl={null} flagCode={team.flagCode} alt={team.name} />
+          <div>
+            <h1 className="text-2xl font-semibold uppercase tracking-tight text-slate-900 md:text-4xl">
+              {team.name}
+            </h1>
+            <span className="text-sm text-slate-400">Group {team.group}</span>
+          </div>
+          <div className="ml-auto">{statusBadge}</div>
+        </div>
+
+        <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <Icon name="help" size={16} className="text-slate-400" />
+            Not listed for trading
+          </span>
+          <p className="text-sm text-slate-500">
+            {team.name} is competing at the World Cup, but doesn&apos;t have a
+            tradeable token. You can still follow their results here and pick
+            their players in{" "}
+            <Link href="/fantasy" className="font-medium text-green-600 hover:underline">
+              Fantasy
+            </Link>
+            .
+          </p>
+        </div>
+
+        {status === "champion" && (
+          <div className="inline-flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-semibold text-amber-700">
+            <Icon name="trophy" size={16} className="text-amber-500" /> World Cup
+            Champion
+          </div>
+        )}
+        {status === "eliminated" && (
+          <div className="inline-flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600">
+            <Icon name="ban" size={16} /> Eliminated from the tournament
+          </div>
+        )}
+
+        <section className="flex flex-col gap-2">
+          <h2 className="label tracking-widest">Tournament Record</h2>
+          <div className="grid grid-cols-3 gap-3">
+            <StatTile label="Wins" value={`${record.wins}`} />
+            <StatTile label="Draws" value={`${record.draws}`} />
+            <StatTile label="Losses" value={`${record.losses}`} />
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 md:px-8">
       {/* Header */}
@@ -79,19 +152,7 @@ export default function TokenPage({
           <span className="text-[11px] uppercase tracking-wider text-slate-400">
             Group {team.group}
           </span>
-          {status === "champion" ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-700">
-              <Icon name="trophy" size={12} /> Champion
-            </span>
-          ) : status === "eliminated" ? (
-            <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-red-500">
-              Eliminated
-            </span>
-          ) : (
-            <span className="rounded-full bg-green-50 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-green-600">
-              Active
-            </span>
-          )}
+          {statusBadge}
         </div>
       </div>
 

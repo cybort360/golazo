@@ -59,6 +59,7 @@ function GroupRow({
     reportMcap(team.ticker, marketCap);
   }, [team.ticker, marketCap, reportMcap]);
 
+  const listed = team.listed;
   const launched = team.tokenAddress !== null;
   const elim = status === "eliminated";
   const champ = status === "champion";
@@ -109,7 +110,7 @@ function GroupRow({
               )}
             </span>
             <span className="truncate text-[11px] text-slate-400">
-              ${team.ticker}
+              {listed ? `$${team.ticker}` : "Not listed"}
             </span>
           </span>
         </button>
@@ -148,32 +149,36 @@ function GroupRow({
         {dataCell(marketCap !== null ? compactUsd(marketCap) : "—")}
       </td>
       <td className="px-3 py-2.5 text-center">
-        <div className="inline-flex flex-col items-center gap-1">
-          {team.meteoraUrl ? (
-            <a
-              href={team.meteoraUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center whitespace-nowrap rounded-full border border-green-600 px-3 py-1 text-xs font-semibold text-green-600 transition-colors hover:bg-green-50"
-            >
-              Buy ${team.ticker}
-            </a>
-          ) : (
-            <span className="inline-flex cursor-not-allowed items-center whitespace-nowrap rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-300">
-              Buy ${team.ticker}
-            </span>
-          )}
-          {team.axiomUrl && (
-            <a
-              href={team.axiomUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center whitespace-nowrap rounded-full border border-slate-200 px-3 py-0.5 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-50"
-            >
-              Axiom
-            </a>
-          )}
-        </div>
+        {!listed ? (
+          <span className="text-xs font-medium text-slate-300">Not listed</span>
+        ) : (
+          <div className="inline-flex flex-col items-center gap-1">
+            {team.meteoraUrl ? (
+              <a
+                href={team.meteoraUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center whitespace-nowrap rounded-full border border-green-600 px-3 py-1 text-xs font-semibold text-green-600 transition-colors hover:bg-green-50"
+              >
+                Buy ${team.ticker}
+              </a>
+            ) : (
+              <span className="inline-flex cursor-not-allowed items-center whitespace-nowrap rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-300">
+                Buy ${team.ticker}
+              </span>
+            )}
+            {team.axiomUrl && (
+              <a
+                href={team.axiomUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center whitespace-nowrap rounded-full border border-slate-200 px-3 py-0.5 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+              >
+                Axiom
+              </a>
+            )}
+          </div>
+        )}
       </td>
       <td className="px-3 py-2.5 text-center">
         <Link
@@ -210,6 +215,7 @@ function GroupRowMobile({
     reportMcap(team.ticker, marketCap);
   }, [team.ticker, marketCap, reportMcap]);
 
+  const listed = team.listed;
   const launched = team.tokenAddress !== null;
   const elim = status === "eliminated";
   const champ = status === "champion";
@@ -251,7 +257,7 @@ function GroupRowMobile({
             )}
           </span>
           <span className="truncate text-[11px] text-slate-400">
-            ${team.ticker}
+            {listed ? `$${team.ticker}` : "Not listed"}
           </span>
         </button>
         <div className="flex shrink-0 flex-col items-end">
@@ -284,32 +290,36 @@ function GroupRowMobile({
         <CopyAddress address={team.tokenAddress} className="w-full" />
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        {team.meteoraUrl ? (
-          <a
-            href={team.meteoraUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center whitespace-nowrap rounded-full border border-green-600 px-3 py-1 text-xs font-semibold text-green-600 transition-colors hover:bg-green-50"
-          >
-            Buy ${team.ticker}
-          </a>
-        ) : (
-          <span className="inline-flex cursor-not-allowed items-center whitespace-nowrap rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-300">
-            Buy ${team.ticker}
-          </span>
-        )}
-        {team.axiomUrl && (
-          <a
-            href={team.axiomUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center whitespace-nowrap rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50"
-          >
-            Trade on Axiom
-          </a>
-        )}
-      </div>
+      {!listed ? (
+        <span className="text-xs font-medium text-slate-300">Not listed</span>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          {team.meteoraUrl ? (
+            <a
+              href={team.meteoraUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center whitespace-nowrap rounded-full border border-green-600 px-3 py-1 text-xs font-semibold text-green-600 transition-colors hover:bg-green-50"
+            >
+              Buy ${team.ticker}
+            </a>
+          ) : (
+            <span className="inline-flex cursor-not-allowed items-center whitespace-nowrap rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-300">
+              Buy ${team.ticker}
+            </span>
+          )}
+          {team.axiomUrl && (
+            <a
+              href={team.axiomUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center whitespace-nowrap rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+            >
+              Trade on Axiom
+            </a>
+          )}
+        </div>
+      )}
     </div>
   );
 }
