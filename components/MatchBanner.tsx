@@ -152,7 +152,7 @@ function BuyButton({ ticker, url }: { ticker: string; url: string | null }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={`Trade ${ticker} on Meteora`}
+      aria-label={`Buy ${ticker} on Jupiter`}
       className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-medium text-green-700 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 md:text-sm"
     >
       Buy ${ticker}
@@ -175,11 +175,12 @@ function TeamSide({
   const { priceUsd, priceChange24h, isLoading } = useTokenPrice(
     team ? ticker : "",
   );
-  // meteoraUrl / axiomUrl come from the live (admin-managed) data; other fields
-  // stay static.
+  // The mint / axiomUrl come from the live (admin-managed) data; other fields
+  // stay static. The buy link is derived from the mint (Jupiter).
   const { teams: liveTeams } = useTokenAddresses();
   const liveTeam = liveTeams.find((t) => t.ticker === ticker);
-  const meteoraUrl = liveTeam?.meteoraUrl ?? team?.meteoraUrl ?? null;
+  const address = liveTeam?.tokenAddress ?? team?.tokenAddress ?? null;
+  const jupiterUrl = address ? `https://jup.ag/tokens/${address}` : null;
   const axiomUrl = liveTeam?.axiomUrl ?? team?.axiomUrl ?? null;
   const right = align === "right";
 
@@ -228,7 +229,7 @@ function TeamSide({
               right ? "items-end" : "items-start",
             )}
           >
-            <BuyButton ticker={ticker} url={meteoraUrl} />
+            <BuyButton ticker={ticker} url={jupiterUrl} />
             {axiomUrl && (
               <a
                 href={axiomUrl}

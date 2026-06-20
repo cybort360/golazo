@@ -254,8 +254,8 @@ function WhyGolazo() {
 }
 
 function GolazoCard() {
-  // address / meteoraUrl come from the live (admin-managed) data; everything else
-  // stays static.
+  // The mint address comes from the live (admin-managed) data; everything else
+  // stays static. The buy link is derived from the mint (Jupiter).
   const { golazo } = useTokenAddresses();
   const address = golazo.address;
   const [price, setPrice] = useState<TokenPrice | null>(null);
@@ -285,6 +285,9 @@ function GolazoCard() {
   }, [address]);
 
   const launched = address !== null;
+  // Buy link is derived from the mint (Jupiter), so it lights up as soon as the
+  // GOLAZO address is set in admin — no separate URL field needed.
+  const jupiterUrl = address ? `https://jup.ag/tokens/${address}` : null;
 
   return (
     <section className="relative flex h-full items-center justify-between gap-3 overflow-hidden rounded-2xl border border-green-200 bg-green-50 p-4 shadow-card">
@@ -325,9 +328,9 @@ function GolazoCard() {
       </div>
 
       <div className="relative flex shrink-0 flex-col items-end gap-2">
-        {golazo.meteoraUrl ? (
+        {jupiterUrl ? (
           <a
-            href={golazo.meteoraUrl}
+            href={jupiterUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex w-fit items-center gap-1.5 rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5"
@@ -613,7 +616,7 @@ export default function Home() {
               </div>
             ) : movers.length === 0 ? (
               <p className="text-sm text-slate-400">
-                No tokens launched yet. Check back after the Meteora launch.
+                No tokens launched yet. Check back after the token launch.
               </p>
             ) : (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

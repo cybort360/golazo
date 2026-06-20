@@ -323,9 +323,9 @@ export default function TelegramMiniApp() {
           <p className="flex flex-wrap items-center gap-1.5 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
             Hold {elig.threshold.toLocaleString()} $GOLAZO to qualify — you have{" "}
             {(elig.golazoBalance ?? 0).toLocaleString()}.
-            {golazo.meteoraUrl && (
+            {golazo.address && (
               <a
-                href={golazo.meteoraUrl}
+                href={`https://jup.ag/tokens/${golazo.address}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-green-700 underline underline-offset-2"

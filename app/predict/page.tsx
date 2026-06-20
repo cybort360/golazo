@@ -574,9 +574,9 @@ export default function PredictPage() {
                 Hold {eligibility.threshold.toLocaleString()} $GOLAZO to qualify
                 for the pot — you have{" "}
                 {(eligibility.golazoBalance ?? 0).toLocaleString()}.
-                {golazo.meteoraUrl && (
+                {golazo.address && (
                   <a
-                    href={golazo.meteoraUrl}
+                    href={`https://jup.ag/tokens/${golazo.address}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-semibold text-green-700 underline underline-offset-2 hover:text-green-800"

@@ -61,6 +61,10 @@ function GroupRow({
 
   const listed = team.listed;
   const launched = team.tokenAddress !== null;
+  // Buy link is derived from the mint (Jupiter); no separate URL field needed.
+  const jupiterUrl = team.tokenAddress
+    ? `https://jup.ag/tokens/${team.tokenAddress}`
+    : null;
   const elim = status === "eliminated";
   const champ = status === "champion";
   const up = priceChange24h !== null && priceChange24h >= 0;
@@ -153,9 +157,9 @@ function GroupRow({
           <span className="text-xs font-medium text-slate-300">Not listed</span>
         ) : (
           <div className="inline-flex flex-col items-center gap-1">
-            {team.meteoraUrl ? (
+            {jupiterUrl ? (
               <a
-                href={team.meteoraUrl}
+                href={jupiterUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center whitespace-nowrap rounded-full border border-green-600 px-3 py-1 text-xs font-semibold text-green-600 transition-colors hover:bg-green-50"
@@ -217,6 +221,10 @@ function GroupRowMobile({
 
   const listed = team.listed;
   const launched = team.tokenAddress !== null;
+  // Buy link is derived from the mint (Jupiter); no separate URL field needed.
+  const jupiterUrl = team.tokenAddress
+    ? `https://jup.ag/tokens/${team.tokenAddress}`
+    : null;
   const elim = status === "eliminated";
   const champ = status === "champion";
   const up = priceChange24h !== null && priceChange24h >= 0;
@@ -294,9 +302,9 @@ function GroupRowMobile({
         <span className="text-xs font-medium text-slate-300">Not listed</span>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
-          {team.meteoraUrl ? (
+          {jupiterUrl ? (
             <a
-              href={team.meteoraUrl}
+              href={jupiterUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center whitespace-nowrap rounded-full border border-green-600 px-3 py-1 text-xs font-semibold text-green-600 transition-colors hover:bg-green-50"

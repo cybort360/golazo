@@ -105,7 +105,7 @@ function teamByTicker(ticker: string): Team | undefined {
   return TEAMS.find((t) => t.ticker === ticker);
 }
 
-// A team name + a buy link, resolving live (admin-managed) Meteora / Axiom URLs.
+// A team name + a buy link: Jupiter derived from the mint, plus the live Axiom URL.
 function WeeklyBuy({
   ticker,
   liveTeams,
@@ -116,7 +116,8 @@ function WeeklyBuy({
   const team = teamByTicker(ticker);
   if (!team) return null;
   const live = liveTeams.find((t) => t.ticker === ticker);
-  const meteoraUrl = safeHttpUrl(live?.meteoraUrl ?? team.meteoraUrl);
+  const address = live?.tokenAddress ?? team.tokenAddress;
+  const jupiterUrl = address ? `https://jup.ag/tokens/${address}` : null;
   const axiomUrl = safeHttpUrl(live?.axiomUrl ?? team.axiomUrl);
 
   return (
@@ -129,9 +130,9 @@ function WeeklyBuy({
         <span className="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-medium text-slate-400">
           Not listed
         </span>
-      ) : meteoraUrl ? (
+      ) : jupiterUrl ? (
         <a
-          href={meteoraUrl}
+          href={jupiterUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="rounded-full bg-green-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-green-700"
