@@ -290,7 +290,7 @@ function GolazoCard() {
   const jupiterUrl = address ? `https://jup.ag/tokens/${address}` : null;
 
   return (
-    <section className="relative flex h-full items-center justify-between gap-3 overflow-hidden rounded-2xl border border-green-200 bg-green-50 p-4 shadow-card">
+    <section className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-green-200 bg-green-50 p-4 shadow-card sm:h-full sm:flex-row sm:items-center sm:justify-between">
       <div
         className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full"
         style={{
@@ -302,7 +302,7 @@ function GolazoCard() {
         <span className="text-[11px] font-semibold uppercase tracking-widest text-green-600">
           Platform Token
         </span>
-        <div className="flex items-baseline gap-2">
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-xl font-bold tracking-tight text-slate-900">
             $GOLAZO
           </span>
@@ -327,7 +327,7 @@ function GolazoCard() {
         </span>
       </div>
 
-      <div className="relative flex shrink-0 flex-col items-end gap-2">
+      <div className="relative flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end">
         {jupiterUrl ? (
           <a
             href={jupiterUrl}

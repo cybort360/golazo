@@ -142,7 +142,8 @@ function ChangePill({ value }: { value: number | null }) {
 function BuyButton({ ticker, url }: { ticker: string; url: string | null }) {
   if (!url) {
     return (
-      <span className="inline-flex items-center rounded-full bg-white/20 px-4 py-1.5 text-xs font-medium text-white/70 ring-1 ring-white/30">
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-black/15 px-2.5 py-1 text-[11px] font-medium text-white/75 ring-1 ring-white/20 backdrop-blur-sm">
+        <span className="h-1.5 w-1.5 rounded-full bg-white/50" />
         Not launched
       </span>
     );
