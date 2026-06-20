@@ -336,7 +336,7 @@ function CenterColumn({
   const showScore =
     score !== null && (clock.kind === "live" || clock.kind === "completed" || clock.kind === "draw");
   return (
-    <div className="flex flex-col items-center gap-2 px-1 text-center md:px-4">
+    <div className="flex h-full flex-col items-center justify-center gap-2 px-1 text-center md:px-4">
       <StatusBadge match={match} result={result} clock={clock} />
       {showScore ? (
         <div className="flex items-center gap-2 text-4xl font-black tabular-nums tracking-tight text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.4)] md:text-5xl">
@@ -498,7 +498,7 @@ export default function MatchBanner({ match, result }: MatchBannerProps) {
 
         <div className="relative h-full">
           {match ? (
-            <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 md:gap-6 md:px-10">
+            <div className="grid h-full grid-cols-[1fr_auto_1fr] items-stretch gap-2 px-4 py-4 md:gap-6 md:px-10 md:py-6">
               <TeamSide
                 ticker={match.teamA}
                 align="left"
