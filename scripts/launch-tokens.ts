@@ -4,7 +4,10 @@
 
 import { TEAMS } from "../constants/teams";
 
-const METEORA_CREATE_URL = "https://launch.meteora.ag";
+// We launch via Jupiter Studio (it mints onto a Meteora DBC pool under the hood
+// and is instantly routable on Jupiter). Meteora itself isn't a launchpad you
+// create tokens on — it's the infrastructure partner launchpads build on.
+const LAUNCH_URL = "https://jup.ag/studio";
 const BLANK = "________________";
 
 interface Entry {
@@ -21,7 +24,7 @@ function printEntry(index: number, e: Entry): void {
   console.log(`    Symbol: ${e.symbol}`);
   console.log(`    Description: ${e.description}`);
   console.log(`    Image: ${e.image}`);
-  console.log(`    Meteora URL: ${METEORA_CREATE_URL}`);
+  console.log(`    Launch on: ${LAUNCH_URL}`);
   console.log(`    After launch, paste address here: ${BLANK}`);
   console.log("");
 }

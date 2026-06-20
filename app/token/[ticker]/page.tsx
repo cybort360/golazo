@@ -46,12 +46,15 @@ export default function TokenPage({
 
   if (!team) notFound();
 
-  // Only tokenAddress / meteoraUrl / axiomUrl come from the live (admin-managed)
-  // data; all other fields stay on the static constants.
+  // Only tokenAddress / axiomUrl come from the live (admin-managed) data; all
+  // other fields stay on the static constants. The Jupiter trade link is
+  // derived straight from the mint, so it needs no admin field.
   const live = liveTeams.find((t) => t.ticker === ticker);
   const tokenAddress = live?.tokenAddress ?? team.tokenAddress;
-  const meteoraUrl = live?.meteoraUrl ?? team.meteoraUrl;
   const axiomUrl = live?.axiomUrl ?? team.axiomUrl;
+  const jupiterUrl = tokenAddress
+    ? `https://jup.ag/tokens/${tokenAddress}`
+    : null;
 
   const launched = tokenAddress !== null;
   const record = getTeamRecord(team.ticker, results);
@@ -237,16 +240,16 @@ export default function TokenPage({
       {/* Trade: only render links that exist (no empty placeholders) */}
       <section className="flex flex-col gap-2">
         <h2 className="label tracking-widest">Trade</h2>
-        {meteoraUrl || axiomUrl ? (
+        {jupiterUrl || axiomUrl ? (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {meteoraUrl && (
+            {jupiterUrl && (
               <a
-                href={meteoraUrl}
+                href={jupiterUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-1.5 rounded-2xl bg-green-600 px-5 py-4 text-base font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5"
               >
-                Trade on Meteora
+                Trade on Jupiter
                 <Icon name="right" size={16} strokeWidth={2.5} />
               </a>
             )}

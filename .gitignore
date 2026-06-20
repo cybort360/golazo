@@ -58,3 +58,9 @@ DEPLOY.md
 
 # internal planning — feature designs / roadmap, local only, never pushed
 /planning/
+
+# token launch scratchpad — local working file with mint addresses, never pushed
+golazo-launch.txt
+
+# downloaded launch flag assets — local only, regenerable, never pushed
+/flags/

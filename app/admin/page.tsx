@@ -668,7 +668,6 @@ function ResultsSection({
 
 interface TokenEdit {
   address: string;
-  meteoraUrl: string;
   axiomUrl: string;
 }
 
@@ -684,7 +683,6 @@ function TokenAddressSection({ ui }: { ui: AdminUI }) {
         t.ticker,
         {
           address: t.address ?? "",
-          meteoraUrl: t.meteoraUrl ?? "",
           axiomUrl: t.axiomUrl ?? "",
         },
       ]),
@@ -700,7 +698,6 @@ function TokenAddressSection({ ui }: { ui: AdminUI }) {
       for (const [ticker, edit] of Object.entries(edits)) {
         value[ticker] = {
           address: edit.address.trim(),
-          meteoraUrl: edit.meteoraUrl.trim(),
           axiomUrl: edit.axiomUrl.trim(),
         };
       }
@@ -716,12 +713,11 @@ function TokenAddressSection({ ui }: { ui: AdminUI }) {
         Changes here update the site without redeploying.
       </p>
       <div className="max-h-[420px] overflow-auto rounded-lg border border-slate-200">
-        <table className="w-full min-w-[820px] text-left text-sm">
+        <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="sticky top-0 bg-slate-50">
             <tr className="text-[11px] uppercase tracking-wider text-slate-400">
               <th className="px-3 py-2 font-medium">Ticker</th>
               <th className="px-3 py-2 font-medium">Address</th>
-              <th className="px-3 py-2 font-medium">Meteora URL</th>
               <th className="px-3 py-2 font-medium">Axiom URL</th>
             </tr>
           </thead>
@@ -740,16 +736,6 @@ function TokenAddressSection({ ui }: { ui: AdminUI }) {
                         patch(t.ticker, { address: ev.target.value })
                       }
                       placeholder="mint address"
-                      className={`${input} w-full`}
-                    />
-                  </td>
-                  <td className="px-3 py-1.5">
-                    <input
-                      value={e.meteoraUrl}
-                      onChange={(ev) =>
-                        patch(t.ticker, { meteoraUrl: ev.target.value })
-                      }
-                      placeholder="https://meteora.ag/…"
                       className={`${input} w-full`}
                     />
                   </td>
