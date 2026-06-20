@@ -41,7 +41,7 @@ export const TEAMS: Team[] = [
   { ticker: "USA", name: "United States", flagCode: "us", group: "D", listed: true, tokenAddress: null, meteoraUrl: null, axiomUrl: null },
   { ticker: "PAR", name: "Paraguay", flagCode: "py", group: "D", listed: false, tokenAddress: null, meteoraUrl: null, axiomUrl: null },
   { ticker: "AUS", name: "Australia", flagCode: "au", group: "D", listed: false, tokenAddress: null, meteoraUrl: null, axiomUrl: null },
-  { ticker: "TUR", name: "Türkiye", flagCode: "tr", group: "D", listed: true, tokenAddress: null, meteoraUrl: null, axiomUrl: null },
+  { ticker: "TUR", name: "Türkiye", flagCode: "tr", group: "D", listed: false, tokenAddress: null, meteoraUrl: null, axiomUrl: null },
 
   // Group E
   { ticker: "GER", name: "Germany", flagCode: "de", group: "E", listed: true, tokenAddress: null, meteoraUrl: null, axiomUrl: null },
@@ -88,6 +88,6 @@ export const TEAMS: Team[] = [
   // Group L
   { ticker: "ENG", name: "England", flagCode: "gb-eng", group: "L", listed: true, tokenAddress: null, meteoraUrl: null, axiomUrl: null },
   { ticker: "CRO", name: "Croatia", flagCode: "hr", group: "L", listed: true, tokenAddress: null, meteoraUrl: null, axiomUrl: null },
-  { ticker: "GHA", name: "Ghana", flagCode: "gh", group: "L", listed: false, tokenAddress: null, meteoraUrl: null, axiomUrl: null },
+  { ticker: "GHA", name: "Ghana", flagCode: "gh", group: "L", listed: true, tokenAddress: null, meteoraUrl: null, axiomUrl: null },
   { ticker: "PAN", name: "Panama", flagCode: "pa", group: "L", listed: false, tokenAddress: null, meteoraUrl: null, axiomUrl: null },
 ];

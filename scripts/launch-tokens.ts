@@ -1,5 +1,6 @@
-// Launch checklist for the 49 Golazo tokens (GOLAZO + 48 World Cup teams).
-// Run with: npx ts-node scripts/launch-tokens.ts
+// Launch checklist for the listed Golazo tokens (GOLAZO + the 24 teams that
+// get a market). Unlisted teams have no token, so they're skipped here.
+// Run with: npx tsx scripts/launch-tokens.ts
 
 import { TEAMS } from "../constants/teams";
 
@@ -42,9 +43,9 @@ function main(): void {
     image: "Upload golazo logo",
   });
 
-  // 2..49 Team tokens, grouped by group stage.
+  // Team tokens, grouped by group stage. Only the listed teams get a market.
   let currentGroup = "";
-  for (const team of TEAMS) {
+  for (const team of TEAMS.filter((t) => t.listed !== false)) {
     if (team.group !== currentGroup) {
       currentGroup = team.group;
       console.log(`--- GROUP ${currentGroup} ---`);
@@ -65,7 +66,7 @@ function main(): void {
   console.log("=======");
   console.log(`Total tokens to launch: ${total}`);
   console.log(
-    "Estimated SOL needed: pool creation cost × 49, plus seed liquidity per pool (see Meteora launch docs)",
+    `Estimated SOL needed: pool creation cost × ${total}, plus seed liquidity per pool (see Meteora launch docs)`,
   );
   console.log(
     "Recommended launch order: $GOLAZO first, then Group A, B, C...",
