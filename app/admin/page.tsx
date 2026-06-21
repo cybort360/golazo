@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import dynamic from "next/dynamic";
 import { SCHEDULE, type ScheduledMatch } from "@/constants/schedule";
 import { TEAMS } from "@/constants/teams";
 import { ALL_TOKENS } from "@/constants/tokens";
@@ -30,6 +31,21 @@ import { stadiumName } from "@/lib/venues";
 import { formatCountdownPrecise } from "@/lib/time";
 import TeamSelect from "@/components/TeamSelect";
 import MatchSelect from "@/components/MatchSelect";
+
+// Burning signs a real wallet transaction, so its panel carries the Solana
+// wallet adapter. Lazy-load with ssr:false so those libs stay out of the main
+// admin bundle and only load when the panel mounts.
+const BurnPanel = dynamic(() => import("@/components/admin/BurnPanel"), {
+  ssr: false,
+  loading: () => (
+    <section className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+      <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">
+        10. Burn Supply
+      </h2>
+      <p className="text-xs text-slate-400">Loading wallet…</p>
+    </section>
+  ),
+});
 
 // ── Shared types & helpers ────────────────────────────────────────────────────
 
@@ -1847,6 +1863,10 @@ export default function AdminPage() {
       <PredictionPayoutsSection ui={ui} />
       <FantasySection ui={ui} />
       <FantasyPrizeSection ui={ui} />
+      <BurnPanel
+        showToast={ui.showToast}
+        requestConfirm={ui.requestConfirm}
+      />
 
       {/* Toast */}
       {toast && (
