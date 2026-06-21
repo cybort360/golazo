@@ -2,6 +2,7 @@ import { kv } from "@vercel/kv";
 import { TEAMS } from "@/constants/teams";
 import { GOLAZO_TOKEN } from "@/constants/tokens";
 import { fetchTokenSupplies } from "@/lib/solanaSupply";
+import { heliusServerRpcUrl } from "@/lib/helius";
 import { computeBurnPct, type BurnStat } from "@/lib/burns";
 
 // Reads on-chain supplies on demand and caches them in KV; never prerender.
@@ -71,9 +72,13 @@ async function refresh(
   now: number,
   force: boolean,
 ): Promise<SupplyCache | null> {
-  const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
+  // Prefer the server-side Helius key: the NEXT_PUBLIC_ one is origin-locked to
+  // the browser and 403s on server-side reads. Fall back to it only if the
+  // server key is missing.
+  const rpcUrl =
+    heliusServerRpcUrl() ?? process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
   if (!rpcUrl) {
-    console.error("[burns] NEXT_PUBLIC_SOLANA_RPC_URL not set — cannot refresh");
+    console.error("[burns] no server RPC URL configured — cannot refresh");
     return null;
   }
 

@@ -2,7 +2,19 @@
 // Uses HELIUS_API_KEY (no NEXT_PUBLIC_ prefix). This must never be imported
 // into client components; it only runs in API routes / server actions.
 
-const BASE_URL = `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY ?? ""}`;
+/**
+ * Server-side Helius RPC URL, built from HELIUS_API_KEY (no NEXT_PUBLIC_
+ * prefix). Unlike NEXT_PUBLIC_SOLANA_RPC_URL — whose key is origin-restricted
+ * to the browser and 403s on server-side calls — this key works from API
+ * routes. Returns null when the key isn't configured. Server-only.
+ */
+export function heliusServerRpcUrl(): string | null {
+  const key = process.env.HELIUS_API_KEY;
+  return key ? `https://mainnet.helius-rpc.com/?api-key=${key}` : null;
+}
+
+const BASE_URL =
+  heliusServerRpcUrl() ?? "https://mainnet.helius-rpc.com/?api-key=";
 
 export interface TokenHolder {
   address: string; // owner wallet
