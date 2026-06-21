@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -13,6 +13,8 @@ import {
 } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import type { Adapter } from "@solana/wallet-adapter-base";
+import { PublicKey } from "@solana/web3.js";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
@@ -57,6 +59,13 @@ function BurnInner({ showToast, requestConfirm }: BurnPanelProps) {
   const [mint, setMint] = useState("");
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
+  // Connected wallet's balance of the chosen mint. `raw` is the exact
+  // uiAmountString (used to fill the input — no float rounding); `ui` is just
+  // for display.
+  const [balance, setBalance] = useState<{ ui: number; raw: string } | null>(
+    null,
+  );
+  const [balLoading, setBalLoading] = useState(false);
   const [result, setResult] = useState<{
     sig: string;
     line: string;
@@ -67,6 +76,45 @@ function BurnInner({ showToast, requestConfirm }: BurnPanelProps) {
   const golazoMint = golazo.address ?? "";
   const effectiveMint = mint || golazoMint;
   const usingGolazo = effectiveMint && effectiveMint === golazoMint;
+
+  // Read how much of the chosen mint the connected wallet holds, so the
+  // operator can click their balance straight into the amount field instead of
+  // typing it. Re-runs when the wallet or mint changes, or after a burn lands.
+  useEffect(() => {
+    if (!publicKey || !effectiveMint.trim()) {
+      setBalance(null);
+      return;
+    }
+    let mintPk: PublicKey;
+    try {
+      mintPk = new PublicKey(effectiveMint.trim());
+    } catch {
+      setBalance(null);
+      return;
+    }
+    let cancelled = false;
+    setBalLoading(true);
+    const ata = getAssociatedTokenAddressSync(mintPk, publicKey);
+    connection
+      .getTokenAccountBalance(ata)
+      .then((b) => {
+        if (!cancelled)
+          setBalance({
+            ui: b.value.uiAmount ?? 0,
+            raw: b.value.uiAmountString ?? "0",
+          });
+      })
+      .catch(() => {
+        // No token account / wallet holds none of it.
+        if (!cancelled) setBalance({ ui: 0, raw: "0" });
+      })
+      .finally(() => {
+        if (!cancelled) setBalLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [publicKey, effectiveMint, connection, result]);
 
   const run = () => {
     if (!effectiveMint.trim()) {
@@ -156,8 +204,29 @@ function BurnInner({ showToast, requestConfirm }: BurnPanelProps) {
             </span>
           )}
         </label>
-        <label className="flex flex-col gap-1 text-xs text-slate-500">
-          Amount to burn
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
+            <span>Amount to burn</span>
+            {connected &&
+              (balLoading ? (
+                <span className="text-[11px] text-slate-400">
+                  Checking balance…
+                </span>
+              ) : balance ? (
+                <button
+                  type="button"
+                  onClick={() => setAmount(balance.raw)}
+                  className="text-[11px] font-semibold text-green-600 hover:underline"
+                  title="Click to burn your full balance"
+                >
+                  Balance:{" "}
+                  {balance.ui.toLocaleString("en-US", {
+                    maximumFractionDigits: 4,
+                  })}{" "}
+                  · Max
+                </button>
+              ) : null)}
+          </div>
           <input
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -165,7 +234,7 @@ function BurnInner({ showToast, requestConfirm }: BurnPanelProps) {
             placeholder="e.g. 1000000"
             className={`${input} w-full`}
           />
-        </label>
+        </div>
       </div>
 
       <div>
