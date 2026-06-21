@@ -88,8 +88,12 @@ async function refresh(
     if (gotLock !== "OK") return null;
   }
 
+  // The browser Helius key is origin-restricted; send the site origin so the
+  // server-side read is accepted instead of 403'd.
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://golazo.fans";
+
   try {
-    const supplies = await fetchTokenSupplies(mints, rpcUrl);
+    const supplies = await fetchTokenSupplies(mints, rpcUrl, origin);
     const byMint: Record<string, number | null> = {};
     for (const mint of mints) byMint[mint] = supplies.get(mint) ?? null;
     const cache: SupplyCache = { fetchedAt: now, byMint };
