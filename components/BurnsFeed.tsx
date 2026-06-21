@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { TEAMS } from "@/constants/teams";
 import { useBuybackHistory } from "@/hooks/useBuybackHistory";
 import { useBurns } from "@/hooks/useBurns";
+import { BURN_INITIAL_SUPPLY } from "@/lib/burns";
 import { safeHttpUrl } from "@/lib/url";
 import { Flag } from "@/components/Flag";
 import { Icon } from "@/components/Icon";
@@ -25,8 +26,34 @@ function formatTimeAgo(timestamp: number, now: number): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-function BurnBar({ ticker, pct }: { ticker: string; pct: number }) {
+// Compact token count: "9,505", "1.2M", "340M". Small burns stay exact so a
+// test burn is legible; large ones abbreviate to fit the column.
+function formatBurned(n: number): string {
+  if (n <= 0) return "0";
+  if (n >= 1_000_000)
+    return `${(n / 1_000_000).toLocaleString("en-US", {
+      maximumFractionDigits: 1,
+    })}M`;
+  return Math.round(n).toLocaleString("en-US");
+}
+
+// A 1-token burn is 0.0000001% of supply, so a 2-decimal percent rounds to
+// 0.00% and hides real activity. Lead with the burned token count; keep the
+// percent as a secondary line, with a "<0.01%" floor so it never reads a flat 0
+// while tokens have actually been burned.
+function BurnBar({
+  ticker,
+  pct,
+  currentSupply,
+}: {
+  ticker: string;
+  pct: number;
+  currentSupply: number;
+}) {
   const isTeam = NAME_BY_TICKER.has(ticker);
+  const burned = Math.max(0, BURN_INITIAL_SUPPLY - currentSupply);
+  const pctLabel =
+    burned <= 0 ? "0%" : pct < 0.01 ? "<0.01%" : `${pct.toFixed(2)}%`;
   return (
     <div className="flex items-center gap-3">
       {isTeam ? (
@@ -43,9 +70,14 @@ function BurnBar({ ticker, pct }: { ticker: string; pct: number }) {
           style={{ width: `${Math.max(2, pct)}%` }}
         />
       </div>
-      <span className="w-16 shrink-0 text-right text-sm font-bold tabular-nums text-orange-600">
-        {pct.toFixed(2)}%
-      </span>
+      <div className="flex w-20 shrink-0 flex-col items-end leading-tight">
+        <span className="text-sm font-bold tabular-nums text-orange-600">
+          {formatBurned(burned)}
+        </span>
+        <span className="text-[10px] tabular-nums text-slate-400">
+          {pctLabel} burned
+        </span>
+      </div>
     </div>
   );
 }
@@ -80,7 +112,12 @@ export default function BurnsFeed() {
               Supply burned
             </span>
             {topBurns.map((b) => (
-              <BurnBar key={b.ticker} ticker={b.ticker} pct={b.percentBurned} />
+              <BurnBar
+                key={b.ticker}
+                ticker={b.ticker}
+                pct={b.percentBurned}
+                currentSupply={b.currentSupply}
+              />
             ))}
           </div>
         )}

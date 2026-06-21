@@ -21,6 +21,9 @@ interface SupplyCache {
 // Supply moves slowly (only on a burn), so a minute-old read is plenty fresh.
 const STALE_MS = 60_000;
 const LOCK_MS = 10_000;
+// Once the cache is this old, refresh even if the single-flight lock looks held
+// — a stuck lock or a run of RPC failures must never freeze the cache forever.
+const HARD_STALE_MS = 5 * 60_000;
 const CACHE_KEY = "burn_supplies";
 const LOCK_KEY = "burn_lock";
 
@@ -57,16 +60,28 @@ async function resolveLaunchedTokens(): Promise<
   return out;
 }
 
-/** Refresh on-chain supplies behind a single-flight lock. Null if it can't. */
+/**
+ * Refresh on-chain supplies. Normally behind a single-flight lock so concurrent
+ * requests don't all hammer the RPC; pass `force` to bypass the lock when the
+ * cache is hard-stale, so a stuck lock can't freeze it. Returns null (and logs
+ * why) when it can't refresh, leaving the caller on its last good cache.
+ */
 async function refresh(
   mints: string[],
   now: number,
+  force: boolean,
 ): Promise<SupplyCache | null> {
   const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
-  if (!rpcUrl) return null;
+  if (!rpcUrl) {
+    console.error("[burns] NEXT_PUBLIC_SOLANA_RPC_URL not set — cannot refresh");
+    return null;
+  }
 
-  const gotLock = await kv.set(LOCK_KEY, now, { nx: true, px: LOCK_MS });
-  if (gotLock !== "OK") return null;
+  if (!force) {
+    const gotLock = await kv.set(LOCK_KEY, now, { nx: true, px: LOCK_MS });
+    // Another request is already refreshing — it'll write the cache.
+    if (gotLock !== "OK") return null;
+  }
 
   try {
     const supplies = await fetchTokenSupplies(mints, rpcUrl);
@@ -75,10 +90,16 @@ async function refresh(
     const cache: SupplyCache = { fetchedAt: now, byMint };
     await kv.set(CACHE_KEY, cache);
     return cache;
-  } catch {
-    return null; // RPC down / rate-limited: keep the last cache
+  } catch (err) {
+    // RPC down / rate-limited / bad response: keep the last cache, but surface
+    // the reason so a persistently frozen feed is diagnosable.
+    console.error(
+      "[burns] supply refresh failed:",
+      err instanceof Error ? err.message : err,
+    );
+    return null;
   } finally {
-    await kv.del(LOCK_KEY);
+    if (!force) await kv.del(LOCK_KEY);
   }
 }
 
@@ -93,15 +114,22 @@ export async function GET() {
   let cache: SupplyCache | null = null;
   try {
     cache = await kv.get<SupplyCache>(CACHE_KEY);
-  } catch {
+  } catch (err) {
+    console.error(
+      "[burns] cache read failed:",
+      err instanceof Error ? err.message : err,
+    );
     return Response.json({ burns: [], fetchedAt: 0 });
   }
 
-  const stale = !cache || now - cache.fetchedAt > STALE_MS;
-  if (stale) {
+  const ageMs = cache ? now - cache.fetchedAt : Infinity;
+  if (ageMs > STALE_MS) {
+    // Past HARD_STALE_MS, bypass the single-flight lock: better a little RPC
+    // contention than a feed that's silently stuck for hours.
     const fresh = await refresh(
       tokens.map((t) => t.mint),
       now,
+      ageMs > HARD_STALE_MS,
     );
     if (fresh) cache = fresh;
   }
