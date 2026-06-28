@@ -11,6 +11,8 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        ink: "#0a0a0a",
+        neon: "#d4ff3f",
       },
       fontFamily: {
         sans: [
