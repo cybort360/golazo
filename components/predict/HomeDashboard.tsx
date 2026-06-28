@@ -55,7 +55,7 @@ export default function HomeDashboard({
           <Label>Recent proof</Label>
           {receipt ? (
             <Link href={`/r/${receipt.pickId}`} className="inline-block rounded-full bg-green-100 px-2.5 py-1 text-xs font-black text-green-800">
-              ✓ O2.5 {receipt.result} +{formatPoints(receipt.points)}
+              ✓ {receipt.predictionLabel} {receipt.result} +{formatPoints(receipt.points)}
             </Link>
           ) : (
             <p className="text-sm text-slate-500">Make a pick to earn your first verified receipt</p>

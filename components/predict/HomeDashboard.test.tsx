@@ -8,7 +8,9 @@ describe("HomeDashboard", () => {
     render(<HomeDashboard liveMatches={[FIXTURE_MATCH]} leagues={[FIXTURE_LEAGUE]} receipts={[FIXTURE_RECEIPT]} />);
     expect(screen.getByText(/Prove you know ball/i)).toBeInTheDocument();
     expect(screen.getByText("The Lads")).toBeInTheDocument();
-    expect(screen.getByText(/O2.5 WON/)).toBeInTheDocument();
+    expect(screen.getByText(/Over 2\.5 goals/)).toBeInTheDocument();
+    expect(screen.getByText(/WON/)).toBeInTheDocument();
+    expect(screen.getByText(/\+120/)).toBeInTheDocument();
   });
   it("shows empty prompts for a first-time visitor", () => {
     render(<HomeDashboard liveMatches={[]} leagues={[]} receipts={[]} />);

@@ -24,27 +24,27 @@ const SLIDES: Slide[] = [
   {
     icon: "football",
     title: "Welcome to Golazo",
-    body: "Trade tokens for the teams you love across the biggest competitions in sport, all on Solana. From the World Cup to the Champions League to the basketball playoffs.",
-  },
-  {
-    icon: "coins",
-    title: "Every team has a token",
-    body: "Back your favorites and trade them on Jupiter. Live prices, volume and charts for every team.",
-  },
-  {
-    icon: "trophy",
-    title: "Win the prize pool",
-    body: "35% of all trading fees fund a SOL prize pool. When the final whistle blows, champion-token holders split it.",
+    body: "Make picks before kick-off. Prove you know ball. Every result is verified — no trust required.",
   },
   {
     icon: "sparkles",
-    title: "Predict & win SOL",
-    body: "Call the result of every match. Top the weekly leaderboard to win a SOL bounty — and once $GOLAZO launches, hold it to be eligible for the pot.",
+    title: "The Chaos Pick",
+    body: "Alongside Winner, Total goals, and BTTS — every match has a signature Chaos Pick. High risk. Maximum points.",
   },
   {
     icon: "chart",
-    title: "Follow every game",
-    body: "Live match banners, standings and brackets, updated automatically as results come in.",
+    title: "Follow it live",
+    body: "Watch live match states update in real time. See how your picks are tracking minute by minute.",
+  },
+  {
+    icon: "check",
+    title: "Verified by TxLINE",
+    body: "Every settled result is verified by TxLINE and anchored on-chain. Share your proof receipt — it's permanent.",
+  },
+  {
+    icon: "trophy",
+    title: "Climb private leagues",
+    body: "Create or join a private league with friends. The leaderboard resets each round — anyone can rise to the top.",
   },
 ];
 
