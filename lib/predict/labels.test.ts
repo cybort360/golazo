@@ -5,10 +5,10 @@ import {
 import type { Match } from "@/lib/predict/types";
 
 const base: Match = {
-  id: "x", competition: "World Cup", round: "Group J",
-  kickoffMs: 0, lockMs: 0, state: "LIVE", minute: 67,
-  home: { ticker: "ARG", name: "Argentina", flagCode: "ar" },
-  away: { ticker: "ESP", name: "Spain", flagCode: "es" },
+  id: "x", competition: "Premier", round: "Wk 31",
+  kickoffMs: 0, lockMs: 0, state: "LIVE", minute: 67, phaseLabel: "2nd half",
+  home: { ticker: "ABL", name: "Albion", flagCode: "gb-eng", color: "#dc2626" },
+  away: { ticker: "RVR", name: "Rovers", flagCode: "gb-eng", color: "#2563eb" },
   homeScore: 1, awayScore: 1,
 };
 

@@ -4,56 +4,99 @@ import { useState } from "react";
 import type { ProofReceipt as Receipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 
-function Row({ label, value }: { label: string; value: string }) {
+function settledTime(ms: number): string {
+  return new Date(ms).toISOString().slice(11, 16) + " UTC";
+}
+
+function MonoRow({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
   return (
-    <div className="flex justify-between border-b border-slate-100 py-1.5">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-semibold">{value}</span>
+    <div className="flex justify-between">
+      <span>{label}</span>
+      <span className={valueClass ?? "text-ink"}>{value}</span>
     </div>
   );
 }
 
 export default function ProofReceipt({ receipt }: { receipt: Receipt }) {
   const [open, setOpen] = useState(false);
-  const score = `${receipt.home.ticker} ${receipt.homeScore} – ${receipt.awayScore} ${receipt.away.ticker}`;
+  const score = `${receipt.home.name} ${receipt.homeScore}–${receipt.awayScore} ${receipt.away.name}`;
+
   return (
-    <div className="mx-auto max-w-xs overflow-hidden rounded-3xl bg-ink shadow-card-md">
-      <div className="flex items-center justify-between px-5 pt-4">
-        <span className="font-black tracking-tight text-neon">GOLAZO</span>
-        <span className="rounded-full bg-neon px-2 py-0.5 text-[9px] font-black tracking-wider text-ink">✓ VERIFIED</span>
-      </div>
-      <div className="px-5 pb-3 pt-1.5 text-center">
-        <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">{receipt.predictionLabel}</div>
-        <div className="my-1 text-4xl font-black tracking-tight text-neon">{receipt.result}</div>
-        <div className="text-sm font-extrabold text-white">{score}</div>
-        <div className="mt-2.5 inline-block rounded-full bg-green-600 px-3.5 py-1 text-sm font-black text-white">
-          +{formatPoints(receipt.points)} pts
+    <div className="mx-auto max-w-sm">
+      {/* ticket */}
+      <div className="relative overflow-hidden rounded-[22px] bg-ink px-5 pt-6">
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ background: "radial-gradient(120% 60% at 50% -10%,rgba(212,255,63,0.16),transparent 60%)" }}
+        />
+        <div className="relative">
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-black tracking-[-0.03em] text-white">GOLAZO</div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(22,163,74,0.45)] bg-[rgba(22,163,74,0.16)] px-2.5 py-1 text-[11px] font-extrabold tracking-[0.06em] text-[#4ade80]">
+              ✓ VERIFIED
+            </span>
+          </div>
+
+          <div className="mt-5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Your prediction</div>
+          <div className="mt-1.5 text-lg font-extrabold text-white">{receipt.predictionLabel}</div>
+          <div className="glz-rise mt-2.5 text-[64px] font-black leading-[0.9] tracking-[-0.05em] text-neon">
+            {receipt.result}
+          </div>
+
+          <div className="mt-4 flex items-end justify-between">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">Final score</div>
+              <div className="mt-0.5 text-[17px] font-extrabold tabular-nums text-white">{score}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">Points</div>
+              <div className="mt-0.5 text-2xl font-black tabular-nums leading-none tracking-[-0.03em] text-neon">
+                +{formatPoints(receipt.points)}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 flex items-center gap-2 border-t border-dashed border-[#2a2a2a] py-3.5">
+            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-green-600 text-[11px] text-white">✓</span>
+            <span className="text-xs font-semibold text-slate-400">
+              Verified by <span className="font-bold text-slate-200">TxLINE</span> · settled {settledTime(receipt.settledAtMs)}
+            </span>
+          </div>
+        </div>
+
+        {/* perforation notches */}
+        <div className="relative h-0">
+          <div className="absolute -left-[30px] -top-[13px] h-[26px] w-[26px] rounded-full bg-[#f1f5f9]" />
+          <div className="absolute -right-[30px] -top-[13px] h-[26px] w-[26px] rounded-full bg-[#f1f5f9]" />
+        </div>
+
+        <div className="flex gap-2 pb-4 pt-4">
+          <button type="button" className="flex-[1.4] rounded-xl bg-neon py-3 text-center text-sm font-black text-ink">
+            Share receipt
+          </button>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="flex-1 rounded-xl border border-[#2a2a2a] bg-[#171717] py-3 text-center text-[13px] font-bold text-slate-200"
+          >
+            {open ? "Hide ▴" : "Advanced ▾"}
+          </button>
         </div>
       </div>
-      <div className="bg-[#1f1f1f] px-5 py-2.5 text-center text-[10px] text-neutral-400">
-        Verified by <span className="font-extrabold text-neon">TxLINE</span>
-      </div>
-      <div className="flex gap-2 px-4 py-3">
-        <button type="button" className="flex-1 rounded-xl bg-neon py-2.5 text-xs font-black text-ink">Share receipt</button>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="flex-1 rounded-xl bg-neutral-800 py-2.5 text-xs font-bold text-neutral-200"
-        >
-          {open ? "Hide proof ▴" : "View advanced proof ▾"}
-        </button>
-      </div>
+
+      {/* advanced proof (quiet) */}
       {open && (
-        <div className="mx-4 mb-4 rounded-xl bg-white px-3 py-2 text-[11px] text-slate-900">
-          <Row label="Fixture ID" value={receipt.fixtureId} />
-          <Row label="Match state" value={receipt.matchState} />
-          <Row label="Market" value={receipt.marketLabel} />
-          <Row label="Stat keys" value={receipt.statKeys} />
-          <Row label="Payload ref" value={receipt.payloadRef} />
-          {receipt.merkleStatus && <Row label="Merkle proof" value={receipt.merkleStatus} />}
-          {receipt.onChainStatus && <Row label="On-chain" value={receipt.onChainStatus} />}
-          <Row label="Settled at" value={new Date(receipt.settledAtMs).toISOString().slice(11, 19) + " UTC"} />
-          {receipt.txUrl && <Row label="Transaction" value="view ↗" />}
+        <div className="mt-3 overflow-hidden rounded-[14px] border border-[#e2e8f0] bg-white">
+          <div className="border-b border-[#f1f5f9] px-3.5 py-3 text-xs font-bold text-slate-600">Advanced proof</div>
+          <div className="space-y-1.5 px-3.5 py-3 font-mono text-[10.5px] leading-relaxed text-slate-500">
+            <MonoRow label="match_id" value={receipt.fixtureId} />
+            <MonoRow label="settled_at" value={new Date(receipt.settledAtMs).toISOString()} />
+            <MonoRow label="data_hash" value={receipt.payloadRef} />
+            {receipt.merkleStatus && (
+              <MonoRow label="attestation" value={`${receipt.merkleStatus} ✓`} valueClass="text-green-600" />
+            )}
+            {receipt.txUrl && <MonoRow label="transaction" value="view ↗" valueClass="text-blue-600" />}
+          </div>
         </div>
       )}
     </div>

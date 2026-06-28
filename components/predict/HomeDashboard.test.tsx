@@ -7,10 +7,10 @@ describe("HomeDashboard", () => {
   it("shows the tagline and populated sections", () => {
     render(<HomeDashboard liveMatches={[FIXTURE_MATCH]} leagues={[FIXTURE_LEAGUE]} receipts={[FIXTURE_RECEIPT]} />);
     expect(screen.getByText(/Prove you know ball/i)).toBeInTheDocument();
-    expect(screen.getByText("The Lads")).toBeInTheDocument();
-    expect(screen.getByText(/Over 2\.5 goals/)).toBeInTheDocument();
+    expect(screen.getByText("Sunday League")).toBeInTheDocument();
+    expect(screen.getByText(/Over 2\.5 Goals/)).toBeInTheDocument();
     expect(screen.getByText(/WON/)).toBeInTheDocument();
-    expect(screen.getByText(/\+120/)).toBeInTheDocument();
+    expect(screen.getByText(/\+50/)).toBeInTheDocument();
   });
   it("shows empty prompts for a first-time visitor", () => {
     render(<HomeDashboard liveMatches={[]} leagues={[]} receipts={[]} />);

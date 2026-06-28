@@ -9,13 +9,13 @@ describe("MatchPickScreen", () => {
     expect(screen.getByText("Match winner")).toBeInTheDocument();
     expect(screen.getByText("Total goals · 2.5")).toBeInTheDocument();
     expect(screen.getByText("Both teams to score")).toBeInTheDocument();
-    expect(screen.getByText("Chaos Pick")).toBeInTheDocument();
+    expect(screen.getByText("Goal after the 80th minute?")).toBeInTheDocument();
     expect(screen.getByText(/no signup needed/i)).toBeInTheDocument();
   });
   it("counts picks in the lock button as they are made", () => {
     render(<MatchPickScreen match={FIXTURE_MATCH} />);
-    expect(screen.getByRole("button", { name: /lock my 0 picks/i })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "ARG" }));
-    expect(screen.getByRole("button", { name: /lock my 1 pick/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Lock my picks · 0 selected/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(FIXTURE_MATCH.home.name) }));
+    expect(screen.getByRole("button", { name: /Lock my picks · 1 selected/i })).toBeInTheDocument();
   });
 });

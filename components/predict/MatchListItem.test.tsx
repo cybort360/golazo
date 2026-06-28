@@ -7,7 +7,7 @@ describe("MatchListItem", () => {
   it("links to the match pick screen", () => {
     render(<MatchListItem match={FIXTURE_MATCH} />);
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "/match/GM041");
-    expect(screen.getByText(/ARG/)).toBeInTheDocument();
+    expect(link).toHaveAttribute("href", "/match/ABLRVR");
+    expect(screen.getByText(/ABL/)).toBeInTheDocument();
   });
 });
