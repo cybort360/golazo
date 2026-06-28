@@ -73,7 +73,7 @@ export default function ReceiptDetailDesktop({ receipt }: { receipt: ProofReceip
 
           <div className="flex gap-3">
             <button type="button" className="flex-1 rounded-xl bg-neon py-3 text-center text-sm font-black text-ink">Share receipt</button>
-            <button type="button" className="rounded-xl border border-[#e2e8f0] bg-white px-5 py-3 text-sm font-bold text-ink transition-colors hover:bg-slate-50">Copy link</button>
+            <Link href={`/r/${receipt.pickId}/proof`} className="rounded-xl border border-[#e2e8f0] bg-white px-5 py-3 text-sm font-bold text-ink transition-colors hover:bg-slate-50">Proof explorer ▸</Link>
             {receipt.txUrl && (
               <a href={receipt.txUrl} target="_blank" rel="noopener noreferrer" className="rounded-xl border border-[#e2e8f0] bg-white px-5 py-3 text-sm font-bold text-blue-600 transition-colors hover:bg-slate-50">View on Solscan ↗</a>
             )}

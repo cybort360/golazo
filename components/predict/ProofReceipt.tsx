@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { ProofReceipt as Receipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 
@@ -101,6 +102,12 @@ export default function ProofReceipt({ receipt }: { receipt: Receipt }) {
             )}
             {receipt.txUrl && <MonoRow label="transaction" value="view ↗" valueClass="text-blue-600" />}
           </div>
+          <Link
+            href={`/r/${receipt.pickId}/proof`}
+            className="block border-t border-[#f1f5f9] px-3.5 py-3 text-center text-[12px] font-bold text-ink"
+          >
+            Open full proof explorer ▸
+          </Link>
         </div>
       )}
     </div>
