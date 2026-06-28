@@ -1,35 +1,78 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Match, MarketId } from "@/lib/predict/types";
 import { buildMarkets } from "@/lib/predict/markets";
 import { scoreLabel, matchStateLabel } from "@/lib/predict/labels";
 import MarketPicker from "@/components/predict/MarketPicker";
+import TeamAvatar from "@/components/predict/TeamAvatar";
+
+function fmtCountdown(ms: number): string {
+  const m = Math.floor(ms / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
 
 export default function MatchPickScreen({ match }: { match: Match }) {
   const markets = buildMarkets(match);
   const [picks, setPicks] = useState<Partial<Record<MarketId, string>>>({});
   const select = (id: MarketId, optionId: string) =>
     setPicks((p) => ({ ...p, [id]: optionId }));
-
   const count = Object.keys(picks).length;
+
   const liveLabel = matchStateLabel(match);
+  const finished = match.state === "FT" || match.state === "VOID";
+
+  // Client-only lock countdown (avoids SSR/CSR mismatch on the live clock).
+  const [remain, setRemain] = useState<number | null>(null);
+  useEffect(() => {
+    const tick = () => setRemain(Math.max(0, match.lockMs - Date.now()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [match.lockMs]);
+  const showLock = !finished && (remain === null || remain > 0);
 
   return (
     <div className="mx-auto max-w-md overflow-hidden rounded-3xl border border-[#e2e8f0] bg-[#f8fafc] shadow-card-md">
-      <div className="bg-ink px-5 py-4 text-white">
-        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
-          <span className="text-neutral-400">{match.competition} · {match.round}</span>
-          {liveLabel && <span className="text-neon">● {liveLabel}</span>}
+      {/* ink header */}
+      <div className="bg-ink px-5 pb-5 pt-4 text-white">
+        <div className="flex items-center justify-between text-[13px] font-bold text-slate-400">
+          <span>‹ Back</span>
+          {liveLabel && (
+            <span className="inline-flex items-center gap-1.5 text-white">
+              <span className="glz-blink h-1.5 w-1.5 rounded-full bg-neon" />
+              {liveLabel}
+            </span>
+          )}
+          <span>⋯</span>
         </div>
-        <div className="mt-2.5 flex items-center justify-center gap-5">
-          <div className="text-center"><div className="text-base font-black">{match.home.ticker}</div></div>
-          <div className="text-2xl font-black tracking-tight">{scoreLabel(match) || "vs"}</div>
-          <div className="text-center"><div className="text-base font-black">{match.away.ticker}</div></div>
+        <div className="mt-4 flex items-center justify-between">
+          <div className="w-[92px] text-center">
+            <TeamAvatar team={match.home} size={46} />
+            <div className="mt-1.5 text-[13px] font-bold">{match.home.name}</div>
+          </div>
+          <div className="text-center">
+            <div className="text-[34px] font-black tracking-[-0.04em]">{scoreLabel(match) || "vs"}</div>
+            {match.phaseLabel && <div className="text-[11px] font-semibold text-slate-500">{match.phaseLabel}</div>}
+          </div>
+          <div className="w-[92px] text-center">
+            <TeamAvatar team={match.away} size={46} />
+            <div className="mt-1.5 text-[13px] font-bold">{match.away.name}</div>
+          </div>
         </div>
+        {showLock && (
+          <div className="mt-4 flex items-center justify-between rounded-xl border border-[#262626] bg-[#171717] px-3.5 py-2.5">
+            <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">Picks lock in</span>
+            <span className="text-[17px] font-black tabular-nums text-neon">
+              {remain === null ? "--:--" : fmtCountdown(remain)}
+            </span>
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-col gap-3 px-4 pb-5 pt-4">
+      {/* markets */}
+      <div className="flex flex-col gap-3.5 px-4 pb-4 pt-4">
         {markets.map((m) => (
           <MarketPicker
             key={m.id}
@@ -38,16 +81,18 @@ export default function MatchPickScreen({ match }: { match: Match }) {
             onSelect={(opt) => select(m.id, opt)}
           />
         ))}
+      </div>
 
+      {/* lock cta */}
+      <div className="px-4 pb-6 pt-1">
         <button
           type="button"
-          className="mt-1 rounded-2xl bg-green-600 px-4 py-3.5 text-center text-sm font-black text-white"
+          className="w-full rounded-2xl bg-neon px-4 py-4 text-center text-base font-black tracking-[-0.01em] text-ink"
         >
-          Lock my {count} pick{count === 1 ? "" : "s"} ▸
+          Lock my picks · {count} selected
         </button>
-        <p className="text-center text-xs text-slate-400">
-          Playing as guest · no signup needed —{" "}
-          <span className="font-bold text-green-600">save your streak</span>
+        <p className="mt-2.5 text-center text-xs font-semibold text-slate-400">
+          Playing as guest · no signup needed
         </p>
       </div>
     </div>

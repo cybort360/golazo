@@ -2,19 +2,21 @@ export type MatchState =
   | "NOT_STARTED" | "LIVE" | "HT" | "FT" | "SUSPENDED" | "POSTPONED" | "VOID";
 
 export interface MatchTeam {
-  ticker: string;
+  ticker: string;      // short code shown in the avatar circle, e.g. "ABL"
   name: string;
   flagCode: string;
+  color: string;       // avatar circle background (hex)
 }
 
 export interface Match {
   id: string;
-  competition: string; // "World Cup"
-  round: string;       // "Group J"
+  competition: string; // "Premier"
+  round: string;       // "Wk 31"
   kickoffMs: number;
   lockMs: number;      // picks lock at/after this
   state: MatchState;
   minute: number | null;
+  phaseLabel: string | null; // "2nd half", "Half time", etc.
   home: MatchTeam;
   away: MatchTeam;
   homeScore: number | null;
@@ -26,12 +28,15 @@ export type MarketId = "winner" | "totals" | "btts" | "chaos";
 export interface MarketOption {
   id: string;
   label: string;
+  odds: string | null; // e.g. "2.10"; null when not shown
 }
 
 export interface Market {
   id: MarketId;
   title: string;        // "Match winner"
   question: string | null; // chaos: "Goal after the 80th minute?"
+  subtitle: string | null; // chaos: "High risk, high reward. The Golazo special."
+  rewardBadge: string | null; // chaos: "2× POINTS"
   options: MarketOption[];
   hero: boolean;        // chaos = true
 }
