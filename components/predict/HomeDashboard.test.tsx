@@ -6,7 +6,7 @@ import { FIXTURE_MATCH, FIXTURE_LEAGUE, FIXTURE_RECEIPT } from "@/lib/predict/mo
 describe("HomeDashboard", () => {
   it("shows the tagline and populated sections", () => {
     render(<HomeDashboard matches={[FIXTURE_MATCH]} leagues={[FIXTURE_LEAGUE]} receipts={[FIXTURE_RECEIPT]} />);
-    expect(screen.getByText(/Prove you know ball/i)).toBeInTheDocument();
+    expect(screen.getByText(/Prove you/i)).toBeInTheDocument();
     expect(screen.getByText("Sunday League")).toBeInTheDocument();
     expect(screen.getByText(/Over 2\.5 Goals/)).toBeInTheDocument();
     expect(screen.getByText(/WON/)).toBeInTheDocument();

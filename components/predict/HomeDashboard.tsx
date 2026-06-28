@@ -66,25 +66,26 @@ export default function HomeDashboard({
   const league = leagues[0] ?? null;
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8 lg:hidden">
-      {/* ink hero */}
-      <section className="relative overflow-hidden rounded-3xl bg-ink px-6 pb-7 pt-5 text-white">
-        <div className="pointer-events-none absolute -bottom-12 -right-7 select-none text-[130px] font-black opacity-[0.06]">⚽</div>
+    <div className="lg:hidden">
+      {/* ink hero — full bleed to the top + edges */}
+      <section className="relative overflow-hidden bg-ink px-5 pb-8 pt-7 text-white">
+        <div className="pointer-events-none absolute -bottom-10 -right-8 select-none text-[150px] font-black opacity-[0.06]">⚽</div>
         <div className="relative">
           <div className="flex items-center justify-between">
-            <div className="text-[21px] font-black tracking-[-0.04em]">GOLAZO</div>
-            <span className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] border-[#334155] bg-[#1e293b] text-[13px] font-extrabold text-neon">JK</span>
+            <div className="text-[22px] font-black tracking-[-0.04em]">GOLAZO</div>
+            <span className="flex h-[36px] w-[36px] items-center justify-center rounded-full border-[1.5px] border-[#334155] bg-[#1e293b] text-[13px] font-extrabold text-neon">JK</span>
           </div>
-          <h1 className="mt-4 text-[30px] font-black leading-[1.02] tracking-[-0.045em]">
-            Make picks. Prove you know ball. <span className="text-neon">⚡</span>
+          <h1 className="mt-5 text-[40px] font-black leading-[1.0] tracking-[-0.045em]">
+            Make picks.<br />Prove you<br />know ball. ⚡
           </h1>
-          <div className="mt-3.5 flex gap-2">
-            <Link href="/matches" className="rounded-full bg-neon px-4 py-2.5 text-[13px] font-extrabold text-ink">Make a pick</Link>
-            <Link href="/leagues" className="rounded-full border border-[#2a2a2a] bg-[#171717] px-4 py-2.5 text-[13px] font-bold text-slate-200">My leagues</Link>
+          <div className="mt-6 flex gap-2.5">
+            <Link href="/matches" className="rounded-full bg-neon px-5 py-3 text-[14px] font-extrabold text-ink">Make a pick</Link>
+            <Link href="/leagues" className="rounded-full border border-[#2a2a2a] bg-[#171717] px-5 py-3 text-[14px] font-bold text-slate-200">My leagues</Link>
           </div>
         </div>
       </section>
 
+      <div className="flex flex-col gap-6 px-4 py-6">
       {/* live now */}
       <section>
         <div className="mb-2.5 flex items-center gap-2">
@@ -143,6 +144,7 @@ export default function HomeDashboard({
           <p className="text-sm text-slate-500">Make a pick to earn your first verified receipt</p>
         )}
       </section>
+      </div>
     </div>
   );
 }
