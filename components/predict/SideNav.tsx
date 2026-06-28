@@ -9,7 +9,7 @@ const ITEMS = [
   { href: "/", label: "Home", icon: "⚡" },
   { href: "/matches", label: "Matches", icon: null },
   { href: "/leagues", label: "My leagues", icon: null },
-  { href: "/r/9f3a", label: "Receipts", icon: null },
+  { href: "/receipts", label: "Receipts", icon: null },
 ];
 
 export default function SideNav() {

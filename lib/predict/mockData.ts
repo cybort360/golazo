@@ -36,10 +36,34 @@ const MATCHES: Match[] = [
     home: CNT, away: ATH, homeScore: null, awayScore: null,
   },
   {
+    id: "UTDATH", competition: "Premier", round: "Wk 31",
+    kickoffMs: Date.now() + 5 * HOUR, lockMs: Date.now() + 5 * HOUR,
+    state: "NOT_STARTED", minute: null, phaseLabel: null,
+    home: UTD, away: ATH, homeScore: null, awayScore: null,
+  },
+  {
+    id: "RVRWAN", competition: "Premier", round: "Wk 32",
+    kickoffMs: Date.now() + 26 * HOUR, lockMs: Date.now() + 26 * HOUR,
+    state: "NOT_STARTED", minute: null, phaseLabel: null,
+    home: RVR, away: WAN, homeScore: null, awayScore: null,
+  },
+  {
+    id: "ABLCTY", competition: "Premier", round: "Wk 32",
+    kickoffMs: Date.now() + 27 * HOUR, lockMs: Date.now() + 27 * HOUR,
+    state: "NOT_STARTED", minute: null, phaseLabel: null,
+    home: ABL, away: CTY, homeScore: null, awayScore: null,
+  },
+  {
     id: "WANCNT", competition: "Premier", round: "Wk 30",
     kickoffMs: Date.now() - 26 * HOUR, lockMs: Date.now() - 26 * HOUR,
     state: "FT", minute: 90, phaseLabel: "Full time",
     home: WAN, away: CNT, homeScore: 2, awayScore: 0,
+  },
+  {
+    id: "CTYWAN", competition: "Premier", round: "Wk 30",
+    kickoffMs: Date.now() - 27 * HOUR, lockMs: Date.now() - 27 * HOUR,
+    state: "FT", minute: 90, phaseLabel: "Full time",
+    home: CTY, away: WAN, homeScore: 1, awayScore: 1,
   },
 ];
 
@@ -72,7 +96,36 @@ const FIXTURE_RECEIPT_2: ProofReceipt = {
   settledAtMs: Date.UTC(2026, 5, 27, 16, 10, 0), txUrl: "https://solscan.io/tx/7c2b",
 };
 
-const RECEIPTS: ProofReceipt[] = [FIXTURE_RECEIPT, FIXTURE_RECEIPT_2];
+const FIXTURE_RECEIPT_3: ProofReceipt = {
+  pickId: "d9a2", predictionLabel: "Match winner · United", result: "WON",
+  home: CTY, away: UTD, homeScore: 0, awayScore: 2, points: 40,
+  fixtureId: "TXL-29-CTYUTD", matchState: "FT", marketLabel: "winner · away",
+  statKeys: "home_g=0, away_g=2", payloadRef: "0xd9a2…3f17",
+  merkleStatus: "valid", onChainStatus: "valid",
+  settledAtMs: Date.UTC(2026, 5, 25, 21, 5, 0), txUrl: "https://solscan.io/tx/d9a2",
+};
+
+const FIXTURE_RECEIPT_4: ProofReceipt = {
+  pickId: "f4c7", predictionLabel: "Both teams to score · Yes", result: "LOST",
+  home: WAN, away: CNT, homeScore: 2, awayScore: 0, points: 0,
+  fixtureId: "TXL-30-WANCNT", matchState: "FT", marketLabel: "btts · yes",
+  statKeys: "home_g=2, away_g=0", payloadRef: "0xf4c7…9b22",
+  merkleStatus: "valid", onChainStatus: "valid",
+  settledAtMs: Date.UTC(2026, 5, 27, 16, 10, 0), txUrl: null,
+};
+
+const FIXTURE_RECEIPT_5: ProofReceipt = {
+  pickId: "a6b8", predictionLabel: "Under 2.5 Goals", result: "WON",
+  home: CTY, away: WAN, homeScore: 1, awayScore: 1, points: 30,
+  fixtureId: "TXL-30-CTYWAN", matchState: "FT", marketLabel: "total_goals · U2.5",
+  statKeys: "home_g=1, away_g=1", payloadRef: "0xa6b8…7e44",
+  merkleStatus: "valid", onChainStatus: "valid",
+  settledAtMs: Date.UTC(2026, 5, 26, 19, 30, 0), txUrl: "https://solscan.io/tx/a6b8",
+};
+
+const RECEIPTS: ProofReceipt[] = [
+  FIXTURE_RECEIPT, FIXTURE_RECEIPT_2, FIXTURE_RECEIPT_3, FIXTURE_RECEIPT_4, FIXTURE_RECEIPT_5,
+];
 const LEAGUES: League[] = [FIXTURE_LEAGUE];
 
 export const mockDataSource: PredictDataSource = {

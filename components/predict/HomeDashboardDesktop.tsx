@@ -1,56 +1,7 @@
 import Link from "next/link";
 import type { Match, League, ProofReceipt, LeagueMember } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
-import TeamAvatar from "@/components/predict/TeamAvatar";
-
-function kickoffLabel(ms: number): string {
-  return new Date(ms)
-    .toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })
-    .toUpperCase();
-}
-
-function MatchCard({ match }: { match: Match }) {
-  const live = match.state === "LIVE";
-  const upcoming = match.state === "NOT_STARTED";
-  return (
-    <Link
-      href={`/match/${match.id}`}
-      className="block rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-card transition-colors hover:border-slate-300"
-    >
-      {live ? (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-1 text-[10px] font-extrabold text-white">
-          <span className="glz-blink h-1.5 w-1.5 rounded-full bg-neon" />
-          LIVE {match.minute}&apos;
-        </span>
-      ) : (
-        <span className="text-[10px] font-extrabold uppercase tracking-[0.05em] tabular-nums text-slate-400">
-          {kickoffLabel(match.kickoffMs)}
-        </span>
-      )}
-      <div className="mt-3.5 flex items-center justify-between">
-        <div className="text-center">
-          <TeamAvatar team={match.home} size={40} />
-          <div className="mt-1.5 text-[12px] font-bold text-ink">{match.home.name}</div>
-        </div>
-        <div className={"font-black tabular-nums tracking-[-0.03em] " + (upcoming ? "text-[15px] text-slate-400" : "text-[26px] text-ink")}>
-          {upcoming ? "vs" : `${match.homeScore}–${match.awayScore}`}
-        </div>
-        <div className="text-center">
-          <TeamAvatar team={match.away} size={40} />
-          <div className="mt-1.5 text-[12px] font-bold text-ink">{match.away.name}</div>
-        </div>
-      </div>
-      <div
-        className={
-          "mt-3.5 rounded-[11px] py-2.5 text-center text-[13px] font-extrabold " +
-          (live ? "bg-neon text-ink" : "bg-ink text-neon")
-        }
-      >
-        Pick ▸
-      </div>
-    </Link>
-  );
-}
+import MatchCard from "@/components/predict/MatchCard";
 
 function RailRow({ member }: { member: LeagueMember }) {
   return (
