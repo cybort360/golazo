@@ -1,4 +1,5 @@
 import type { ProofReceipt, ProfileStats } from "@/lib/predict/types";
+import { buildBadges } from "@/lib/predict/badges";
 
 // Human label for a market key (the part before " · " in a receipt's marketLabel).
 const MARKET_LABELS: Record<string, string> = {
@@ -82,5 +83,6 @@ export function buildProfile(receipts: ProofReceipt[], identity: ProfileIdentity
     points,
     favoriteMarket,
     biggestUpset,
+    badges: buildBadges(receipts),
   };
 }

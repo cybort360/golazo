@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ProfileStats } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import ShareButton from "@/components/predict/ShareButton";
+import BadgeShelf from "@/components/predict/BadgeShelf";
 
 function Tile({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
@@ -72,6 +73,9 @@ export default function ProfileScreen({ profile }: { profile: ProfileStats }) {
             <div className="mt-0.5 text-[12px] font-semibold text-slate-400">{profile.biggestUpset.detail} · verified by TxLINE</div>
           </div>
         )}
+
+        {/* badges */}
+        <BadgeShelf badges={profile.badges} />
 
         <Link href="/receipts" className="block rounded-2xl border border-[#e2e8f0] bg-white px-4 py-3.5 text-center text-sm font-bold text-slate-600 shadow-card">
           View verified history ▸

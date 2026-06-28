@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ProfileStats } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import ShareButton from "@/components/predict/ShareButton";
+import BadgeShelf from "@/components/predict/BadgeShelf";
 
 function StatCard({ label, value, accent, sub }: { label: string; value: string; accent?: boolean; sub?: string }) {
   return (
@@ -76,7 +77,12 @@ export default function ProfileDesktop({ profile }: { profile: ProfileStats }) {
           )}
         </div>
 
-        <Link href="/receipts" className="mt-4 inline-block text-[13px] font-bold text-slate-500 hover:text-ink">
+        {/* badges */}
+        <div className="mt-6">
+          <BadgeShelf badges={profile.badges} />
+        </div>
+
+        <Link href="/receipts" className="mt-6 inline-block text-[13px] font-bold text-slate-500 hover:text-ink">
           View verified history ▸
         </Link>
       </div>

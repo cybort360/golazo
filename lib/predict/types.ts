@@ -92,6 +92,17 @@ export interface GlobalLeaderboard {
   top: LeagueMember[];   // leading players, sorted by rank asc
 }
 
+// Reputation badge derived from prediction history. `progress` drives the
+// "x / target" hint shown on locked badges (null when not applicable).
+export interface Badge {
+  id: string;
+  name: string;
+  icon: string;        // emoji stand-in
+  description: string; // how it is earned
+  earned: boolean;
+  progress: { current: number; target: number } | null;
+}
+
 // Public, shareable player profile derived from prediction history.
 export interface ProfileStats {
   handle: string;
@@ -111,6 +122,7 @@ export interface ProfileStats {
     detail: string;        // "WAN 2–0 CNT"
     points: number;
   } | null;
+  badges: Badge[];
 }
 
 export interface PredictDataSource {
