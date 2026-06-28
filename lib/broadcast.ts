@@ -5,28 +5,21 @@
 // it to KV and the Telegram provider.
 
 import { kv } from "@vercel/kv";
-import { SCHEDULE } from "@/constants/schedule";
 import { TEAMS } from "@/constants/teams";
 import type { MatchResult } from "@/hooks/useMatchResults";
-import type { BuybackEntry } from "@/lib/buyback";
-import type { WeeklyPrize } from "@/lib/weeklyPrize";
 import { sendTelegramMessage, telegramConfigured } from "@/lib/telegram";
 
 export interface BroadcastState {
   results: MatchResult[];
-  buybacks: BuybackEntry[];
-  weeklyPrize: WeeklyPrize | null;
   champion: string | null;
 }
 
 export interface PostedRecord {
   results: string[]; // matchIds already announced
-  buybacks: string[]; // matchIds already announced
-  weeklyKey: string | null; // `${week}:${matchId}` already announced
   champion: string | null; // ticker already announced
 }
 
-export type BroadcastType = "result" | "buyback" | "weekly" | "champion";
+export type BroadcastType = "result" | "champion";
 export interface BroadcastEvent {
   type: BroadcastType;
   id: string;
@@ -36,7 +29,6 @@ export interface BroadcastEvent {
 // ── Formatting helpers ────────────────────────────────────────────────────────
 
 const TEAM_BY_TICKER = new Map(TEAMS.map((t) => [t.ticker, t]));
-const FIXTURE_BY_ID = new Map(SCHEDULE.map((m) => [m.id, m]));
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -69,53 +61,11 @@ function formatResult(r: MatchResult): string {
   if (r.isDraw) {
     return `⚽ <b>FT</b> — ${label(r.winner)}${scoreText(r)} ${label(r.loser)} — Draw.`;
   }
-  return `⚽ <b>FT</b> — ${label(r.winner)}${scoreText(r)} ${label(r.loser)}\n$${r.winner} takes it. 🏆`;
-}
-
-function formatBuyback(b: BuybackEntry): string {
-  return (
-    `🔥 <b>Buyback</b> — burned ${escapeHtml(b.tokensBurned)} $${escapeHtml(b.teamId)} after the win.\n` +
-    `Supply only goes down. <a href="${b.txUrl}">View the burn ↗</a>`
-  );
-}
-
-function formatWeekly(wp: WeeklyPrize): string {
-  const fixture = FIXTURE_BY_ID.get(wp.matchId);
-  const match = fixture
-    ? `${label(fixture.teamA)} vs ${label(fixture.teamB)}`
-    : "this week's match";
-  return (
-    `💰 <b>Week ${wp.week} Prize Match</b> — ${match}\n` +
-    `Hold the winner's token at kickoff to split <b>${wp.potSol} SOL</b>.`
-  );
+  return `⚽ <b>FT</b> — ${label(r.winner)}${scoreText(r)} ${label(r.loser)}\n${label(r.winner)} takes it. 🏆`;
 }
 
 function formatChampion(ticker: string): string {
-  return (
-    `👑 ${label(ticker)} are World Cup champions!\n` +
-    `Prize-pool airdrop incoming to $${ticker} holders.`
-  );
-}
-
-// CTA back to the prediction game, appended to every post. When the Mini App
-// link is set we use an inline button instead (see predictButton) — better than
-// a web link that opens Telegram's in-app browser. Falls back to a web link to
-// /predict otherwise. Read at call time so it stays testable.
-function predictCta(): string {
-  if (process.env.NEXT_PUBLIC_TELEGRAM_APP_URL) return ""; // button handles it
-  const site = process.env.NEXT_PUBLIC_SITE_URL;
-  return site
-    ? `\n\n🔮 <a href="${site}/predict">Predict &amp; win SOL</a>`
-    : "";
-}
-
-// Inline keyboard button that opens the Telegram Mini App natively. Undefined
-// when no Mini App link is configured.
-export function predictButton(): unknown {
-  const url = process.env.NEXT_PUBLIC_TELEGRAM_APP_URL;
-  return url
-    ? { inline_keyboard: [[{ text: "🔮 Predict & win", url }]] }
-    : undefined;
+  return `👑 ${label(ticker)} are World Cup champions!`;
 }
 
 // ── Pure diff ─────────────────────────────────────────────────────────────────
@@ -123,10 +73,6 @@ export function predictButton(): unknown {
 function baselineFrom(state: BroadcastState): PostedRecord {
   return {
     results: state.results.map((r) => r.matchId),
-    buybacks: state.buybacks.map((b) => b.matchId),
-    weeklyKey: state.weeklyPrize
-      ? `${state.weeklyPrize.week}:${state.weeklyPrize.matchId}`
-      : null,
     champion: state.champion,
   };
 }
@@ -152,17 +98,6 @@ export function composeBroadcasts(
       events.push({ type: "result", id: r.matchId, text: formatResult(r) });
     }
   }
-  for (const b of state.buybacks) {
-    if (!posted.buybacks.includes(b.matchId)) {
-      events.push({ type: "buyback", id: b.matchId, text: formatBuyback(b) });
-    }
-  }
-  if (state.weeklyPrize) {
-    const key = `${state.weeklyPrize.week}:${state.weeklyPrize.matchId}`;
-    if (key !== posted.weeklyKey) {
-      events.push({ type: "weekly", id: key, text: formatWeekly(state.weeklyPrize) });
-    }
-  }
   if (state.champion && state.champion !== posted.champion) {
     events.push({
       type: "champion",
@@ -171,12 +106,7 @@ export function composeBroadcasts(
     });
   }
 
-  // Append the predict CTA to every post.
-  const cta = predictCta();
-  return {
-    events: cta ? events.map((e) => ({ ...e, text: e.text + cta })) : events,
-    baseline,
-  };
+  return { events, baseline };
 }
 
 /** Apply one successfully-sent event to the posted record (immutably). */
@@ -187,10 +117,6 @@ export function applyEvent(
   switch (event.type) {
     case "result":
       return { ...posted, results: [...posted.results, event.id] };
-    case "buyback":
-      return { ...posted, buybacks: [...posted.buybacks, event.id] };
-    case "weekly":
-      return { ...posted, weeklyKey: event.id };
     case "champion":
       return { ...posted, champion: event.id };
   }
@@ -221,19 +147,14 @@ export async function broadcastPending(): Promise<void> {
   }
 
   try {
-    const [results, buybacks, weeklyPrize, champion, posted] =
-      await Promise.all([
-        kv.get<MatchResult[]>("match_results"),
-        kv.get<BuybackEntry[]>("buyback_history"),
-        kv.get<WeeklyPrize>("weekly_prize"),
-        kv.get<string>("champion"),
-        kv.get<PostedRecord>(POSTED_KEY),
-      ]);
+    const [results, champion, posted] = await Promise.all([
+      kv.get<MatchResult[]>("match_results"),
+      kv.get<string>("champion"),
+      kv.get<PostedRecord>(POSTED_KEY),
+    ]);
 
     const state: BroadcastState = {
       results: results ?? [],
-      buybacks: buybacks ?? [],
-      weeklyPrize: weeklyPrize ?? null,
       champion: champion ?? null,
     };
 
@@ -245,10 +166,9 @@ export async function broadcastPending(): Promise<void> {
       return;
     }
 
-    const button = predictButton();
     let current = posted;
     for (const event of events) {
-      const sent = await sendTelegramMessage(event.text, button);
+      const sent = await sendTelegramMessage(event.text);
       if (!sent) break; // stop; unsent events retry on the next trigger
       current = applyEvent(current, event);
       await kv.set(POSTED_KEY, current); // persist progress after each send

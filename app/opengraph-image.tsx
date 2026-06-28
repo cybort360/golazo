@@ -1,10 +1,10 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Golazo: Football Token Trading on Solana";
+export const alt = "Golazo: Make picks. Prove you know ball. Verify every result.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Branded share card on a top-down pitch background.
+// Branded share card — ink + neon lime prediction-league framing.
 export default function Image() {
   return new ImageResponse(
     (
@@ -17,31 +17,32 @@ export default function Image() {
           justifyContent: "space-between",
           padding: "72px",
           color: "white",
-          background: "linear-gradient(135deg, #166534 0%, #16a34a 100%)",
+          background: "#0a0a0a",
           fontFamily: "sans-serif",
           position: "relative",
         }}
       >
-        {/* pitch markings */}
+        {/* decorative pitch-circle accent */}
         <div
           style={{
             position: "absolute",
-            left: 600,
-            top: 0,
-            width: 2,
-            height: 630,
-            background: "rgba(255,255,255,0.18)",
+            right: 80,
+            top: 80,
+            width: 320,
+            height: 320,
+            borderRadius: 320,
+            border: "2px solid rgba(212,255,63,0.18)",
           }}
         />
         <div
           style={{
             position: "absolute",
-            left: 480,
-            top: 195,
-            width: 240,
-            height: 240,
-            borderRadius: 240,
-            border: "2px solid rgba(255,255,255,0.18)",
+            right: 140,
+            top: 140,
+            width: 200,
+            height: 200,
+            borderRadius: 200,
+            border: "1px solid rgba(212,255,63,0.10)",
           }}
         />
 
@@ -52,11 +53,11 @@ export default function Image() {
               width: 44,
               height: 44,
               borderRadius: 44,
-              background: "rgba(255,255,255,0.18)",
+              background: "#d4ff3f",
               display: "flex",
             }}
           />
-          <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: -1 }}>
+          <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: -1, color: "#d4ff3f" }}>
             GOLAZO
           </div>
         </div>
@@ -72,14 +73,15 @@ export default function Image() {
               maxWidth: 900,
             }}
           >
-            World Cup Token Trading on Solana
+            Make picks.{" "}
+            <span style={{ color: "#d4ff3f" }}>Prove you know ball.</span>
           </div>
-          <div style={{ fontSize: 32, color: "rgba(255,255,255,0.85)" }}>
-            48 nations. One champion. Holders split the prize pool.
+          <div style={{ fontSize: 32, color: "rgba(255,255,255,0.75)" }}>
+            Pick matches. Get TxLINE-verified results. Climb private leagues.
           </div>
         </div>
 
-        {/* footer */}
+        {/* footer chips */}
         <div
           style={{
             display: "flex",
@@ -93,21 +95,25 @@ export default function Image() {
             style={{
               padding: "8px 18px",
               borderRadius: 999,
-              background: "rgba(255,255,255,0.16)",
+              background: "rgba(212,255,63,0.15)",
+              border: "1px solid rgba(212,255,63,0.35)",
               fontWeight: 600,
+              color: "#d4ff3f",
             }}
           >
-            Live prize pool
+            Private leagues
           </div>
           <div
             style={{
               padding: "8px 18px",
               borderRadius: 999,
-              background: "rgba(255,255,255,0.16)",
+              background: "rgba(22,163,74,0.20)",
+              border: "1px solid rgba(22,163,74,0.40)",
               fontWeight: 600,
+              color: "#4ade80",
             }}
           >
-            On-chain buybacks
+            Verified results
           </div>
         </div>
       </div>
