@@ -11,13 +11,13 @@ export default function SiteFooter() {
               Join the Golazo community
             </h2>
             <p className="text-sm text-slate-500">
-              Live scores, predictions, and prize drops — first on Telegram and X.
+              Make picks, climb your league, and prove you know ball — first on Telegram and X.
             </p>
           </div>
           <SocialLinks variant="chip" />
         </section>
         <p className="mt-4 text-center text-xs text-slate-400">
-          Golazo · World Cup 2026 · on Solana
+          Golazo · Prove you know ball
         </p>
       </div>
     </footer>

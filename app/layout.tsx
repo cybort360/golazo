@@ -21,25 +21,23 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Golazo: Football Token Trading on Solana",
+    default: "Golazo: Prove You Know Ball",
     template: "%s · Golazo",
   },
   description:
-    "Trade World Cup team tokens on Solana. Champion holders split the prize pool.",
+    "Make picks. Prove you know ball. Verify every result. Free-to-play football prediction leagues with verified results.",
   applicationName: "Golazo",
   openGraph: {
     type: "website",
     siteName: "Golazo",
-    title: "Golazo: Football Token Trading on Solana",
-    description:
-      "Trade World Cup team tokens on Solana. Champion holders split the prize pool.",
+    title: "Golazo: Prove You Know Ball",
+    description: "Make picks. Prove you know ball. Verify every result.",
     url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Golazo: Football Token Trading on Solana",
-    description:
-      "Trade World Cup team tokens on Solana. Champion holders split the prize pool.",
+    title: "Golazo: Prove You Know Ball",
+    description: "Make picks. Prove you know ball. Verify every result.",
   },
 };
 
