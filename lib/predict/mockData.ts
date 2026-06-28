@@ -1,5 +1,5 @@
 import type {
-  Match, MatchTeam, League, ProofReceipt, PredictDataSource,
+  Match, MatchTeam, League, LeagueMember, GlobalLeaderboard, ProofReceipt, PredictDataSource,
 } from "@/lib/predict/types";
 
 // Sample clubs (mock). `ticker` is the 3-letter code shown in the avatar circle,
@@ -78,6 +78,28 @@ export const FIXTURE_LEAGUE: League = {
   ],
 };
 
+// Public global leaderboard (mock). Top players are global handles distinct from
+// the private-league members; "you" sits well outside the top, as is realistic.
+export const FIXTURE_GLOBAL_YOU: LeagueMember = {
+  rank: 142, userId: "jk", name: "You (Jordan)", initials: "JK", color: "#1e293b",
+  points: 1095, accuracy: 0.76, streak: 3, isYou: true,
+};
+
+export const FIXTURE_GLOBAL: GlobalLeaderboard = {
+  totalPlayers: 8432,
+  you: FIXTURE_GLOBAL_YOU,
+  top: [
+    { rank: 1, userId: "g1", name: "xG_Wizard", initials: "XW", color: "#f59e0b", points: 4820, accuracy: 0.91, streak: 21, isYou: false },
+    { rank: 2, userId: "g2", name: "ParkTheBus", initials: "PB", color: "#0ea5e9", points: 4655, accuracy: 0.89, streak: 14, isYou: false },
+    { rank: 3, userId: "g3", name: "TikiTaka_Tom", initials: "TT", color: "#10b981", points: 4490, accuracy: 0.88, streak: 9, isYou: false },
+    { rank: 4, userId: "g4", name: "ChaosMerchant", initials: "CM", color: "#a855f7", points: 4310, accuracy: 0.85, streak: 17, isYou: false },
+    { rank: 5, userId: "g5", name: "CleanSheetSue", initials: "CS", color: "#ef4444", points: 4180, accuracy: 0.87, streak: 5, isYou: false },
+    { rank: 6, userId: "g6", name: "UnderdogProphet", initials: "UP", color: "#14b8a6", points: 4025, accuracy: 0.83, streak: 11, isYou: false },
+    { rank: 7, userId: "g7", name: "GegenpressGav", initials: "GG", color: "#f97316", points: 3970, accuracy: 0.84, streak: 7, isYou: false },
+    { rank: 8, userId: "g8", name: "OffsideOracle", initials: "OO", color: "#6366f1", points: 3840, accuracy: 0.82, streak: 4, isYou: false },
+  ],
+};
+
 export const FIXTURE_RECEIPT: ProofReceipt = {
   pickId: "9f3a", predictionLabel: "Over 2.5 Goals", result: "WON",
   home: ABL, away: RVR, homeScore: 3, awayScore: 1, points: 50,
@@ -133,6 +155,7 @@ export const mockDataSource: PredictDataSource = {
   async getMatch(id) { return MATCHES.find((m) => m.id === id) ?? null; },
   async getMyLeagues() { return LEAGUES; },
   async getLeague(code) { return LEAGUES.find((l) => l.code === code) ?? null; },
+  async getGlobalLeaderboard() { return FIXTURE_GLOBAL; },
   async getRecentReceipts(limit = 10) { return RECEIPTS.slice(0, limit); },
   async getReceipt(pickId) { return RECEIPTS.find((r) => r.pickId === pickId) ?? null; },
 };

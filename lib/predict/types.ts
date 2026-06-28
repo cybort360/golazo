@@ -84,11 +84,20 @@ export interface League {
   members: LeagueMember[]; // sorted by rank asc
 }
 
+// Public, all-users ranking. Secondary to private leagues: shows the top of the
+// table plus the current player's own standing (which may sit outside the top).
+export interface GlobalLeaderboard {
+  totalPlayers: number;
+  you: LeagueMember;     // your standing, may be outside `top`
+  top: LeagueMember[];   // leading players, sorted by rank asc
+}
+
 export interface PredictDataSource {
   getMatches(): Promise<Match[]>;
   getMatch(id: string): Promise<Match | null>;
   getMyLeagues(): Promise<League[]>;
   getLeague(code: string): Promise<League | null>;
+  getGlobalLeaderboard(): Promise<GlobalLeaderboard>;
   getRecentReceipts(limit?: number): Promise<ProofReceipt[]>;
   getReceipt(pickId: string): Promise<ProofReceipt | null>;
 }
