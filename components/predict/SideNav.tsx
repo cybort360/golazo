@@ -42,8 +42,12 @@ export default function SideNav() {
         })}
       </nav>
       <div className="mt-auto rounded-[13px] border border-[#262626] bg-[#171717] p-3.5">
-        <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">Playing as</div>
-        <div className="mt-1 text-sm font-extrabold">Guest · Jordan</div>
+        <Link href="/u/jordan" className="block">
+          <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">Playing as</div>
+          <div className="mt-1 flex items-center justify-between text-sm font-extrabold">
+            Guest · Jordan <span className="text-slate-500">›</span>
+          </div>
+        </Link>
         <button
           type="button"
           className="mt-2.5 w-full rounded-[9px] bg-neon py-2 text-center text-xs font-extrabold text-ink"

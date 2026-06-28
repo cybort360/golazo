@@ -92,12 +92,34 @@ export interface GlobalLeaderboard {
   top: LeagueMember[];   // leading players, sorted by rank asc
 }
 
+// Public, shareable player profile derived from prediction history.
+export interface ProfileStats {
+  handle: string;
+  displayName: string;
+  initials: string;
+  color: string;
+  tagline: string;
+  globalRank: number | null;
+  accuracy: number;        // 0..1
+  currentStreak: number;
+  totalPicks: number;
+  wins: number;
+  points: number;
+  favoriteMarket: string;  // "Total goals"
+  biggestUpset: {
+    label: string;         // "Chaos · Goal after 80'"
+    detail: string;        // "WAN 2–0 CNT"
+    points: number;
+  } | null;
+}
+
 export interface PredictDataSource {
   getMatches(): Promise<Match[]>;
   getMatch(id: string): Promise<Match | null>;
   getMyLeagues(): Promise<League[]>;
   getLeague(code: string): Promise<League | null>;
   getGlobalLeaderboard(): Promise<GlobalLeaderboard>;
+  getProfile(): Promise<ProfileStats>;
   getRecentReceipts(limit?: number): Promise<ProofReceipt[]>;
   getReceipt(pickId: string): Promise<ProofReceipt | null>;
 }

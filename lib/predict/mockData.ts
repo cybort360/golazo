@@ -1,6 +1,7 @@
 import type {
   Match, MatchTeam, League, LeagueMember, GlobalLeaderboard, ProofReceipt, PredictDataSource,
 } from "@/lib/predict/types";
+import { buildProfile } from "@/lib/predict/profile";
 
 // Sample clubs (mock). `ticker` is the 3-letter code shown in the avatar circle,
 // `color` is that circle's background.
@@ -156,6 +157,16 @@ export const mockDataSource: PredictDataSource = {
   async getMyLeagues() { return LEAGUES; },
   async getLeague(code) { return LEAGUES.find((l) => l.code === code) ?? null; },
   async getGlobalLeaderboard() { return FIXTURE_GLOBAL; },
+  async getProfile() {
+    return buildProfile(RECEIPTS, {
+      handle: "jordan",
+      displayName: "Jordan",
+      initials: "JK",
+      color: "#1e293b",
+      tagline: "Prove you know ball.",
+      globalRank: FIXTURE_GLOBAL_YOU.rank,
+    });
+  },
   async getRecentReceipts(limit = 10) { return RECEIPTS.slice(0, limit); },
   async getReceipt(pickId) { return RECEIPTS.find((r) => r.pickId === pickId) ?? null; },
 };

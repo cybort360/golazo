@@ -73,7 +73,7 @@ export default function HomeDashboard({
         <div className="relative">
           <div className="flex items-center justify-between">
             <div className="text-[22px] font-black tracking-[-0.04em]">GOLAZO</div>
-            <span className="flex h-[36px] w-[36px] items-center justify-center rounded-full border-[1.5px] border-[#334155] bg-[#1e293b] text-[13px] font-extrabold text-neon">JK</span>
+            <Link href="/u/jordan" aria-label="Your profile" className="flex h-[36px] w-[36px] items-center justify-center rounded-full border-[1.5px] border-[#334155] bg-[#1e293b] text-[13px] font-extrabold text-neon">JK</Link>
           </div>
           <h1 className="mt-5 text-[40px] font-black leading-[1.0] tracking-[-0.045em]">
             Make picks.<br />Prove you<br />know ball. ⚡
