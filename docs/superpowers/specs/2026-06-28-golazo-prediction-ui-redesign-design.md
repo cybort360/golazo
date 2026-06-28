@@ -135,19 +135,44 @@ The retention + viral hub.
 
 ---
 
-## 5. Removing the token UX (task 53)
+## 5. Removing the token product (task 53)
 
-Pull the token-trading product out of the **core fan experience** without deleting
-the code (it may return as compliance-gated Web3 rewards, PRD §11 Phase 3–4):
+**Decision (2026-06-28): delete the token product entirely from the codebase.** Not
+dormant — gone. It carries weight (extra deps, KV keys, RPC/Helius wiring, admin
+surface) the prediction product doesn't need, and a clean tree is easier to reason
+about. If compliance-gated Web3 rewards return later (PRD §11 Phase 3–4, P1-22),
+they get built fresh against the new product, and the old implementation remains
+recoverable in git history.
 
+Replace, then delete:
 - `app/page.tsx` — replace the token homepage (GolazoCard, Top Movers, BurnsFeed,
   StatsStrip, group token tables) with the hybrid dashboard (§4.1).
-- Remove buy/trade as a first action: $GOLAZO buy buttons, Jupiter links, token
-  `[ticker]` buy CTAs out of the primary path; `SiteNav`/`SiteFooter` cleanup.
-- Demote `/prize-pool`, burns feed, and token pages from primary nav.
-- **Keep, but dormant:** `lib/burns*`, `lib/buyback*`, `lib/burnToken*`,
-  `constants/tokens*`, the admin Burn panel, and the Solana wallet-adapter plumbing.
-  Do not delete — they are reused by P1-22 (wallet mode) later.
+- Remove buy/trade entirely: $GOLAZO buy buttons, Jupiter links, token `[ticker]`
+  buy CTAs; `SiteNav`/`SiteFooter` cleanup.
+
+**Delete (code + routes + assets):**
+- Pages/routes: `app/token/[ticker]/*`, `app/prize-pool/*`, and the token/burn/
+  buyback/snapshot/weekly-prize/stats API routes under `app/api/*`.
+- Libs: `lib/burns*`, `lib/buyback*`, `lib/burnToken*`, `lib/solanaSupply*`,
+  `lib/snapshot*`, `lib/fees*`, `lib/dexscreener*`, `lib/price-history*`,
+  `lib/weeklyPrize*`, `lib/helius*`, `lib/golazoBalance*`, `lib/golazoPay*`,
+  `lib/golazoTransfer*` (audit each for non-token reuse before removing).
+- Constants: `constants/tokens.ts`; strip token fields (`tokenAddress`,
+  `meteoraUrl`, `axiomUrl`, `listed`) from `constants/teams.ts`.
+- Components: `BurnsFeed`, `TokenLogo`, `StatsStrip`, `CopyAddress`, `admin/BurnPanel`
+  and token columns/CTAs in `GroupTable` / `MatchBanner`.
+- Hooks: `useBurns`, `useBuybackHistory`, `useTokenPrice`, `useTokenAddresses`,
+  `usePrizePool`, `useWeeklyPrize`.
+- Admin: remove token-address, burn, snapshot, buyback, weekly-prize sections.
+- Scripts: `scripts/launch-tokens.ts`, `scripts/snapshot.ts`.
+- Dependencies: drop the `@solana/*` wallet-adapter + web3 packages, `tweetnacl`,
+  and any token-only KV usage once nothing imports them. (Re-evaluate any wallet-
+  signature code still used by admin/predict eligibility — eligibility-by-token-
+  holding is also removed since the product is free-to-play.)
+
+This is a large, cross-cutting deletion; it will be sequenced carefully in the
+implementation plan with typecheck/test gates after each removal so the app stays
+green.
 
 ## 6. Reframing identity & copy (task 54)
 
@@ -199,3 +224,4 @@ Real-money wagering is out of scope entirely for the MVP (free-to-play, PRD §11
 | Proof receipt | Simple dark shareable fan card |
 | Advanced proof | Inline expand (default), not a separate page |
 | Leaderboard | Own row pinned/highlighted; This week / All time; accuracy + streak shown |
+| Token product | Deleted entirely from the codebase (not kept dormant); rebuilt fresh if it returns |
