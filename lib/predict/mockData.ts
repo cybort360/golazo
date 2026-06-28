@@ -46,11 +46,11 @@ const MATCHES: Match[] = [
 export const FIXTURE_LEAGUE: League = {
   code: "GLZ-4F2K", name: "Sunday League", yourRank: 3, memberCount: 12,
   members: [
-    { rank: 1, userId: "mk", name: "Mikey", initials: "MK", points: 1240, accuracy: 0.82, streak: 6, isYou: false },
-    { rank: 2, userId: "sr", name: "Sara", initials: "SR", points: 1180, accuracy: 0.79, streak: 4, isYou: false },
-    { rank: 3, userId: "jk", name: "You (Jordan)", initials: "JK", points: 1095, accuracy: 0.76, streak: 3, isYou: true },
-    { rank: 4, userId: "dv", name: "Dav", initials: "DV", points: 1010, accuracy: 0.71, streak: 2, isYou: false },
-    { rank: 5, userId: "pt", name: "Pat", initials: "PT", points: 940, accuracy: 0.68, streak: 0, isYou: false },
+    { rank: 1, userId: "mk", name: "Mikey", initials: "MK", color: "#f59e0b", points: 1240, accuracy: 0.82, streak: 6, isYou: false },
+    { rank: 2, userId: "sr", name: "Sara", initials: "SR", color: "#0ea5e9", points: 1180, accuracy: 0.79, streak: 4, isYou: false },
+    { rank: 3, userId: "jk", name: "You (Jordan)", initials: "JK", color: "#1e293b", points: 1095, accuracy: 0.76, streak: 3, isYou: true },
+    { rank: 4, userId: "dv", name: "Dav", initials: "DV", color: "#10b981", points: 1010, accuracy: 0.71, streak: 2, isYou: false },
+    { rank: 5, userId: "pt", name: "Pat", initials: "PT", color: "#ef4444", points: 940, accuracy: 0.68, streak: 0, isYou: false },
   ],
 };
 
@@ -63,7 +63,16 @@ export const FIXTURE_RECEIPT: ProofReceipt = {
   settledAtMs: Date.UTC(2026, 5, 28, 17, 42, 0), txUrl: "https://solscan.io/tx/9f3a",
 };
 
-const RECEIPTS: ProofReceipt[] = [FIXTURE_RECEIPT];
+const FIXTURE_RECEIPT_2: ProofReceipt = {
+  pickId: "7c2b", predictionLabel: "Chaos · Goal after 80'", result: "WON",
+  home: WAN, away: CNT, homeScore: 2, awayScore: 0, points: 100,
+  fixtureId: "TXL-30-WANCNT", matchState: "FT", marketLabel: "chaos · late_goal",
+  statKeys: "late_goal=1", payloadRef: "0x7c2b…a18d",
+  merkleStatus: "valid", onChainStatus: "valid",
+  settledAtMs: Date.UTC(2026, 5, 27, 16, 10, 0), txUrl: "https://solscan.io/tx/7c2b",
+};
+
+const RECEIPTS: ProofReceipt[] = [FIXTURE_RECEIPT, FIXTURE_RECEIPT_2];
 const LEAGUES: League[] = [FIXTURE_LEAGUE];
 
 export const mockDataSource: PredictDataSource = {

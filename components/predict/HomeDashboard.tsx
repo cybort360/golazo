@@ -18,7 +18,7 @@ export default function HomeDashboard({
   const league = leagues[0] ?? null;
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
+    <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8 lg:hidden">
       {/* ink hero */}
       <section className="relative overflow-hidden rounded-3xl bg-ink px-6 pb-7 pt-5 text-white">
         <div className="pointer-events-none absolute -bottom-12 -right-7 select-none text-[130px] font-black opacity-[0.06]">⚽</div>

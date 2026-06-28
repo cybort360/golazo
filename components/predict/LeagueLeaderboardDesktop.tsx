@@ -1,0 +1,76 @@
+import type { League, LeagueMember } from "@/lib/predict/types";
+import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
+
+function Row({ member, index }: { member: LeagueMember; index: number }) {
+  const you = member.isYou;
+  return (
+    <div
+      className={
+        you
+          ? "flex items-center gap-4 rounded-2xl bg-white px-5 py-4 shadow-[0_0_0_2px_#d4ff3f]"
+          : "flex items-center gap-4 border-b border-[#eef2f7] px-5 py-4 last:border-0"
+      }
+    >
+      <span className={"w-5 text-[15px] font-black tabular-nums " + (you ? "text-neon" : index >= 4 ? "text-slate-400" : "text-ink")}>
+        {member.rank}
+      </span>
+      {you ? (
+        <span className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] border-neon bg-[#1e293b] text-[12px] font-extrabold text-neon">{member.initials}</span>
+      ) : (
+        <span className="flex h-[34px] w-[34px] items-center justify-center rounded-full text-[12px] font-extrabold text-white" style={{ background: member.color }}>{member.initials}</span>
+      )}
+      <span className="flex-1 truncate text-[15px] font-extrabold text-ink">{member.name}</span>
+      <span className="w-24 text-right text-[14px] font-bold tabular-nums text-slate-600">{formatAccuracy(member.accuracy)}</span>
+      <span className="w-20 text-right text-[14px] font-bold tabular-nums text-slate-600">🔥{member.streak}</span>
+      <span className="w-20 text-right text-[15px] font-black tabular-nums text-ink">{formatPoints(member.points)}</span>
+    </div>
+  );
+}
+
+export default function LeagueLeaderboardDesktop({ league }: { league: League }) {
+  return (
+    <div className="hidden lg:block">
+      {/* ink banner */}
+      <div className="bg-ink px-8 py-7 text-white">
+        <div className="flex items-end justify-between gap-6">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Private league</div>
+            <div className="mt-1 text-[28px] font-black tracking-[-0.03em]">{league.name}</div>
+            <div className="mt-1 text-[13px] font-semibold text-slate-400">{league.memberCount} players · season 2 · week 31</div>
+          </div>
+          <div className="flex items-center gap-5">
+            <div className="text-right">
+              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Your rank</div>
+              <div className="text-[34px] font-black leading-none tracking-[-0.04em] tabular-nums">#{league.yourRank}</div>
+            </div>
+            <div className="rounded-[13px] border border-dashed border-[#333] bg-[#171717] px-4 py-3">
+              <div className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">Invite code</div>
+              <div className="text-[18px] font-black tracking-[0.04em] tabular-nums text-neon">{league.code}</div>
+              <button type="button" className="mt-1.5 w-full rounded-[9px] bg-neon py-1.5 text-center text-[12px] font-black text-ink">Share invite ▸</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* toggle + column headers */}
+      <div className="flex items-center justify-between px-8 pb-2 pt-6">
+        <div className="flex rounded-xl bg-[#e9eef4] p-1">
+          <button type="button" className="rounded-[9px] bg-white px-5 py-2 text-[13px] font-extrabold text-ink shadow-card">This week</button>
+          <button type="button" className="px-5 py-2 text-[13px] font-bold text-slate-500">All time</button>
+        </div>
+        <div className="flex items-center text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+          <span className="w-24 text-right">Accuracy</span>
+          <span className="w-20 text-right">Streak</span>
+          <span className="w-20 text-right">Points</span>
+        </div>
+      </div>
+
+      {/* rows */}
+      <div className="px-8 pb-8">
+        <div className="rounded-2xl">
+          {league.members.map((m, i) => <Row key={m.userId} member={m} index={i} />)}
+        </div>
+      </div>
+    </div>
+  );
+}

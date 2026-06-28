@@ -69,6 +69,7 @@ export interface LeagueMember {
   userId: string;
   name: string;
   initials: string;
+  color: string; // avatar circle background (hex)
   points: number;
   accuracy: number; // 0..1
   streak: number;

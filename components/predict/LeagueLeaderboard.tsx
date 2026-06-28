@@ -1,10 +1,7 @@
 import type { League, LeagueMember } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 
-// Avatar colors for non-"you" rows, cycled by position.
-const AVATAR_COLORS = ["#f59e0b", "#0ea5e9", "#10b981", "#ef4444", "#8b5cf6", "#ec4899"];
-
-function Avatar({ member, index }: { member: LeagueMember; index: number }) {
+function Avatar({ member }: { member: LeagueMember }) {
   if (member.isYou) {
     return (
       <span className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-[1.5px] border-neon bg-[#1e293b] text-[12px] font-extrabold text-neon">
@@ -15,7 +12,7 @@ function Avatar({ member, index }: { member: LeagueMember; index: number }) {
   return (
     <span
       className="flex h-[34px] w-[34px] items-center justify-center rounded-full text-[12px] font-extrabold text-white"
-      style={{ background: AVATAR_COLORS[index % AVATAR_COLORS.length] }}
+      style={{ background: member.color }}
     >
       {member.initials}
     </span>
@@ -67,7 +64,7 @@ export default function LeagueLeaderboard({ league }: { league: League }) {
 
       {/* rows */}
       <div className="px-4 pb-5 pt-1.5">
-        {league.members.map((m, i) => (
+        {league.members.map((m) => (
           <div
             key={m.userId}
             data-testid={`row-${m.userId}`}
@@ -79,7 +76,7 @@ export default function LeagueLeaderboard({ league }: { league: League }) {
             }
           >
             <span className={"w-5 text-[15px] font-black tabular-nums " + (m.isYou ? "text-neon" : "text-ink")}>{m.rank}</span>
-            <Avatar member={m} index={i} />
+            <Avatar member={m} />
             <div className="min-w-0 flex-1">
               <div className={"truncate text-sm font-extrabold " + (m.isYou ? "text-white" : "text-ink")}>{m.name}</div>
               <div className={"text-[11px] font-semibold " + (m.isYou ? "text-slate-400" : "text-slate-500")}>
