@@ -8,6 +8,7 @@ const ITEMS = [
   { href: "/", emoji: "🏠", label: "Home" },
   { href: "/matches", emoji: "⚽", label: "Matches" },
   { href: "/leagues", emoji: "🏆", label: "Leagues" },
+  { href: "/pools", emoji: "🎁", label: "Pools" },
   { href: "/receipts", emoji: "🧾", label: "Receipts" },
 ];
 
