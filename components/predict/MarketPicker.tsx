@@ -13,8 +13,8 @@ export default function MarketPicker({
     return (
       <div className="relative overflow-hidden rounded-[18px] bg-ink p-4 shadow-[0_8px_24px_rgba(10,10,10,0.28)]">
         <div
-          className="glz-shimmer pointer-events-none absolute inset-0"
-          style={{ background: "linear-gradient(115deg,transparent 0%,rgba(212,255,63,0.10) 50%,transparent 100%)" }}
+          className="glz-glow pointer-events-none absolute inset-0"
+          style={{ background: "linear-gradient(105deg,transparent 25%,rgba(212,255,63,0.14) 50%,transparent 75%)" }}
         />
         <div className="relative">
           <div className="flex items-center justify-between">
