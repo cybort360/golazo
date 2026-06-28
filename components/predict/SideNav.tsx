@@ -10,6 +10,7 @@ const ITEMS = [
   { href: "/matches", label: "Matches", icon: null },
   { href: "/leagues", label: "My leagues", icon: null },
   { href: "/leaderboard", label: "Leaderboard", icon: null },
+  { href: "/pools", label: "Prize pools", icon: null },
   { href: "/receipts", label: "Receipts", icon: null },
 ];
 

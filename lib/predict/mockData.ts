@@ -1,5 +1,5 @@
 import type {
-  Match, MatchTeam, League, LeagueMember, GlobalLeaderboard, ProofReceipt, PredictDataSource,
+  Match, MatchTeam, League, LeagueMember, GlobalLeaderboard, SponsoredPool, ProofReceipt, PredictDataSource,
 } from "@/lib/predict/types";
 import { buildProfile } from "@/lib/predict/profile";
 
@@ -101,6 +101,43 @@ export const FIXTURE_GLOBAL: GlobalLeaderboard = {
   ],
 };
 
+// Sponsored / creator pools (mock). Prizes are non-cash only — merch, access,
+// perks — to stay inside the compliance posture (no real-money wagering).
+const DAY = 24 * HOUR;
+
+export const FIXTURE_POOL: SponsoredPool = {
+  id: "megapool", name: "Matchday Megapool", sponsor: "BootRoom FC", sponsorColor: "#dc2626",
+  prize: "Signed match shirt + stadium tour for two", prizeKind: "merch",
+  description: "Call this weekend's six headline fixtures. Top of the pool by Sunday night takes the kit.",
+  entrants: 3240, capacity: null, closesAtMs: Date.now() + 2 * DAY,
+  joined: true, yourRank: 58, featured: true, creator: false,
+};
+
+export const FIXTURE_POOLS: SponsoredPool[] = [
+  FIXTURE_POOL,
+  {
+    id: "chaos-cup", name: "Chaos Cup", sponsor: "Golazo Labs", sponsorColor: "#0a0a0a",
+    prize: "Season-long Golazo Pro access", prizeKind: "access",
+    description: "Chaos picks only. Highest 2× multiplier streak wins a year of Pro.",
+    entrants: 1190, capacity: 5000, closesAtMs: Date.now() + 5 * DAY,
+    joined: false, yourRank: null, featured: false, creator: false,
+  },
+  {
+    id: "derby-day", name: "Derby Day Special", sponsor: "Terrace Threads", sponsorColor: "#7c3aed",
+    prize: "Limited-edition derby scarf bundle", prizeKind: "merch",
+    description: "One fixture, one chance. Nail the derby scoreline for the drop.",
+    entrants: 880, capacity: 2000, closesAtMs: Date.now() + 18 * HOUR,
+    joined: false, yourRank: null, featured: false, creator: false,
+  },
+  {
+    id: "sunday-creators", name: "The Gaffers' Invitational", sponsor: "Run by @mikey", sponsorColor: "#f59e0b",
+    prize: "Bragging rights + custom league trophy", prizeKind: "perk",
+    description: "Creator-run pool from the Sunday League crew. Winner picks next week's chaos question.",
+    entrants: 42, capacity: 50, closesAtMs: Date.now() + 3 * DAY,
+    joined: false, yourRank: null, featured: false, creator: true,
+  },
+];
+
 export const FIXTURE_RECEIPT: ProofReceipt = {
   pickId: "9f3a", predictionLabel: "Over 2.5 Goals", result: "WON",
   home: ABL, away: RVR, homeScore: 3, awayScore: 1, points: 50,
@@ -157,6 +194,7 @@ export const mockDataSource: PredictDataSource = {
   async getMyLeagues() { return LEAGUES; },
   async getLeague(code) { return LEAGUES.find((l) => l.code === code) ?? null; },
   async getGlobalLeaderboard() { return FIXTURE_GLOBAL; },
+  async getSponsoredPools() { return FIXTURE_POOLS; },
   async getProfile() {
     return buildProfile(RECEIPTS, {
       handle: "jordan",

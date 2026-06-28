@@ -92,6 +92,28 @@ export interface GlobalLeaderboard {
   top: LeagueMember[];   // leading players, sorted by rank asc
 }
 
+// Sponsored / creator-run free-to-play pool. Prizes are strictly non-cash
+// (merch / access / perks) — never real-money wagering — per the compliance
+// posture. `creator` marks pools run by a community member vs a brand sponsor.
+export type PrizeKind = "merch" | "access" | "perk";
+
+export interface SponsoredPool {
+  id: string;
+  name: string;
+  sponsor: string;
+  sponsorColor: string;   // brand chip background (hex)
+  prize: string;          // "Signed match shirt + stadium tour"
+  prizeKind: PrizeKind;
+  description: string;
+  entrants: number;
+  capacity: number | null;
+  closesAtMs: number;
+  joined: boolean;
+  yourRank: number | null;
+  featured: boolean;
+  creator: boolean;       // true = creator-run, false = brand-sponsored
+}
+
 // Reputation badge derived from prediction history. `progress` drives the
 // "x / target" hint shown on locked badges (null when not applicable).
 export interface Badge {
@@ -132,6 +154,7 @@ export interface PredictDataSource {
   getLeague(code: string): Promise<League | null>;
   getGlobalLeaderboard(): Promise<GlobalLeaderboard>;
   getProfile(): Promise<ProfileStats>;
+  getSponsoredPools(): Promise<SponsoredPool[]>;
   getRecentReceipts(limit?: number): Promise<ProofReceipt[]>;
   getReceipt(pickId: string): Promise<ProofReceipt | null>;
 }

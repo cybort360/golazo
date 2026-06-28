@@ -29,6 +29,13 @@ export default function LeaguesPage() {
           <span>🌍 Global leaderboard</span>
           <span className="text-slate-400">›</span>
         </Link>
+        <Link
+          href="/pools"
+          className="flex items-center justify-between rounded-2xl border border-[#e2e8f0] bg-white px-4 py-3.5 text-sm font-bold shadow-card hover:border-slate-300"
+        >
+          <span>🏆 Prize pools</span>
+          <span className="text-slate-400">›</span>
+        </Link>
         <div className="flex flex-col gap-2">
           {leagues.map((l) => (
             <Link
