@@ -77,6 +77,11 @@ export default function ProfileScreen({ profile }: { profile: ProfileStats }) {
         {/* badges */}
         <BadgeShelf badges={profile.badges} />
 
+        <Link href="/wallet" className="flex items-center justify-between rounded-2xl border border-[#e2e8f0] bg-white px-4 py-3.5 text-sm font-bold shadow-card">
+          <span>◎ Wallet &amp; on-chain rewards</span>
+          <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-slate-400">Preview</span>
+        </Link>
+
         <Link href="/receipts" className="block rounded-2xl border border-[#e2e8f0] bg-white px-4 py-3.5 text-center text-sm font-bold text-slate-600 shadow-card">
           View verified history ▸
         </Link>

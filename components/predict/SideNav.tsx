@@ -12,6 +12,7 @@ const ITEMS = [
   { href: "/leaderboard", label: "Leaderboard", icon: null },
   { href: "/pools", label: "Prize pools", icon: null },
   { href: "/receipts", label: "Receipts", icon: null },
+  { href: "/wallet", label: "Wallet", icon: null },
 ];
 
 export default function SideNav() {

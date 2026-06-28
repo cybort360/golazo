@@ -114,6 +114,29 @@ export interface SponsoredPool {
   creator: boolean;       // true = creator-run, false = brand-sponsored
 }
 
+// Wallet mode (compliance-gated PREVIEW). Optional, opt-in connection for
+// wallet-based / on-chain rewards in supported jurisdictions only. This is UI
+// scaffolding on the mock seam — no real wallet adapter and no fund movement;
+// real activation is gated behind legal/jurisdiction sign-off.
+export type WalletRewardStatus = "claimable" | "claimed" | "pending";
+
+export interface WalletReward {
+  id: string;
+  label: string;       // "Chaos Cup — season Pro access"
+  source: string;      // pool / league it came from
+  amount: string | null; // "1,000 $GOLAZO" for token rewards, else null
+  isToken: boolean;    // on-chain token reward (launches on Meteora)
+  status: WalletRewardStatus;
+}
+
+export interface WalletState {
+  eligibleRegion: boolean; // jurisdiction gate
+  connected: boolean;
+  address: string | null;  // truncated display address, e.g. "7xKX…9fQ2"
+  network: string;         // "Solana"
+  rewards: WalletReward[];
+}
+
 // Reputation badge derived from prediction history. `progress` drives the
 // "x / target" hint shown on locked badges (null when not applicable).
 export interface Badge {
@@ -155,6 +178,7 @@ export interface PredictDataSource {
   getGlobalLeaderboard(): Promise<GlobalLeaderboard>;
   getProfile(): Promise<ProfileStats>;
   getSponsoredPools(): Promise<SponsoredPool[]>;
+  getWalletState(): Promise<WalletState>;
   getRecentReceipts(limit?: number): Promise<ProofReceipt[]>;
   getReceipt(pickId: string): Promise<ProofReceipt | null>;
 }

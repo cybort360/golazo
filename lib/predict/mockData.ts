@@ -1,5 +1,5 @@
 import type {
-  Match, MatchTeam, League, LeagueMember, GlobalLeaderboard, SponsoredPool, ProofReceipt, PredictDataSource,
+  Match, MatchTeam, League, LeagueMember, GlobalLeaderboard, SponsoredPool, WalletState, ProofReceipt, PredictDataSource,
 } from "@/lib/predict/types";
 import { buildProfile } from "@/lib/predict/profile";
 
@@ -138,6 +138,20 @@ export const FIXTURE_POOLS: SponsoredPool[] = [
   },
 ];
 
+// Wallet mode (mock, PREVIEW). Starts disconnected; region eligible so the
+// connect flow is previewable. Token rewards launch on Meteora.
+export const FIXTURE_WALLET: WalletState = {
+  eligibleRegion: true,
+  connected: false,
+  address: null,
+  network: "Solana",
+  rewards: [
+    { id: "chaos-cup", label: "Chaos Cup — season Pro access", source: "Chaos Cup", amount: null, isToken: false, status: "claimable" },
+    { id: "glz-drop", label: "Weekly streak token drop", source: "Global leaderboard", amount: "1,000 $GOLAZO", isToken: true, status: "claimable" },
+    { id: "megapool", label: "Matchday Megapool — entry confirmed", source: "Matchday Megapool", amount: null, isToken: false, status: "pending" },
+  ],
+};
+
 export const FIXTURE_RECEIPT: ProofReceipt = {
   pickId: "9f3a", predictionLabel: "Over 2.5 Goals", result: "WON",
   home: ABL, away: RVR, homeScore: 3, awayScore: 1, points: 50,
@@ -195,6 +209,7 @@ export const mockDataSource: PredictDataSource = {
   async getLeague(code) { return LEAGUES.find((l) => l.code === code) ?? null; },
   async getGlobalLeaderboard() { return FIXTURE_GLOBAL; },
   async getSponsoredPools() { return FIXTURE_POOLS; },
+  async getWalletState() { return FIXTURE_WALLET; },
   async getProfile() {
     return buildProfile(RECEIPTS, {
       handle: "jordan",

@@ -82,9 +82,15 @@ export default function ProfileDesktop({ profile }: { profile: ProfileStats }) {
           <BadgeShelf badges={profile.badges} />
         </div>
 
-        <Link href="/receipts" className="mt-6 inline-block text-[13px] font-bold text-slate-500 hover:text-ink">
-          View verified history ▸
-        </Link>
+        <div className="mt-6 flex items-center gap-5">
+          <Link href="/wallet" className="inline-flex items-center gap-2 rounded-full border border-[#e2e8f0] bg-white px-5 py-2.5 text-[13px] font-bold text-ink shadow-card hover:bg-slate-50">
+            ◎ Wallet &amp; on-chain rewards
+            <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-slate-400">Preview</span>
+          </Link>
+          <Link href="/receipts" className="text-[13px] font-bold text-slate-500 hover:text-ink">
+            View verified history ▸
+          </Link>
+        </div>
       </div>
     </div>
   );
