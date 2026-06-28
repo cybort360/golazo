@@ -64,3 +64,6 @@ golazo-launch.txt
 
 # downloaded launch flag assets — local only, regenerable, never pushed
 /flags/
+
+# Visual brainstorming companion
+.superpowers/
