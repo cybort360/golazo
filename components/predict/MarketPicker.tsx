@@ -13,7 +13,7 @@ export default function MarketPicker({
   return (
     <div className={hero ? "rounded-2xl bg-ink p-3" : ""}>
       <div className={`mb-1.5 text-[10px] font-black uppercase tracking-widest ${hero ? "text-neon" : "text-slate-500"}`}>
-        {hero ? "⚡ " : ""}{market.title}
+        {hero && <span>⚡ </span>}{market.title}
       </div>
       {market.question && (
         <div className="mb-2 text-sm font-extrabold text-white">{market.question}</div>
