@@ -21,7 +21,7 @@ export default function MatchPage({ params }: { params: { id: string } }) {
   return (
     <>
       {/* mobile (<lg) */}
-      <div className="mx-auto max-w-md px-4 py-6 lg:hidden">
+      <div className="lg:hidden">
         <MatchPickScreen match={match} />
       </div>
       {/* desktop (lg+) */}

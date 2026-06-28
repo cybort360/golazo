@@ -34,9 +34,9 @@ export default function MatchPickScreen({ match }: { match: Match }) {
   const showLock = !finished && (remain === null || remain > 0);
 
   return (
-    <div className="mx-auto max-w-md overflow-hidden rounded-3xl border border-[#e2e8f0] bg-[#f8fafc] shadow-card-md">
-      {/* ink header */}
-      <div className="bg-ink px-5 pb-5 pt-4 text-white">
+    <div>
+      {/* ink header — full bleed to the top + edges */}
+      <div className="bg-ink px-5 pb-5 pt-5 text-white">
         <div className="flex items-center justify-between text-[13px] font-bold text-slate-400">
           <span>‹ Back</span>
           {liveLabel && (
