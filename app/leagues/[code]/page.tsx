@@ -18,7 +18,7 @@ export default function LeaguePage({ params }: { params: { code: string } }) {
   return (
     <>
       {/* mobile (<lg) */}
-      <div className="px-4 py-6 lg:hidden">
+      <div className="pb-6 lg:hidden">
         <LeagueLeaderboard league={league} />
       </div>
       {/* desktop (lg+) */}

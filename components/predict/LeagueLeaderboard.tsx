@@ -21,9 +21,9 @@ function Avatar({ member }: { member: LeagueMember }) {
 
 export default function LeagueLeaderboard({ league }: { league: League }) {
   return (
-    <div className="mx-auto max-w-md overflow-hidden rounded-3xl border border-[#e2e8f0] bg-[#f8fafc] shadow-card-md">
+    <div className="bg-[#f8fafc]">
       {/* ink header */}
-      <div className="bg-ink px-5 pb-5 pt-4 text-white">
+      <div className="bg-ink px-5 pb-5 pt-5 text-white">
         <div className="flex items-center justify-between text-[13px] font-bold text-slate-400">
           <span>‹ Leagues</span>
           <span>⚙</span>
@@ -31,7 +31,7 @@ export default function LeagueLeaderboard({ league }: { league: League }) {
         <div className="mt-3.5 flex items-end justify-between">
           <div>
             <div className="text-2xl font-black tracking-[-0.03em]">{league.name}</div>
-            <div className="mt-0.5 text-xs font-semibold text-slate-400">{league.memberCount} players</div>
+            <div className="mt-0.5 text-xs font-semibold text-slate-400">{league.memberCount} players · season 2</div>
           </div>
           <div className="text-right">
             <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-neon">Your rank</div>

@@ -1,19 +1,67 @@
 import Link from "next/link";
 import type { Match, League, ProofReceipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
-import MatchListItem from "@/components/predict/MatchListItem";
+import TeamAvatar from "@/components/predict/TeamAvatar";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <div className="text-[11px] font-black uppercase tracking-[0.13em] text-ink">{children}</div>;
 }
 
+function kickoffTime(ms: number): string {
+  return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).replace(/\s?[AP]M$/i, "");
+}
+
+function LiveCard({ match }: { match: Match }) {
+  return (
+    <div className="rounded-2xl border border-[#e2e8f0] bg-white p-3.5 shadow-card">
+      <div className="flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-1 text-[10px] font-extrabold text-white">
+          <span className="glz-blink h-1.5 w-1.5 rounded-full bg-neon" />LIVE {match.minute}&apos;
+        </span>
+        <span className="text-[11px] font-semibold text-slate-400">{match.competition} · {match.round}</span>
+      </div>
+      <div className="mt-2.5 flex items-center justify-between">
+        <div className="flex flex-1 items-center gap-2.5">
+          <TeamAvatar team={match.home} size={30} />
+          <span className="text-[14px] font-bold text-ink">{match.home.name}</span>
+        </div>
+        <div className="px-2 text-[22px] font-black tabular-nums tracking-[-0.03em] text-ink">{match.homeScore}<span className="text-slate-300">–</span>{match.awayScore}</div>
+        <div className="flex flex-1 items-center justify-end gap-2.5">
+          <span className="text-[14px] font-bold text-ink">{match.away.name}</span>
+          <TeamAvatar team={match.away} size={30} />
+        </div>
+      </div>
+      <div className="mt-3 flex gap-2">
+        <Link href={`/match/${match.id}`} className="flex-1 rounded-[11px] bg-neon py-2.5 text-center text-[13px] font-extrabold text-ink">Pick ▸</Link>
+        <span className="rounded-[11px] bg-[#f1f5f9] px-4 py-2.5 text-[13px] font-bold text-slate-600">Watch</span>
+      </div>
+    </div>
+  );
+}
+
+function NextRow({ match }: { match: Match }) {
+  return (
+    <Link href={`/match/${match.id}`} className="flex items-center justify-between rounded-2xl border border-[#e2e8f0] bg-white px-3.5 py-3 shadow-card">
+      <div className="flex items-center gap-2.5">
+        <TeamAvatar team={match.home} size={28} />
+        <span className="text-[13px] font-semibold text-slate-400">vs</span>
+        <TeamAvatar team={match.away} size={28} />
+        <span className="ml-1 text-[12px] font-extrabold tabular-nums text-slate-500">Kicks off {kickoffTime(match.kickoffMs)}</span>
+      </div>
+      <span className="rounded-full bg-ink px-3 py-1.5 text-[12px] font-extrabold text-neon">Pick ▸</span>
+    </Link>
+  );
+}
+
 export default function HomeDashboard({
-  liveMatches, leagues, receipts,
+  matches, leagues, receipts,
 }: {
-  liveMatches: Match[];
+  matches: Match[];
   leagues: League[];
   receipts: ProofReceipt[];
 }) {
+  const live = matches.find((m) => m.state === "LIVE");
+  const next = matches.find((m) => m.state === "NOT_STARTED");
   const receipt = receipts[0] ?? null;
   const league = leagues[0] ?? null;
 
@@ -42,13 +90,12 @@ export default function HomeDashboard({
         <div className="mb-2.5 flex items-center gap-2">
           <span className="glz-pulse h-2 w-2 rounded-full bg-neon" />
           <SectionLabel>Live now</SectionLabel>
-          {liveMatches.length > 0 && (
-            <Link href="/matches" className="ml-auto text-[11px] font-bold text-slate-500">See all</Link>
-          )}
+          <Link href="/matches" className="ml-auto text-[11px] font-bold text-slate-500">See all</Link>
         </div>
-        {liveMatches.length > 0 ? (
+        {live || next ? (
           <div className="flex flex-col gap-2.5">
-            {liveMatches.map((m) => <MatchListItem key={m.id} match={m} />)}
+            {live && <LiveCard match={live} />}
+            {next && <NextRow match={next} />}
           </div>
         ) : (
           <Link href="/matches" className="block rounded-2xl border border-[#e2e8f0] bg-white px-4 py-4 text-sm font-medium text-slate-500 shadow-card">
@@ -61,10 +108,7 @@ export default function HomeDashboard({
       <section>
         <div className="mb-2.5"><SectionLabel>Your leagues</SectionLabel></div>
         {league ? (
-          <Link
-            href={`/leagues/${league.code}`}
-            className="flex items-center justify-between rounded-2xl bg-ink px-4 py-4 text-white"
-          >
+          <Link href={`/leagues/${league.code}`} className="flex items-center justify-between rounded-2xl bg-ink px-4 py-4 text-white">
             <div>
               <div className="text-[15px] font-extrabold">{league.name}</div>
               <div className="mt-0.5 text-xs font-semibold text-slate-400">{league.memberCount} players · this week</div>

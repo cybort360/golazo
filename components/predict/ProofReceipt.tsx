@@ -18,11 +18,11 @@ function MonoRow({ label, value, valueClass }: { label: string; value: string; v
 }
 
 export default function ProofReceipt({ receipt }: { receipt: Receipt }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const score = `${receipt.home.name} ${receipt.homeScore}–${receipt.awayScore} ${receipt.away.name}`;
 
   return (
-    <div className="mx-auto max-w-sm">
+    <div className="w-full">
       {/* ticket */}
       <div className="relative overflow-hidden rounded-[22px] bg-ink px-5 pt-6">
         <div
@@ -77,9 +77,10 @@ export default function ProofReceipt({ receipt }: { receipt: Receipt }) {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
             className="flex-1 rounded-xl border border-[#2a2a2a] bg-[#171717] py-3 text-center text-[13px] font-bold text-slate-200"
           >
-            {open ? "Hide ▴" : "Advanced ▾"}
+            Advanced
           </button>
         </div>
       </div>
@@ -87,7 +88,10 @@ export default function ProofReceipt({ receipt }: { receipt: Receipt }) {
       {/* advanced proof (quiet) */}
       {open && (
         <div className="mt-3 overflow-hidden rounded-[14px] border border-[#e2e8f0] bg-white">
-          <div className="border-b border-[#f1f5f9] px-3.5 py-3 text-xs font-bold text-slate-600">Advanced proof</div>
+          <div className="flex items-center justify-between border-b border-[#f1f5f9] px-3.5 py-3 text-xs font-bold text-slate-600">
+            <span>Advanced proof</span>
+            <span className="text-slate-400">▾</span>
+          </div>
           <div className="space-y-1.5 px-3.5 py-3 font-mono text-[10.5px] leading-relaxed text-slate-500">
             <MonoRow label="match_id" value={receipt.fixtureId} />
             <MonoRow label="settled_at" value={new Date(receipt.settledAtMs).toISOString()} />

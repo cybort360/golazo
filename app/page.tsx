@@ -21,11 +21,10 @@ export default function Home() {
 
   if (!data) return <div className="px-4 py-10 text-center text-slate-400">Loading…</div>;
 
-  const live = data.matches.filter((m) => m.state === "LIVE");
   return (
     <>
       {/* mobile (<lg) */}
-      <HomeDashboard liveMatches={live} leagues={data.leagues} receipts={data.receipts} />
+      <HomeDashboard matches={data.matches} leagues={data.leagues} receipts={data.receipts} />
       {/* desktop (lg+) */}
       <HomeDashboardDesktop matches={data.matches} leagues={data.leagues} receipts={data.receipts} />
     </>
