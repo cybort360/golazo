@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import type { ProofReceipt as Receipt } from "@/lib/predict/types";
 import { dataSource } from "@/lib/predict/dataSource";
 import ProofReceipt from "@/components/predict/ProofReceipt";
+import ReceiptDetailDesktop from "@/components/predict/ReceiptDetailDesktop";
 
 export default function ReceiptPage({ params }: { params: { pickId: string } }) {
   const [receipt, setReceipt] = useState<Receipt | null | undefined>(undefined);
@@ -18,8 +19,13 @@ export default function ReceiptPage({ params }: { params: { pickId: string } }) 
   if (receipt === null) return notFound();
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
-      <ProofReceipt receipt={receipt} />
-    </div>
+    <>
+      {/* mobile (<lg) */}
+      <div className="px-4 py-8 lg:hidden">
+        <ProofReceipt receipt={receipt} />
+      </div>
+      {/* desktop (lg+) */}
+      <ReceiptDetailDesktop receipt={receipt} />
+    </>
   );
 }
