@@ -81,7 +81,7 @@ Sections, top to bottom:
 - **Headline** — "Make picks. **Prove you know ball.**" (lime highlight on the
   second clause).
 - **Live now** — a prominent live/next match card with inline pick pills and the
-  market row (Winner · O/U · BTTS · Corners · Chaos ⚡). Tapping opens the full
+  market row (Winner · O/U · BTTS · Chaos ⚡). Tapping opens the full
   pick screen (§4.2).
 - **Your leagues** — standings summary (e.g. "The Lads · #2 of 8"). Empty state:
   "＋ Create or join a league."
@@ -94,10 +94,11 @@ The core action surface. One match, all five markets on one screen.
 
 - **Ink header strip** — competition/round, live status (lime "● LIVE 67'"), team
   flags + score, and a **picks-lock countdown** ("🔒 Picks lock in 02:14").
-- **Markets**, stacked: Match winner (3-way), Total goals (O/U 2.5), BTTS (Yes/No),
-  Total corners (O/U 8.5). Each is a segmented pill control; selected option fills
-  lime (or ink). Corners renders only when the TxLINE stat is reliable; otherwise
-  it is omitted / shown as market-void per PRD §9.
+- **Markets**, stacked: Match winner (3-way), Total goals (O/U 2.5), BTTS (Yes/No).
+  Each is a segmented pill control; selected option fills lime (or ink). **Corners
+  is dropped from the MVP** (decision 2026-06-28) pending confirmation that TxLINE
+  provides reliable corner data; it can be added back later via the same market
+  pattern.
 - **Chaos Pick — hero treatment (locked decision).** Visually separated as a black
   block with lime accent: "⚡ Chaos Pick — Goal after the 80th minute?" Yes/No.
   This is the signature differentiator and stays prominent.
@@ -190,8 +191,9 @@ green.
 ## 7. Dependencies & open items
 
 - **TxLINE (P0-01)** — confirms which advanced-proof fields are real (Merkle /
-  on-chain / tx), live-state vocabulary for the match header, and the stats behind
-  Corners + Chaos Pick. Blocks final fidelity of §4.2/§4.3.
+  on-chain / tx), live-state vocabulary for the match header, and the goal-event
+  timestamps behind the Chaos Pick. Blocks final fidelity of §4.2/§4.3. (Confirming
+  reliable corner data here is also what would let Corners return post-MVP.)
 - **Storage (P0-02)** — leagues, predictions, settlements, append-only event log.
 - **Match-state machine (P1-06)** — drives every status chip (NOT STARTED / LIVE n'
   / HT / FT / SUSPENDED / POSTPONED / VOID) and market-void rendering.
@@ -219,7 +221,8 @@ Real-money wagering is out of scope entirely for the MVP (free-to-play, PRD §11
 | Top nav | Home · Matches · Leagues · Leaderboard/Profile |
 | Visual direction | Clean + Bold |
 | Accent palette | Electric Lime + ink black (green supporting) |
-| Pick screen | All 5 markets on one screen; select-then-confirm + Lock button |
+| MVP markets | Winner · Total goals · BTTS · Chaos Pick (Corners dropped for now) |
+| Pick screen | All markets on one screen; select-then-confirm + Lock button |
 | Chaos Pick | Kept as visual hero (black block, lime accent) |
 | Proof receipt | Simple dark shareable fan card |
 | Advanced proof | Inline expand (default), not a separate page |
