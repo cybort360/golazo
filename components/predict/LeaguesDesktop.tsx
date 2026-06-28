@@ -86,42 +86,45 @@ export default function LeaguesDesktop({ leagues }: { leagues: League[] }) {
 
   return (
     <div className="hidden lg:block">
-      <div className="mx-auto grid max-w-5xl grid-cols-[360px_1fr] items-start gap-7 px-8 py-8">
-        {/* left: list */}
-        <div>
-          <h1 className="mb-4 text-[26px] font-black tracking-[-0.03em]">Your leagues</h1>
-          <button type="button" className="w-full rounded-2xl bg-ink px-4 py-3.5 text-center text-sm font-black text-neon transition-transform hover:-translate-y-0.5">
-            + Create or join a league
-          </button>
-          <div className="mt-3 flex flex-col gap-2">
-            {leagues.map((l, i) => {
-              const active = i === selIdx;
-              return (
-                <button
-                  key={l.code}
-                  type="button"
-                  onClick={() => setSelIdx(i)}
-                  className={
-                    "flex items-center justify-between rounded-2xl border px-4 py-3.5 text-left transition-colors " +
-                    (active ? "border-ink bg-white shadow-[0_0_0_2px_#0a0a0a]" : "border-[#e2e8f0] bg-white hover:border-slate-300")
-                  }
-                >
-                  <span className="text-[15px] font-extrabold text-ink">{l.name}</span>
-                  <span className="text-[13px] font-bold text-slate-500">#{l.yourRank} of {l.memberCount}</span>
-                </button>
-              );
-            })}
-          </div>
+      <div className="mx-auto grid max-w-5xl grid-cols-[360px_minmax(0,1fr)] items-start gap-x-7 px-8 py-8">
+        {/* left column, stacked across rows so the preview can align to the list row */}
+        <h1 className="col-start-1 row-start-1 mb-4 text-[26px] font-black tracking-[-0.03em]">Your leagues</h1>
+        <button
+          type="button"
+          className="col-start-1 row-start-2 w-full rounded-2xl bg-ink px-4 py-3.5 text-center text-sm font-black text-neon transition-transform hover:-translate-y-0.5"
+        >
+          + Create or join a league
+        </button>
+        <div className="col-start-1 row-start-3 mt-3 flex flex-col gap-2">
+          {leagues.map((l, i) => {
+            const active = i === selIdx;
+            return (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => setSelIdx(i)}
+                className={
+                  "flex items-center justify-between rounded-2xl border px-4 py-3.5 text-left transition-colors " +
+                  (active ? "border-ink bg-white shadow-[0_0_0_2px_#0a0a0a]" : "border-[#e2e8f0] bg-white hover:border-slate-300")
+                }
+              >
+                <span className="text-[15px] font-extrabold text-ink">{l.name}</span>
+                <span className="text-[13px] font-bold text-slate-500">#{l.yourRank} of {l.memberCount}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* right: preview */}
-        {selected ? (
-          <Preview league={selected} />
-        ) : (
-          <div className="rounded-2xl border border-dashed border-[#e2e8f0] bg-white px-6 py-16 text-center text-sm font-medium text-slate-400">
-            Create or join a league to see it here.
-          </div>
-        )}
+        {/* right: preview — placed on the list row so its top aligns with the first league card */}
+        <div className="col-start-2 row-start-3 mt-3">
+          {selected ? (
+            <Preview league={selected} />
+          ) : (
+            <div className="rounded-2xl border border-dashed border-[#e2e8f0] bg-white px-6 py-16 text-center text-sm font-medium text-slate-400">
+              Create or join a league to see it here.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
