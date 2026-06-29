@@ -9,8 +9,10 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import golazoIdl from "@/lib/chain/idl/golazo_predict.json";
-import { GOLAZO_MINT } from "@/lib/chain/constants";
-import { mintAuthorityPda, marketPda, vaultPda, positionPda } from "@/lib/chain/pdas";
+import txlineIdl from "@/lib/chain/idl/txline_mock.json";
+import { GOLAZO_MINT, TXLINE_MOCK_PROGRAM } from "@/lib/chain/constants";
+import { mintAuthorityPda, marketPda, vaultPda, positionPda, matchRootPda } from "@/lib/chain/pdas";
+import { buildMatchProof, proofForStat } from "@/lib/txline/proof";
 
 // Loosely-typed Program — the IDL JSON carries the address + instructions.
 export type GolazoProgram = Program<Idl>;
@@ -23,6 +25,17 @@ export function useGolazoProgram(): GolazoProgram | null {
     if (!wallet) return null;
     const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
     return new Program(golazoIdl as Idl, provider) as GolazoProgram;
+  }, [connection, wallet]);
+}
+
+/** The txline_mock program bound to the connected wallet (oracle/keeper). */
+export function useTxlineProgram(): GolazoProgram | null {
+  const { connection } = useConnection();
+  const wallet = useAnchorWallet();
+  return useMemo(() => {
+    if (!wallet) return null;
+    const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
+    return new Program(txlineIdl as Idl, provider) as GolazoProgram;
   }, [connection, wallet]);
 }
 
@@ -94,6 +107,73 @@ export async function claim(
   return kind === "refund"
     ? program.methods.refund().accounts(accounts).rpc()
     : program.methods.claim().accounts(accounts).rpc();
+}
+
+/** Open a YES/NO market on-chain. The caller becomes the keeper. */
+export async function initMarket(
+  program: GolazoProgram,
+  owner: PublicKey,
+  matchId: string,
+  marketId: string,
+  question: string,
+  lockTsSeconds: number,
+) {
+  const market = marketPda(matchId, marketId);
+  return program.methods
+    .initMarket(matchId, marketId, question, new BN(lockTsSeconds))
+    .accounts({
+      creator: owner,
+      mint: GOLAZO_MINT,
+      market,
+      vault: vaultPda(market),
+      tokenProgram: TOKEN_PROGRAM_ID,
+      systemProgram: PublicKey.default,
+      rent: new PublicKey("SysvarRent111111111111111111111111111111111"),
+    })
+    .rpc();
+}
+
+/**
+ * Keeper settlement: post the match Merkle root (idempotent) into txline_mock,
+ * then settle the market via the real validate_stat CPI. `stats` are the binary
+ * (0/1) resolutions keyed by market_id, as returned by the TxLINE adapter.
+ */
+export async function settleMarket(
+  golazo: GolazoProgram,
+  txline: GolazoProgram,
+  owner: PublicKey,
+  matchId: string,
+  marketId: string,
+  stats: Record<string, 0 | 1>,
+) {
+  const bigStats: Record<string, bigint> = Object.fromEntries(
+    Object.entries(stats).map(([k, v]) => [k, BigInt(v)]),
+  );
+  const { root } = buildMatchProof(matchId, bigStats);
+  const rootPda = matchRootPda(matchId);
+
+  const existing = await txline.provider.connection.getAccountInfo(rootPda);
+  if (!existing) {
+    await txline.methods
+      .postRoot(matchId, Array.from(root))
+      .accounts({
+        oracle: owner,
+        matchRoot: rootPda,
+        systemProgram: PublicKey.default,
+      })
+      .rpc();
+  }
+
+  const { claimedValue, proof } = proofForStat(matchId, bigStats, marketId);
+  return golazo.methods
+    .settle(new BN(claimedValue.toString()), proof.map((p) => Array.from(p)))
+    .accounts({
+      keeper: owner,
+      market: marketPda(matchId, marketId),
+      matchRoot: rootPda,
+      txlineProgram: TXLINE_MOCK_PROGRAM,
+    })
+    .rpc();
 }
 
 export interface MarketState {
