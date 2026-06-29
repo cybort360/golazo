@@ -1,5 +1,5 @@
 import { mockDataSource } from "@/lib/predict/mockData";
-import type { Match, PredictDataSource } from "@/lib/predict/types";
+import type { Match, PredictDataSource, ProofReceipt } from "@/lib/predict/types";
 
 // DB-backed data source for the Picks screens: matches come from the TxLINE-
 // ingested Postgres via API routes; everything else (leagues/profile/pools/
@@ -29,5 +29,17 @@ export const dbBackedDataSource: PredictDataSource = {
     const d = await getJson(`/api/predict/matches/${encodeURIComponent(id)}`);
     if (d?.ok && d.match) return d.match as Match;
     return mockDataSource.getMatch(id);
+  },
+
+  async getRecentReceipts(limit = 10) {
+    const d = await getJson(`/api/predict/receipts?limit=${limit}`);
+    if (d?.ok && Array.isArray(d.receipts) && d.receipts.length > 0) return d.receipts as ProofReceipt[];
+    return mockDataSource.getRecentReceipts(limit); // demo fallback until the user has settled picks
+  },
+
+  async getReceipt(pickId) {
+    const d = await getJson(`/api/predict/receipts/${encodeURIComponent(pickId)}`);
+    if (d?.ok && d.receipt) return d.receipt as ProofReceipt;
+    return mockDataSource.getReceipt(pickId);
   },
 };
