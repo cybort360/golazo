@@ -67,3 +67,9 @@ golazo-launch.txt
 
 # Visual brainstorming companion
 .superpowers/
+
+# Anchor / Solana build artifacts (keep program keypairs under target/deploy out of git)
+/anchor/target
+/anchor/.anchor
+/anchor/test-ledger
+/anchor/node_modules

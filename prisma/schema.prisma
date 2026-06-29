@@ -1,0 +1,206 @@
+// Golazo Markets — Postgres application/index layer (Prisma).
+//
+// Source-of-truth split: the Solana devnet program owns escrow balances,
+// positions, settlement and claims. Postgres mirrors that on-chain state for
+// fast reads and powers every app screen (markets, receipts, leagues, history).
+// Every on-chain transaction is written to `Transaction` with its signature,
+// wallet, market and parsed metadata.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MarketStatus {
+  OPEN
+  LOCKED
+  LIVE
+  SETTLING
+  SETTLED
+  VOID
+  REFUNDED
+}
+
+enum Side {
+  YES
+  NO
+}
+
+enum TxKind {
+  FAUCET
+  INIT_MARKET
+  STAKE
+  POST_ROOT
+  SETTLE
+  CLAIM
+  REFUND
+}
+
+enum TxStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+model User {
+  id          String   @id @default(cuid())
+  handle      String   @unique
+  displayName String?
+  createdAt   DateTime @default(now())
+
+  wallets        Wallet[]
+  ownedLeagues   PrivateLeague[] @relation("LeagueOwner")
+  leagueMembers  LeagueMember[]
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  address   String   @unique
+  cluster   String   @default("devnet")
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  positions    MarketPosition[]
+  transactions Transaction[]
+}
+
+model Match {
+  id          String   @id // deterministic match id (e.g. "ABLRVR")
+  homeTeam    String
+  awayTeam    String
+  competition String?
+  kickoff     DateTime
+  status      String   @default("scheduled")
+  createdAt   DateTime @default(now())
+
+  markets     Market[]
+  txlineEvents TxlineEvent[]
+}
+
+model Market {
+  id           String       @id @default(cuid())
+  match        Match        @relation(fields: [matchId], references: [id])
+  matchId      String
+  // The on-chain market_id, also the TxLINE stat key (e.g. "winner").
+  marketId     String
+  statKey      String
+  question     String
+  status       MarketStatus @default(OPEN)
+  lockTs       DateTime
+  yesTotal     BigInt       @default(0)
+  noTotal      BigInt       @default(0)
+  winningSide  Side?
+  // On-chain addresses (PDAs) for verification + receipts.
+  poolPda      String?
+  vaultPda     String?
+  mint         String?
+  createdAt    DateTime     @default(now())
+
+  positions    MarketPosition[]
+  settlement   Settlement?
+  proofReceipts ProofReceipt[]
+  transactions Transaction[]
+
+  @@unique([matchId, marketId])
+}
+
+model MarketPosition {
+  id            String   @id @default(cuid())
+  market        Market   @relation(fields: [marketId], references: [id])
+  marketId      String
+  wallet        Wallet   @relation(fields: [walletAddress], references: [address])
+  walletAddress String
+  side          Side
+  amount        BigInt   @default(0)
+  claimed       Boolean  @default(false)
+  positionPda   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([marketId, walletAddress])
+}
+
+model TxlineEvent {
+  id        String   @id @default(cuid())
+  match     Match    @relation(fields: [matchId], references: [id])
+  matchId   String
+  type      String // "minute" | "goal" | "ft" | "void"
+  minute    Int?
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([matchId])
+}
+
+model Settlement {
+  id           String   @id @default(cuid())
+  market       Market   @relation(fields: [marketId], references: [id])
+  marketId     String   @unique
+  winningSide  Side?
+  claimedValue Int
+  merkleRoot   String
+  proof        Json
+  settleTx     String?
+  voided       Boolean  @default(false)
+  settledAt    DateTime @default(now())
+}
+
+model ProofReceipt {
+  id             String   @id @default(cuid())
+  market         Market   @relation(fields: [marketId], references: [id])
+  marketId       String
+  walletAddress  String
+  prediction     Side
+  result         String? // resolved outcome label or "VOID"
+  verified       Boolean  @default(false)
+  escrowAddress  String?
+  settlementTx   String?
+  claimTx        String?
+  createdAt      DateTime @default(now())
+
+  @@index([marketId])
+  @@index([walletAddress])
+}
+
+model Transaction {
+  id            String   @id @default(cuid())
+  signature     String   @unique
+  wallet        Wallet?  @relation(fields: [walletAddress], references: [address])
+  walletAddress String?
+  market        Market?  @relation(fields: [marketId], references: [id])
+  marketId      String?
+  kind          TxKind
+  status        TxStatus @default(CONFIRMED)
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  @@index([walletAddress])
+  @@index([marketId])
+}
+
+model PrivateLeague {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  owner       User?    @relation("LeagueOwner", fields: [ownerUserId], references: [id])
+  ownerUserId String?
+  createdAt   DateTime @default(now())
+
+  members LeagueMember[]
+}
+
+model LeagueMember {
+  id        String        @id @default(cuid())
+  league    PrivateLeague @relation(fields: [leagueId], references: [id])
+  leagueId  String
+  user      User          @relation(fields: [userId], references: [id])
+  userId    String
+  joinedAt  DateTime      @default(now())
+
+  @@unique([leagueId, userId])
+}
