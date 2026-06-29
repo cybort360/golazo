@@ -81,3 +81,16 @@ export async function getUserReceipt(pickId: string): Promise<ProofReceipt | nul
   });
   return p ? toReceipt(p as any) : null;
 }
+
+/**
+ * Public receipt lookup by id (no user scope). A receipt is a shareable proof —
+ * the deep link must render for anyone, including not-logged-in recipients in
+ * Telegram/Discord (P2-13). Only settled picks have a meaningful receipt.
+ */
+export async function getReceiptById(pickId: string): Promise<ProofReceipt | null> {
+  const p = await prisma.prediction.findFirst({
+    where: { id: pickId, status: { in: ["WON", "LOST", "VOID"] } },
+    include: { match: true },
+  });
+  return p ? toReceipt(p as any) : null;
+}

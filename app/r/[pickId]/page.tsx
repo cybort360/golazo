@@ -7,6 +7,7 @@ import type { ProofReceipt as Receipt } from "@/lib/predict/types";
 import { dataSource } from "@/lib/predict/dataSource";
 import ProofReceipt from "@/components/predict/ProofReceipt";
 import ReceiptDetailDesktop from "@/components/predict/ReceiptDetailDesktop";
+import LeagueMovement from "@/components/predict/LeagueMovement";
 
 export default function ReceiptPage({ params }: { params: { pickId: string } }) {
   const [receipt, setReceipt] = useState<Receipt | null | undefined>(undefined);
@@ -29,6 +30,7 @@ export default function ReceiptPage({ params }: { params: { pickId: string } }) 
           <span className="w-10" />
         </div>
         <ProofReceipt receipt={receipt} />
+        <LeagueMovement pickId={receipt.pickId} />
       </div>
       {/* desktop (lg+) */}
       <ReceiptDetailDesktop receipt={receipt} />

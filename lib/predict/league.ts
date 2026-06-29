@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/db/client";
 import { ensureUser, currentUserId } from "@/lib/predict/session";
 import { generateLeagueCode, rankStandings, type MemberStat, type RankedMember } from "@/lib/predict/league-util";
+import { computeDelta } from "@/lib/predict/leaderboard-delta";
 
 // Private leagues (PRD §6.3): create / join via code + a private leaderboard
 // ranked by points earned from settled picks.
@@ -85,6 +86,47 @@ export async function leagueStandings(code: string): Promise<LeagueView | null> 
   const members = rankStandings(stats);
   const yourRank = members.find((m) => m.isYou)?.rank ?? null;
   return { code: league.code, name: league.name, memberCount: members.length, yourRank, members };
+}
+
+export interface LeagueMovement {
+  code: string;
+  name: string;
+  rank: number;
+  previousRank: number;
+  memberCount: number;
+  pointsGained: number;
+}
+
+/**
+ * The leaderboard-update moment (PRD §4 step 8): for a just-settled pick, how it
+ * moved the current user in each of their private leagues. Returns [] if the pick
+ * isn't theirs or they're in no leagues. Movements are ordered biggest-rise-first
+ * so the UI can lead with the most exciting one.
+ */
+export async function pickLeagueMovement(pickId: string): Promise<LeagueMovement[]> {
+  const you = await currentUserId();
+  if (!you) return [];
+  const pred = await prisma.prediction.findFirst({
+    where: { id: pickId, userId: you },
+    select: { points: true },
+  });
+  if (!pred) return [];
+
+  const leagues = await prisma.privateLeague.findMany({
+    where: { members: { some: { userId: you } } },
+    include: { members: { select: { userId: true } } },
+  });
+
+  const out: LeagueMovement[] = [];
+  for (const lg of leagues) {
+    const stats = await memberStats(lg.members.map((m) => m.userId), you);
+    const d = computeDelta(rankStandings(stats), you, pred.points);
+    if (!d) continue;
+    out.push({ code: lg.code, name: lg.name, pointsGained: pred.points, ...d });
+  }
+  // biggest jump first, then current rank
+  out.sort((a, b) => b.previousRank - b.rank - (a.previousRank - a.rank) || a.rank - b.rank);
+  return out;
 }
 
 export async function myLeagues(): Promise<{ code: string; name: string; memberCount: number }[]> {

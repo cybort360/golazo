@@ -4,6 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import type { ProofReceipt as Receipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
+import ShareButton from "@/components/predict/ShareButton";
+
+// Telegram/Discord-friendly share copy for a settled pick (PRD §6.2 communities).
+export function shareCopy(r: Receipt): { title: string; text: string } {
+  const won = r.result === "WON";
+  return {
+    title: "Golazo — verified pick",
+    text: won
+      ? `Called it ✅ ${r.predictionLabel} — +${formatPoints(r.points)} pts, verified by TxLINE.`
+      : `${r.predictionLabel} — ${r.result}. Verified by TxLINE. Prove you know ball:`,
+  };
+}
 
 function settledTime(ms: number): string {
   return new Date(ms).toISOString().slice(11, 16) + " UTC";
@@ -72,9 +84,12 @@ export default function ProofReceipt({ receipt }: { receipt: Receipt }) {
         </div>
 
         <div className="flex gap-2 pb-4 pt-4">
-          <button type="button" className="flex-[1.4] rounded-xl bg-neon py-3 text-center text-sm font-black text-ink">
-            Share receipt
-          </button>
+          <ShareButton
+            path={`/r/${receipt.pickId}`}
+            label="Share receipt"
+            className="flex-[1.4] rounded-xl bg-neon py-3 text-center text-sm font-black text-ink"
+            {...shareCopy(receipt)}
+          />
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
