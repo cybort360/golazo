@@ -163,6 +163,7 @@ model ProofReceipt {
   claimTx        String?
   createdAt      DateTime @default(now())
 
+  @@unique([marketId, walletAddress])
   @@index([marketId])
   @@index([walletAddress])
 }

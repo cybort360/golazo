@@ -20,7 +20,11 @@ import {
   type MarketState,
 } from "@/lib/chain/client";
 import { GOLAZO_MINT } from "@/lib/chain/constants";
+import { marketPda, vaultPda } from "@/lib/chain/pdas";
+import { buildMatchProof, proofForStat } from "@/lib/txline/proof";
+import { toHex } from "@/lib/txline/merkle";
 import { mirrorTx } from "@/lib/markets/mirror";
+import { mirrorSettlement, mirrorReceipt } from "@/lib/markets/index-writes";
 
 const WalletMultiButton = dynamic(
   () => import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
@@ -70,7 +74,11 @@ export default function MarketPanel({ match }: { match: Match }) {
     void refresh();
   }, [refresh]);
 
-  const run = async (label: string, fn: () => Promise<string>) => {
+  const run = async (
+    label: string,
+    fn: () => Promise<string>,
+    after?: (sig: string) => void | Promise<void>,
+  ) => {
     if (!golazo || !publicKey) return;
     setBusy(label);
     setMsg(null);
@@ -78,12 +86,61 @@ export default function MarketPanel({ match }: { match: Match }) {
       const sig = await fn();
       setMsg(`✓ ${label} confirmed`);
       void mirrorTx({ signature: sig, wallet: publicKey.toBase58(), matchId: match.id, marketId, kind: label });
+      if (after) {
+        try {
+          await after(sig);
+        } catch {
+          // index mirror is best-effort
+        }
+      }
       await refresh();
     } catch (e: any) {
       setMsg(`× ${label} failed: ${(e?.message ?? String(e)).slice(0, 120)}`);
     } finally {
       setBusy(null);
     }
+  };
+
+  // Best-effort Postgres index writes (chain stays source of truth).
+  const indexSettlement = (sig: string) => {
+    const bigStats = Object.fromEntries(
+      Object.entries(DEMO_RESULT).map(([k, v]) => [k, BigInt(v)]),
+    );
+    const { root } = buildMatchProof(match.id, bigStats);
+    const { claimedValue, proof } = proofForStat(match.id, bigStats, marketId);
+    void mirrorSettlement({
+      matchId: match.id,
+      marketId,
+      winningSide: claimedValue === 1n ? "YES" : "NO",
+      claimedValue: Number(claimedValue),
+      merkleRoot: toHex(root),
+      proof: proof.map(toHex),
+      settleTx: sig,
+      yesTotal: yesTotal.toString(),
+      noTotal: noTotal.toString(),
+      question,
+      lockTs: lockTs * 1000,
+      match: {
+        homeTeam: match.home.name,
+        awayTeam: match.away.name,
+        kickoff: new Date(match.lockMs).toISOString(),
+      },
+      vaultPda: vaultPda(marketPda(match.id, marketId)).toBase58(),
+      mint: GOLAZO_MINT.toBase58(),
+    });
+  };
+
+  const indexReceipt = (kind: "claim" | "refund") => (sig: string) => {
+    void mirrorReceipt({
+      matchId: match.id,
+      marketId,
+      wallet: publicKey!.toBase58(),
+      prediction: side === 1 ? "YES" : "NO",
+      result: kind === "refund" ? "VOID" : DEMO_RESULT[marketId] === 1 ? "YES" : "NO",
+      verified: true,
+      escrowAddress: vaultPda(marketPda(match.id, marketId)).toBase58(),
+      claimTx: sig,
+    });
   };
 
   const amount = (() => {
@@ -225,7 +282,7 @@ export default function MarketPanel({ match }: { match: Match }) {
             {canClaim(status) ? (
               <button
                 disabled={!!busy}
-                onClick={() => run("claim", () => claim(golazo!, publicKey!, match.id, marketId, "claim"))}
+                onClick={() => run("claim", () => claim(golazo!, publicKey!, match.id, marketId, "claim"), indexReceipt("claim"))}
                 className="rounded-full bg-neon py-2.5 text-[13px] font-extrabold text-ink disabled:opacity-40"
               >
                 {busy === "claim" ? "Claiming…" : "Claim"}
@@ -233,7 +290,7 @@ export default function MarketPanel({ match }: { match: Match }) {
             ) : canRefund(status) ? (
               <button
                 disabled={!!busy}
-                onClick={() => run("refund", () => claim(golazo!, publicKey!, match.id, marketId, "refund"))}
+                onClick={() => run("refund", () => claim(golazo!, publicKey!, match.id, marketId, "refund"), indexReceipt("refund"))}
                 className="rounded-full bg-amber-400 py-2.5 text-[13px] font-extrabold text-ink disabled:opacity-40"
               >
                 {busy === "refund" ? "Refunding…" : "Refund"}
@@ -241,7 +298,7 @@ export default function MarketPanel({ match }: { match: Match }) {
             ) : (
               <button
                 disabled={!!busy || status === MARKET_STATUS.SETTLED}
-                onClick={() => run("settle", () => settleMarket(golazo!, txline!, publicKey!, match.id, marketId, DEMO_RESULT))}
+                onClick={() => run("settle", () => settleMarket(golazo!, txline!, publicKey!, match.id, marketId, DEMO_RESULT), indexSettlement)}
                 className="rounded-full border border-neon py-2.5 text-[13px] font-bold text-neon disabled:opacity-40"
               >
                 {busy === "settle" ? "Settling…" : "Settle (keeper)"}
