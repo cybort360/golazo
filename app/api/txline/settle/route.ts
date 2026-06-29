@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { syncAll } from "@/lib/predict/ingest";
+import { settleFinished } from "@/lib/predict/settle";
 import { isAdminAuthorized } from "@/lib/api/adminAuth";
 
-// Trigger TxLINE ingestion (fixtures + append-only events) into Postgres. Secret-
-// protected (x-admin-secret header) so an external pinger (GitHub Action / cron)
-// can drive it without site traffic. Node runtime; never edge.
+// Run deterministic auto-settlement over all finished fixtures. Secret-protected
+// (x-admin-secret header) for an external pinger. Idempotent. Node runtime.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -13,7 +12,7 @@ async function run(req: Request) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
   try {
-    const counts = await syncAll();
+    const counts = await settleFinished();
     return NextResponse.json({ ok: true, ...counts });
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: String(e?.message ?? e).slice(0, 200) }, { status: 500 });
