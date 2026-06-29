@@ -37,6 +37,7 @@ export function initialsFor(name: string): string {
 
 export interface MemberStat {
   userId: string;
+  handle?: string;
   name: string;
   points: number;
   won: number;
@@ -70,6 +71,7 @@ export function rankedToMember(m: RankedMember): LeagueMember {
   return {
     rank: m.rank,
     userId: m.userId,
+    handle: m.handle,
     name: m.name,
     initials: m.initials,
     color: m.color,

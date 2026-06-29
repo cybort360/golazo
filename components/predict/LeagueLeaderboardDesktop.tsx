@@ -3,6 +3,7 @@ import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import { Flame } from "@phosphor-icons/react/dist/ssr";
 import CopyButton from "@/components/predict/CopyButton";
 import SegTabs from "@/components/predict/SegTabs";
+import PlayerLink from "@/components/predict/PlayerLink";
 
 function Row({ member, index }: { member: LeagueMember; index: number }) {
   const you = member.isYou;
@@ -22,7 +23,7 @@ function Row({ member, index }: { member: LeagueMember; index: number }) {
       ) : (
         <span className="flex h-[34px] w-[34px] items-center justify-center rounded-full text-[12px] font-extrabold text-white" style={{ background: member.color }}>{member.initials}</span>
       )}
-      <span className="flex-1 truncate text-[15px] font-extrabold text-ink">{member.name}</span>
+      <span className="flex-1 truncate text-[15px] font-extrabold text-ink"><PlayerLink handle={member.handle}>{member.name}</PlayerLink></span>
       <span className="w-24 text-right text-[14px] font-bold tabular-nums text-slate-600">{formatAccuracy(member.accuracy)}</span>
       <span className="flex w-20 items-center justify-end gap-1 text-[14px] font-bold tabular-nums text-slate-600"><Flame weight="fill" size={13} className="text-orange-500" />{member.streak}</span>
       <span className="w-20 text-right text-[15px] font-black tabular-nums text-ink">{formatPoints(member.points)}</span>

@@ -3,6 +3,7 @@ import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import { Gear, Flame } from "@phosphor-icons/react/dist/ssr";
 import CopyButton from "@/components/predict/CopyButton";
 import SegTabs from "@/components/predict/SegTabs";
+import PlayerLink from "@/components/predict/PlayerLink";
 
 function Avatar({ member }: { member: LeagueMember }) {
   if (member.isYou) {
@@ -72,7 +73,7 @@ export default function LeagueLeaderboard({ league }: { league: League }) {
             <span className={"w-5 text-[15px] font-black tabular-nums " + (m.isYou ? "text-neon" : "text-ink")}>{m.rank}</span>
             <Avatar member={m} />
             <div className="min-w-0 flex-1">
-              <div className={"truncate text-sm font-extrabold " + (m.isYou ? "text-white" : "text-ink")}>{m.name}</div>
+              <div className={"truncate text-sm font-extrabold " + (m.isYou ? "text-white" : "text-ink")}><PlayerLink handle={m.handle}>{m.name}</PlayerLink></div>
               <div className={"text-[11px] font-semibold " + (m.isYou ? "text-slate-400" : "text-slate-500")}>
                 <span className="inline-flex items-center gap-1">{formatAccuracy(m.accuracy)} acc · <Flame weight="fill" size={11} className="text-orange-500" /> {m.streak}</span>
               </div>

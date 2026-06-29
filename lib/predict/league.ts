@@ -78,6 +78,7 @@ async function memberStats(userIds: string[], you: string | null): Promise<Membe
     const a = agg.get(u.id)!;
     return {
       userId: u.id,
+      handle: u.handle ?? undefined,
       name: publicName(u),
       points: a.points,
       won: wins.get(u.id) ?? 0,

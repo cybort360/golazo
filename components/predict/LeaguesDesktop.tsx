@@ -6,6 +6,7 @@ import type { League, LeagueMember } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 import LeagueDialog from "@/components/predict/LeagueDialog";
 import CopyButton from "@/components/predict/CopyButton";
+import PlayerLink from "@/components/predict/PlayerLink";
 
 function Avatar({ member, size = 28 }: { member: LeagueMember; size?: number }) {
   if (member.isYou) {
@@ -66,7 +67,7 @@ function Preview({ league }: { league: League }) {
           >
             <span className={"w-4 text-[14px] font-black tabular-nums " + (m.isYou ? "text-neon" : "text-ink")}>{m.rank}</span>
             <Avatar member={m} />
-            <span className={"flex-1 truncate text-[13px] font-bold " + (m.isYou ? "text-white" : "text-ink")}>{m.isYou ? "You" : m.name}</span>
+            <span className={"flex-1 truncate text-[13px] font-bold " + (m.isYou ? "text-white" : "text-ink")}><PlayerLink handle={m.handle}>{m.isYou ? "You" : m.name}</PlayerLink></span>
             <span className={"text-[14px] font-black tabular-nums " + (m.isYou ? "text-neon" : "text-ink")}>{formatPoints(m.points)}</span>
           </div>
         ))}

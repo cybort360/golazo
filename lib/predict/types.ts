@@ -67,6 +67,7 @@ export interface ProofReceipt {
 export interface LeagueMember {
   rank: number;
   userId: string;
+  handle?: string; // url slug for /u/<handle>; absent for mock/empty rows
   name: string;
   initials: string;
   color: string; // avatar circle background (hex)

@@ -2,6 +2,7 @@ import type { GlobalLeaderboard as GlobalLeaderboardData, LeagueMember } from "@
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import { Medal, Flame, Globe } from "@phosphor-icons/react/dist/ssr";
 import SegTabs from "@/components/predict/SegTabs";
+import PlayerLink from "@/components/predict/PlayerLink";
 
 const MEDAL_COLORS = ["#f5b301", "#cbd5e1", "#cd7f32"]; // gold / silver / bronze
 
@@ -40,7 +41,7 @@ function Row({ member }: { member: LeagueMember }) {
       </span>
       <Avatar member={member} />
       <div className="min-w-0 flex-1">
-        <div className={"truncate text-sm font-extrabold " + (member.isYou ? "text-white" : "text-ink")}>{member.name}</div>
+        <div className={"truncate text-sm font-extrabold " + (member.isYou ? "text-white" : "text-ink")}><PlayerLink handle={member.handle}>{member.name}</PlayerLink></div>
         <div className={"text-[11px] font-semibold " + (member.isYou ? "text-slate-400" : "text-slate-500")}>
           <span className="inline-flex items-center gap-1">{formatAccuracy(member.accuracy)} acc · <Flame weight="fill" size={11} className="text-orange-500" /> {member.streak}</span>
         </div>
