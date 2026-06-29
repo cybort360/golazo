@@ -1,10 +1,18 @@
 import { mockDataSource } from "@/lib/predict/mockData";
-import type { Match, PredictDataSource, ProofReceipt } from "@/lib/predict/types";
+import type {
+  Match,
+  PredictDataSource,
+  ProofReceipt,
+  League,
+  GlobalLeaderboard,
+  ProfileStats,
+} from "@/lib/predict/types";
 
-// DB-backed data source for the Picks screens: matches come from the TxLINE-
-// ingested Postgres via API routes; everything else (leagues/profile/pools/
-// wallet/receipts) still falls back to the mock until those screens are wired.
-// Matches also fall back to mock when the DB is empty, so the UI never breaks.
+// DB-backed data source for the Picks screens: matches, leagues, the global
+// leaderboard, profile, and receipts all come from Postgres (TxLINE-ingested +
+// real picks) via API routes. Pools/wallet remain mock (Markets-side preview).
+// Every method falls back to the mock when the DB has nothing yet, so the
+// marketing/demo pages never render empty.
 
 async function getJson(url: string): Promise<any | null> {
   try {
@@ -29,6 +37,30 @@ export const dbBackedDataSource: PredictDataSource = {
     const d = await getJson(`/api/predict/matches/${encodeURIComponent(id)}`);
     if (d?.ok && d.match) return d.match as Match;
     return mockDataSource.getMatch(id);
+  },
+
+  async getMyLeagues() {
+    const d = await getJson("/api/predict/league");
+    if (d?.ok && Array.isArray(d.leagues) && d.leagues.length > 0) return d.leagues as League[];
+    return mockDataSource.getMyLeagues();
+  },
+
+  async getLeague(code) {
+    const d = await getJson(`/api/predict/league/${encodeURIComponent(code)}`);
+    if (d?.ok && d.league) return d.league as League;
+    return mockDataSource.getLeague(code);
+  },
+
+  async getGlobalLeaderboard() {
+    const d = await getJson("/api/predict/leaderboard");
+    if (d?.ok && d.board) return d.board as GlobalLeaderboard;
+    return mockDataSource.getGlobalLeaderboard();
+  },
+
+  async getProfile() {
+    const d = await getJson("/api/predict/profile");
+    if (d?.ok && d.profile) return d.profile as ProfileStats;
+    return mockDataSource.getProfile();
   },
 
   async getRecentReceipts(limit = 10) {

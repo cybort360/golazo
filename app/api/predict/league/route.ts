@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createLeague, myLeagues } from "@/lib/predict/league";
+import { createLeague, myLeaguesUi } from "@/lib/predict/league";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,5 +15,5 @@ export async function POST(req: Request) {
 }
 
 export async function GET() {
-  return NextResponse.json({ ok: true, leagues: await myLeagues() });
+  return NextResponse.json({ ok: true, leagues: await myLeaguesUi() });
 }

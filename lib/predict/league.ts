@@ -1,8 +1,9 @@
 import "server-only";
 import { prisma } from "@/lib/db/client";
 import { ensureUser, currentUserId } from "@/lib/predict/session";
-import { generateLeagueCode, rankStandings, type MemberStat, type RankedMember } from "@/lib/predict/league-util";
+import { generateLeagueCode, rankStandings, rankedToMember, type MemberStat, type RankedMember } from "@/lib/predict/league-util";
 import { computeDelta } from "@/lib/predict/leaderboard-delta";
+import type { League, GlobalLeaderboard, LeagueMember } from "@/lib/predict/types";
 
 // Private leagues (PRD §6.3): create / join via code + a private leaderboard
 // ranked by points earned from settled picks.
@@ -43,33 +44,44 @@ export async function joinLeague(code: string): Promise<{ code: string }> {
   return { code: league.code };
 }
 
-/** Member stats (points/accuracy) for a set of users, from settled predictions. */
+/** Member stats (points/accuracy/streak) for a set of users, from settled predictions. */
 async function memberStats(userIds: string[], you: string | null): Promise<MemberStat[]> {
   if (userIds.length === 0) return [];
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
-    select: { id: true, handle: true, displayName: true },
+    select: { id: true, handle: true, displayName: true, anonId: true },
   });
   const preds = await prisma.prediction.findMany({
     where: { userId: { in: userIds } },
-    select: { userId: true, status: true, points: true },
+    select: { userId: true, status: true, points: true, settledAt: true },
+    orderBy: { settledAt: "desc" },
   });
-  const agg = new Map<string, { points: number; won: number; settled: number }>();
-  for (const id of userIds) agg.set(id, { points: 0, won: 0, settled: 0 });
+  const agg = new Map<string, { points: number; won: number; settled: number; streak: number; streakOpen: boolean }>();
+  for (const id of userIds) agg.set(id, { points: 0, won: 0, settled: 0, streak: 0, streakOpen: true });
+  // preds are settledAt desc, so the first settled rows per user form the streak.
   for (const p of preds) {
     const a = agg.get(p.userId)!;
     a.points += p.points;
-    if (p.status === "WON" || p.status === "LOST") a.settled++;
-    if (p.status === "WON") a.won++;
+    if (p.status === "WON" || p.status === "LOST") {
+      a.settled++;
+      if (a.streakOpen && p.status === "WON") a.streak++;
+      else if (p.status === "LOST") a.streakOpen = false;
+    }
   }
+  // count wins separately (streak loop above only tracks leading WONs)
+  const wins = new Map<string, number>();
+  for (const id of userIds) wins.set(id, 0);
+  for (const p of preds) if (p.status === "WON") wins.set(p.userId, (wins.get(p.userId) ?? 0) + 1);
+
   return users.map((u) => {
     const a = agg.get(u.id)!;
     return {
       userId: u.id,
-      name: u.displayName ?? u.handle,
+      name: u.displayName ?? u.handle ?? `Player ${u.anonId?.slice(0, 4) ?? "?"}`,
       points: a.points,
-      won: a.won,
+      won: wins.get(u.id) ?? 0,
       settled: a.settled,
+      streak: a.streak,
       isYou: u.id === you,
     };
   });
@@ -138,4 +150,43 @@ export async function myLeagues(): Promise<{ code: string; name: string; memberC
     orderBy: { createdAt: "desc" },
   });
   return leagues.map((l) => ({ code: l.code, name: l.name, memberCount: l._count.members }));
+}
+
+// ---- UI-shaped views (real DB data for the Picks screens) -------------------
+
+function viewToUi(v: LeagueView): League {
+  return {
+    code: v.code,
+    name: v.name,
+    yourRank: v.yourRank ?? 0,
+    memberCount: v.memberCount,
+    members: v.members.map(rankedToMember),
+  };
+}
+
+/** Full UI leagues for the current user (list + detail), real standings. */
+export async function myLeaguesUi(): Promise<League[]> {
+  const summaries = await myLeagues();
+  const views = await Promise.all(summaries.map((s) => leagueStandings(s.code)));
+  return views.filter((v): v is LeagueView => v !== null).map(viewToUi);
+}
+
+/** One league's UI standings by code. */
+export async function leagueUi(code: string): Promise<League | null> {
+  const v = await leagueStandings(code.toUpperCase());
+  return v ? viewToUi(v) : null;
+}
+
+/** Public, all-users global leaderboard ranked by total points. */
+export async function globalLeaderboardUi(topN = 20): Promise<GlobalLeaderboard | null> {
+  const you = await currentUserId();
+  const ids = (await prisma.user.findMany({ select: { id: true } })).map((u) => u.id);
+  if (ids.length === 0) return null;
+  const ranked = rankStandings(await memberStats(ids, you));
+  const top = ranked.slice(0, topN).map(rankedToMember);
+  const youRow = ranked.find((m) => m.isYou);
+  const you2: LeagueMember = youRow
+    ? rankedToMember(youRow)
+    : { rank: ranked.length + 1, userId: you ?? "anon", name: "You", initials: "YOU", color: "#1e293b", points: 0, accuracy: 0, streak: 0, isYou: true };
+  return { totalPlayers: ranked.length, you: you2, top };
 }

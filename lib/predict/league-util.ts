@@ -1,5 +1,6 @@
 // Pure helpers for private leagues (testable, no server-only chain).
 import { randomInt } from "node:crypto";
+import type { LeagueMember } from "@/lib/predict/types";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous 0/O/1/I
 const CODE_LEN = 8;
@@ -40,6 +41,7 @@ export interface MemberStat {
   points: number;
   won: number;
   settled: number;
+  streak?: number; // current consecutive-WON streak
   isYou?: boolean;
 }
 
@@ -61,4 +63,19 @@ export function rankStandings(members: MemberStat[]): RankedMember[] {
       initials: initialsFor(m.name),
       color: colorFor(m.userId),
     }));
+}
+
+/** Map a ranked standings row to the UI's LeagueMember shape. */
+export function rankedToMember(m: RankedMember): LeagueMember {
+  return {
+    rank: m.rank,
+    userId: m.userId,
+    name: m.name,
+    initials: m.initials,
+    color: m.color,
+    points: m.points,
+    accuracy: m.accuracy,
+    streak: m.streak ?? 0,
+    isYou: m.isYou ?? false,
+  };
 }
