@@ -4,10 +4,10 @@ import { ensureUser } from "@/lib/predict/session";
 import { syncAll } from "@/lib/predict/ingest";
 import { settleFinished, type SettleCounts } from "@/lib/predict/settle";
 
-// Demo seed (P4-16): make the verified loop visible without waiting for live
-// fixtures. Ingests TxLINE, gives the current user + two rivals picks on finished
-// World Cup fixtures, puts them in a shared league, and runs the REAL resolver so
-// receipts/profile/leaderboard show genuine settled results. Idempotent.
+// Demo seed (P4-16): make the social loop visible on REAL TxLINE fixtures.
+// Ingests live fixtures, gives the current user + two rivals picks across the
+// soonest real matches, puts them in a shared league, and runs the REAL resolver.
+// Outcomes settle as matches actually finish — nothing is faked. Idempotent.
 
 const DEMO_LEAGUE_CODE = "GLZ-WORLDCUP";
 
@@ -26,25 +26,41 @@ async function pick(userId: string, matchId: string, marketId: string, optionId:
   });
 }
 
-export async function seedDemo(): Promise<{ leagueCode: string; settled: SettleCounts; userId: string }> {
+export async function seedDemo(): Promise<{ leagueCode: string; settled: SettleCounts; userId: string; picks: number }> {
   await syncAll();
   const you = await ensureUser();
   const mikey = await upsertNamed("mikey", "Mikey");
   const sara = await upsertNamed("sara", "Sara");
 
-  // Picks on finished fixtures (bypass lock — this is a demo seed). The resolver
-  // decides outcomes; we don't hardcode WON/LOST.
-  const picks: [string, string, string, string, string][] = [
-    [you.id, "WC-A-BRA-ARG", "winner", "BRA", "Brazil to win"],
-    [you.id, "WC-A-BRA-ARG", "chaos", "yes", "Goal after 80'"],
-    [you.id, "WC-D-GER-NED", "btts", "no", "Not both to score"],
-    [mikey, "WC-A-BRA-ARG", "winner", "ARG", "Argentina to win"],
-    [mikey, "WC-D-GER-NED", "totals", "over", "Over 2.5 goals"],
-    [mikey, "WC-A-FRA-ESP", "btts", "yes", "Both teams to score"],
-    [sara, "WC-A-BRA-ARG", "chaos", "yes", "Goal after 80'"],
-    [sara, "WC-A-FRA-ESP", "winner", "draw", "Draw"],
-    [sara, "WC-D-GER-NED", "totals", "over", "Over 2.5 goals"],
-  ];
+  // Real fixtures, soonest first (so in-progress/finishing matches settle first).
+  const matches = await prisma.match.findMany({
+    orderBy: { lockAt: "asc" },
+    take: 4,
+    select: { id: true, homeTeam: true, awayTeam: true },
+  });
+
+  // Spread varied markets across the three players on real matches. Winner uses
+  // the "home"/"away" aliases the resolver understands regardless of ticker.
+  // (Chaos is skipped: goal minutes aren't in the snapshot feed yet → would VOID.)
+  const picks: [string, string, string, string, string][] = [];
+  matches.forEach((m, i) => {
+    const HOME = `${m.homeTeam} to win`;
+    const AWAY = `${m.awayTeam} to win`;
+    if (i === 0) {
+      picks.push([you.id, m.id, "winner", "home", HOME]);
+      picks.push([sara, m.id, "winner", "away", AWAY]);
+      picks.push([mikey, m.id, "btts", "yes", "Both teams to score"]);
+    } else if (i === 1) {
+      picks.push([you.id, m.id, "totals", "over", "Over 2.5 goals"]);
+      picks.push([mikey, m.id, "winner", "home", HOME]);
+    } else if (i === 2) {
+      picks.push([sara, m.id, "btts", "no", "Not both to score"]);
+      picks.push([you.id, m.id, "winner", "away", AWAY]);
+    } else {
+      picks.push([mikey, m.id, "totals", "under", "Under 2.5 goals"]);
+      picks.push([sara, m.id, "winner", "home", HOME]);
+    }
+  });
   for (const [uid, mid, mk, opt, label] of picks) await pick(uid, mid, mk, opt, label);
 
   // Shared league with all three.
@@ -62,5 +78,5 @@ export async function seedDemo(): Promise<{ leagueCode: string; settled: SettleC
   }
 
   const settled = await settleFinished();
-  return { leagueCode: DEMO_LEAGUE_CODE, settled, userId: you.id };
+  return { leagueCode: DEMO_LEAGUE_CODE, settled, userId: you.id, picks: picks.length };
 }
