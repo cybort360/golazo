@@ -1,0 +1,194 @@
+{
+  "address": "Go73N2JanmNjxJz7rGdTcd1PzgTZCuM9uRC11jvQGV7w",
+  "metadata": {
+    "name": "txline_mock",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "TxLINE validate_stat stand-in: signed Merkle root per match"
+  },
+  "instructions": [
+    {
+      "name": "post_root",
+      "docs": [
+        "The demo oracle authority publishes the signed Merkle root for a match.",
+        "In real TxLINE this root is attested by the data provider; here the",
+        "post_root signer is the trusted oracle. The CPI shape stays the same."
+      ],
+      "discriminator": [
+        154,
+        210,
+        156,
+        158,
+        199,
+        27,
+        174,
+        35
+      ],
+      "accounts": [
+        {
+          "name": "oracle",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "match_root",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  111,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "match_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "match_id",
+          "type": "string"
+        },
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "validate_stat",
+      "docs": [
+        "Permissionless result validation: recompute the leaf from the claimed",
+        "stat, walk the proof to a root, and require it equals the stored root."
+      ],
+      "discriminator": [
+        107,
+        197,
+        232,
+        90,
+        191,
+        136,
+        105,
+        185
+      ],
+      "accounts": [
+        {
+          "name": "match_root",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  111,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "match_id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "match_id",
+          "type": "string"
+        },
+        {
+          "name": "stat_key",
+          "type": "string"
+        },
+        {
+          "name": "claimed_value",
+          "type": "u64"
+        },
+        {
+          "name": "proof",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "MatchRoot",
+      "discriminator": [
+        119,
+        102,
+        86,
+        31,
+        98,
+        20,
+        62,
+        35
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "MatchMismatch",
+      "msg": "match id mismatch"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidProof",
+      "msg": "invalid merkle proof"
+    }
+  ],
+  "types": [
+    {
+      "name": "MatchRoot",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "match_id",
+            "type": "string"
+          },
+          {
+            "name": "root",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "oracle",
+            "type": "pubkey"
+          }
+        ]
+      }
+    }
+  ]
+}
