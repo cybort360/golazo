@@ -15,6 +15,7 @@ const securityHeaders = [
 const nextConfig = {
   poweredByHeader: false, // drop the X-Powered-By: Next.js header
   compress: true, // gzip responses
+  experimental: { instrumentationHook: true }, // enable instrumentation.ts (live TxLINE autosync)
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "api.dexscreener.com" },

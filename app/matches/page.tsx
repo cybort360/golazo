@@ -1,16 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { Match } from "@/lib/predict/types";
 import { dataSource } from "@/lib/predict/dataSource";
+import { usePoll } from "@/components/predict/usePoll";
 import MatchListItem from "@/components/predict/MatchListItem";
 import MatchesDesktop from "@/components/predict/MatchesDesktop";
 
 export default function MatchesPage() {
-  const [matches, setMatches] = useState<Match[] | null>(null);
-  useEffect(() => {
-    void dataSource.getMatches().then(setMatches);
-  }, []);
+  const matches = usePoll(() => dataSource.getMatches());
 
   if (matches === null) return <div className="px-4 py-10 text-center text-slate-400">Loading…</div>;
 

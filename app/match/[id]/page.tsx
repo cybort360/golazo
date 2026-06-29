@@ -40,7 +40,17 @@ export default function MatchPage({ params }: { params: { id: string } }) {
   const showMarket = marketsEnabled();
 
   useEffect(() => {
-    void dataSource.getMatch(params.id).then(setMatch);
+    let live = true;
+    const run = () =>
+      dataSource.getMatch(params.id).then((m) => {
+        if (live) setMatch(m);
+      }).catch(() => {});
+    void run();
+    const id = setInterval(run, 20000); // poll so the live header stays current
+    return () => {
+      live = false;
+      clearInterval(id);
+    };
   }, [params.id]);
 
   if (match === undefined) {
