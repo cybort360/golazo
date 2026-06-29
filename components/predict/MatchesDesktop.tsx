@@ -1,5 +1,6 @@
 import type { Match } from "@/lib/predict/types";
 import MatchCard from "@/components/predict/MatchCard";
+import { SoccerBall } from "@phosphor-icons/react/dist/ssr";
 
 function Group({ label, dot, matches }: { label: string; dot?: boolean; matches: Match[] }) {
   if (matches.length === 0) return null;
@@ -26,7 +27,7 @@ export default function MatchesDesktop({ matches }: { matches: Match[] }) {
     <div className="hidden lg:block">
       {/* ink banner */}
       <div className="relative overflow-hidden bg-ink px-8 py-7 text-white">
-        <div className="pointer-events-none absolute -bottom-8 right-6 select-none text-[120px] font-black opacity-[0.05]">⚽</div>
+        <SoccerBall weight="fill" className="pointer-events-none absolute -bottom-10 right-6 select-none opacity-[0.05]" size={150} />
         <div className="relative flex items-end justify-between gap-6">
           <div>
             <h1 className="text-[30px] font-black tracking-[-0.04em]">Matches</h1>

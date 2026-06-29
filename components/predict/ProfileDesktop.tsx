@@ -3,6 +3,7 @@ import type { ProfileStats } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import ShareButton from "@/components/predict/ShareButton";
 import BadgeShelf from "@/components/predict/BadgeShelf";
+import { Lightning, Wallet } from "@phosphor-icons/react/dist/ssr";
 
 function StatCard({ label, value, accent, sub }: { label: string; value: string; accent?: boolean; sub?: string }) {
   return (
@@ -55,7 +56,7 @@ export default function ProfileDesktop({ profile }: { profile: ProfileStats }) {
       <div className="px-8 py-8">
         <div className="grid grid-cols-3 gap-4">
           <StatCard label="Accuracy" value={formatAccuracy(profile.accuracy)} accent sub={`${profile.wins} of ${profile.totalPicks} verified correct`} />
-          <StatCard label="Current streak" value={`🔥 ${profile.currentStreak}`} sub="consecutive correct picks" />
+          <StatCard label="Current streak" value={`${profile.currentStreak}`} sub="consecutive correct picks" />
           <StatCard label="Total points" value={`+${formatPoints(profile.points)}`} sub="across all settled picks" />
         </div>
 
@@ -68,7 +69,7 @@ export default function ProfileDesktop({ profile }: { profile: ProfileStats }) {
           {profile.biggestUpset && (
             <div className="rounded-2xl bg-ink px-6 py-5 text-white">
               <div className="flex items-center justify-between">
-                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-neon">⚡ Biggest upset called</div>
+                <div className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-neon"><Lightning weight="fill" size={11} /> Biggest upset called</div>
                 <span className="text-[18px] font-black tabular-nums text-neon">+{formatPoints(profile.biggestUpset.points)}</span>
               </div>
               <div className="mt-2 text-[18px] font-extrabold">{profile.biggestUpset.label}</div>
@@ -84,7 +85,7 @@ export default function ProfileDesktop({ profile }: { profile: ProfileStats }) {
 
         <div className="mt-6 flex items-center gap-5">
           <Link href="/wallet" className="inline-flex items-center gap-2 rounded-full border border-[#e2e8f0] bg-white px-5 py-2.5 text-[13px] font-bold text-ink shadow-card hover:bg-slate-50">
-            ◎ Wallet &amp; on-chain rewards
+            <Wallet weight="fill" size={15} className="text-slate-400" /> Wallet &amp; on-chain rewards
             <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-slate-400">Preview</span>
           </Link>
           <Link href="/receipts" className="text-[13px] font-bold text-slate-500 hover:text-ink">

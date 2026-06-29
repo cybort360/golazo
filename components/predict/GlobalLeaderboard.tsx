@@ -1,5 +1,8 @@
 import type { GlobalLeaderboard as GlobalLeaderboardData, LeagueMember } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
+import { Medal, Flame, Globe } from "@phosphor-icons/react/dist/ssr";
+
+const MEDAL_COLORS = ["#f5b301", "#cbd5e1", "#cd7f32"]; // gold / silver / bronze
 
 function Avatar({ member }: { member: LeagueMember }) {
   if (member.isYou) {
@@ -20,7 +23,7 @@ function Avatar({ member }: { member: LeagueMember }) {
 }
 
 function Row({ member }: { member: LeagueMember }) {
-  const medal = member.rank <= 3 ? ["🥇", "🥈", "🥉"][member.rank - 1] : null;
+  const medal = member.rank <= 3 ? <Medal weight="fill" size={18} color={MEDAL_COLORS[member.rank - 1]} /> : null;
   return (
     <div
       data-testid={`grow-${member.userId}`}
@@ -31,14 +34,14 @@ function Row({ member }: { member: LeagueMember }) {
           : "flex items-center gap-3 rounded-[13px] px-3 py-2.5"
       }
     >
-      <span className={"w-6 text-center text-[15px] font-black tabular-nums " + (member.isYou ? "text-neon" : "text-ink")}>
+      <span className={"flex w-6 items-center justify-center text-[15px] font-black tabular-nums " + (member.isYou ? "text-neon" : "text-ink")}>
         {medal ?? member.rank}
       </span>
       <Avatar member={member} />
       <div className="min-w-0 flex-1">
         <div className={"truncate text-sm font-extrabold " + (member.isYou ? "text-white" : "text-ink")}>{member.name}</div>
         <div className={"text-[11px] font-semibold " + (member.isYou ? "text-slate-400" : "text-slate-500")}>
-          {formatAccuracy(member.accuracy)} acc · 🔥 {member.streak}
+          <span className="inline-flex items-center gap-1">{formatAccuracy(member.accuracy)} acc · <Flame weight="fill" size={11} className="text-orange-500" /> {member.streak}</span>
         </div>
       </div>
       <span className={"text-[15px] font-black tabular-nums " + (member.isYou ? "text-neon" : "text-ink")}>
@@ -56,7 +59,7 @@ export default function GlobalLeaderboard({ board }: { board: GlobalLeaderboardD
       <div className="bg-ink px-5 pb-5 pt-5 text-white">
         <div className="flex items-center justify-between text-[13px] font-bold text-slate-400">
           <span>‹ Leagues</span>
-          <span>🌍</span>
+          <Globe weight="fill" size={16} />
         </div>
         <div className="mt-3.5 flex items-end justify-between">
           <div>

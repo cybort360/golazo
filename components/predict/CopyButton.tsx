@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "@phosphor-icons/react/dist/ssr";
 
 // Copies arbitrary text to the clipboard with a transient "Copied" state.
 export default function CopyButton({
@@ -28,7 +29,7 @@ export default function CopyButton({
 
   return (
     <button type="button" onClick={onCopy} className={className}>
-      {copied ? "✓ Copied" : label}
+      {copied ? <span className="inline-flex items-center gap-1"><Check weight="bold" size={13} /> Copied</span> : label}
     </button>
   );
 }

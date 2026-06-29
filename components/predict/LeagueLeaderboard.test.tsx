@@ -13,6 +13,8 @@ describe("LeagueLeaderboard", () => {
     render(<LeagueLeaderboard league={FIXTURE_LEAGUE} />);
     const you = screen.getByTestId("row-jk");
     expect(you).toHaveAttribute("data-you", "true");
-    expect(screen.getByText("76% acc · 🔥 3")).toBeInTheDocument();
+    expect(
+      screen.getByText((_, el) => el?.tagName === "SPAN" && /76% acc/.test(el.textContent ?? "")),
+    ).toBeInTheDocument();
   });
 });

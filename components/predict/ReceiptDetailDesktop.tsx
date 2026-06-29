@@ -3,10 +3,11 @@ import type { ProofReceipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 import ShareButton from "@/components/predict/ShareButton";
 import LeagueMovement from "@/components/predict/LeagueMovement";
+import { SealCheck, Check } from "@phosphor-icons/react/dist/ssr";
 
 function shareText(r: ProofReceipt): string {
   return r.result === "WON"
-    ? `Called it ✅ ${r.predictionLabel} — +${formatPoints(r.points)} pts, verified by TxLINE.`
+    ? `Called it. ${r.predictionLabel} — +${formatPoints(r.points)} pts, verified by TxLINE.`
     : `${r.predictionLabel} — ${r.result}. Verified by TxLINE. Prove you know ball:`;
 }
 
@@ -41,7 +42,7 @@ export default function ReceiptDetailDesktop({ receipt }: { receipt: ProofReceip
           <div className="relative">
             <div className="flex items-center justify-between">
               <div className="text-xl font-black tracking-[-0.03em] text-white">GOLAZO</div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(22,163,74,0.45)] bg-[rgba(22,163,74,0.16)] px-3 py-1.5 text-[12px] font-extrabold tracking-[0.06em] text-[#4ade80]">✓ VERIFIED</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(22,163,74,0.45)] bg-[rgba(22,163,74,0.16)] px-3 py-1.5 text-[12px] font-extrabold tracking-[0.06em] text-[#4ade80]"><SealCheck weight="fill" size={13} /> VERIFIED</span>
             </div>
             <div className="mt-7 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Your prediction</div>
             <div className="mt-2 text-xl font-extrabold text-white">{receipt.predictionLabel}</div>
@@ -57,7 +58,7 @@ export default function ReceiptDetailDesktop({ receipt }: { receipt: ProofReceip
               </div>
             </div>
             <div className="mt-6 flex items-center gap-2 border-t border-dashed border-[#2a2a2a] pt-4">
-              <span className="flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-green-600 text-[11px] text-white">✓</span>
+              <span className="flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-green-600 text-white"><Check weight="bold" size={12} /></span>
               <span className="text-[12px] font-semibold text-slate-400">Verified by <span className="font-bold text-slate-200">TxLINE</span></span>
             </div>
           </div>
@@ -74,8 +75,8 @@ export default function ReceiptDetailDesktop({ receipt }: { receipt: ProofReceip
               <VRow label="stat_keys" value={receipt.statKeys} />
               <VRow label="settled_at" value={new Date(receipt.settledAtMs).toISOString()} />
               <VRow label="data_hash" value={receipt.payloadRef} />
-              {receipt.merkleStatus && <VRow label="attestation" value={`${receipt.merkleStatus} ✓`} valueClass="text-green-600" />}
-              {receipt.onChainStatus && <VRow label="on_chain" value={`${receipt.onChainStatus} ✓`} valueClass="text-green-600" />}
+              {receipt.merkleStatus && <VRow label="attestation" value={receipt.merkleStatus} valueClass="text-green-600" />}
+              {receipt.onChainStatus && <VRow label="on_chain" value={receipt.onChainStatus} valueClass="text-green-600" />}
             </div>
           </div>
 

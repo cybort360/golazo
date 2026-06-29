@@ -3,17 +3,27 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMe } from "@/components/predict/useMe";
+import {
+  House,
+  SoccerBall,
+  Trophy,
+  Ranking,
+  Gift,
+  Receipt,
+  Wallet,
+} from "@phosphor-icons/react/dist/ssr";
+import type { Icon } from "@phosphor-icons/react";
 
 // Persistent desktop sidebar (canvas "Desktop layouts"). Hidden below lg, where
 // the top SiteNav takes over.
-const ITEMS = [
-  { href: "/", label: "Home", icon: "⚡" },
-  { href: "/matches", label: "Matches", icon: null },
-  { href: "/leagues", label: "My leagues", icon: null },
-  { href: "/leaderboard", label: "Leaderboard", icon: null },
-  { href: "/pools", label: "Prize pools", icon: null },
-  { href: "/receipts", label: "Receipts", icon: null },
-  { href: "/wallet", label: "Wallet", icon: null },
+const ITEMS: { href: string; label: string; Icon: Icon }[] = [
+  { href: "/", label: "Home", Icon: House },
+  { href: "/matches", label: "Matches", Icon: SoccerBall },
+  { href: "/leagues", label: "My leagues", Icon: Trophy },
+  { href: "/leaderboard", label: "Leaderboard", Icon: Ranking },
+  { href: "/pools", label: "Prize pools", Icon: Gift },
+  { href: "/receipts", label: "Receipts", Icon: Receipt },
+  { href: "/wallet", label: "Wallet", Icon: Wallet },
 ];
 
 export default function SideNav() {
@@ -36,11 +46,12 @@ export default function SideNav() {
               href={it.href}
               className={
                 on
-                  ? "rounded-[11px] bg-[#171717] px-3.5 py-3 text-sm font-extrabold text-neon"
-                  : "rounded-[11px] px-3.5 py-3 text-sm font-bold text-slate-400 transition-colors hover:text-white"
+                  ? "flex items-center gap-2.5 rounded-[11px] bg-[#171717] px-3.5 py-3 text-sm font-extrabold text-neon"
+                  : "flex items-center gap-2.5 rounded-[11px] px-3.5 py-3 text-sm font-bold text-slate-400 transition-colors hover:text-white"
               }
             >
-              {it.icon ? `${it.icon} ` : ""}{it.label}
+              <it.Icon size={18} weight={on ? "fill" : "regular"} />
+              {it.label}
             </Link>
           );
         })}

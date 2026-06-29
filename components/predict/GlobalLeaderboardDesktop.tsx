@@ -1,9 +1,12 @@
 import type { GlobalLeaderboard as GlobalLeaderboardData, LeagueMember } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
+import { Medal, Flame, Globe } from "@phosphor-icons/react/dist/ssr";
+
+const MEDAL_COLORS = ["#f5b301", "#cbd5e1", "#cd7f32"]; // gold / silver / bronze
 
 function Row({ member }: { member: LeagueMember }) {
   const you = member.isYou;
-  const medal = member.rank <= 3 ? ["🥇", "🥈", "🥉"][member.rank - 1] : null;
+  const medal = member.rank <= 3 ? <Medal weight="fill" size={18} color={MEDAL_COLORS[member.rank - 1]} /> : null;
   return (
     <div
       data-testid={`grow-${member.userId}`}
@@ -14,7 +17,7 @@ function Row({ member }: { member: LeagueMember }) {
           : "flex items-center gap-4 border-b border-[#eef2f7] px-5 py-4 last:border-0"
       }
     >
-      <span className={"w-7 text-center text-[15px] font-black tabular-nums " + (you ? "text-neon" : "text-ink")}>
+      <span className={"flex w-7 items-center justify-center text-[15px] font-black tabular-nums " + (you ? "text-neon" : "text-ink")}>
         {medal ?? member.rank}
       </span>
       {you ? (
@@ -24,7 +27,7 @@ function Row({ member }: { member: LeagueMember }) {
       )}
       <span className="flex-1 truncate text-[15px] font-extrabold text-ink">{member.name}</span>
       <span className="w-24 text-right text-[14px] font-bold tabular-nums text-slate-600">{formatAccuracy(member.accuracy)}</span>
-      <span className="w-20 text-right text-[14px] font-bold tabular-nums text-slate-600">🔥{member.streak}</span>
+      <span className="flex w-20 items-center justify-end gap-1 text-[14px] font-bold tabular-nums text-slate-600"><Flame weight="fill" size={13} className="text-orange-500" />{member.streak}</span>
       <span className="w-24 text-right text-[15px] font-black tabular-nums text-ink">{formatPoints(member.points)}</span>
     </div>
   );
@@ -39,7 +42,7 @@ export default function GlobalLeaderboardDesktop({ board }: { board: GlobalLeade
         <div className="flex items-end justify-between gap-6">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">Public ranking</div>
-            <div className="mt-1 text-[28px] font-black tracking-[-0.03em]">Global leaderboard 🌍</div>
+            <div className="mt-1 flex items-center gap-2 text-[28px] font-black tracking-[-0.03em]">Global leaderboard <Globe weight="fill" size={26} className="text-neon" /></div>
             <div className="mt-1 text-[13px] font-semibold text-slate-400">
               {formatPoints(board.totalPlayers)} players worldwide · this week
             </div>

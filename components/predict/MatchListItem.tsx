@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Match } from "@/lib/predict/types";
 import TeamAvatar from "@/components/predict/TeamAvatar";
+import { Check } from "@phosphor-icons/react/dist/ssr";
 
 function kickoffLabel(ms: number): string {
   const d = new Date(ms);
@@ -35,7 +36,7 @@ export default function MatchListItem({ match }: { match: Match }) {
   } else if (match.state === "HT") {
     header = <span className="text-[10px] font-extrabold tracking-[0.05em] text-amber-500">HALF TIME</span>;
   } else if (finished) {
-    header = <span className="text-[10px] font-extrabold tracking-[0.05em] text-slate-500">FULL TIME · ✓ settled</span>;
+    header = <span className="inline-flex items-center gap-1 text-[10px] font-extrabold tracking-[0.05em] text-slate-500">FULL TIME · <Check weight="bold" size={11} /> settled</span>;
   } else {
     header = <span className="text-[10px] font-extrabold tracking-[0.05em] tabular-nums text-slate-400">{kickoffLabel(match.kickoffMs)}</span>;
   }

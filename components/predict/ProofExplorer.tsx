@@ -5,6 +5,7 @@ import type { ProofReceipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 import { parseStatKeys, buildPipeline, buildRawPayload } from "@/lib/predict/proof";
 import CopyButton from "@/components/predict/CopyButton";
+import { SealCheck, Check } from "@phosphor-icons/react/dist/ssr";
 
 function FieldRow({ label, value, valueClass, copy }: { label: string; value: string; valueClass?: string; copy?: boolean }) {
   return (
@@ -30,7 +31,7 @@ export default function ProofExplorer({ receipt }: { receipt: ProofReceipt }) {
       <div className="bg-ink px-5 py-5 text-white lg:px-8 lg:py-6">
         <div className="flex items-center justify-between text-[13px] font-bold text-slate-400">
           <Link href={`/r/${receipt.pickId}`} className="transition-colors hover:text-white">‹ Back to receipt</Link>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(22,163,74,0.45)] bg-[rgba(22,163,74,0.16)] px-2.5 py-1 text-[11px] font-extrabold tracking-[0.06em] text-[#4ade80]">✓ VERIFIED</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(22,163,74,0.45)] bg-[rgba(22,163,74,0.16)] px-2.5 py-1 text-[11px] font-extrabold tracking-[0.06em] text-[#4ade80]"><SealCheck weight="fill" size={12} /> VERIFIED</span>
         </div>
         <div className="mt-4">
           <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Proof explorer</div>
@@ -51,7 +52,7 @@ export default function ProofExplorer({ receipt }: { receipt: ProofReceipt }) {
                 <li key={stage.id} className="relative flex gap-3 pb-5 last:pb-0">
                   {!last && <span className="absolute left-[11px] top-6 h-full w-px bg-[#e2e8f0]" />}
                   <span className={"relative z-10 mt-0.5 flex h-[23px] w-[23px] shrink-0 items-center justify-center rounded-full text-[12px] " + (ok ? "bg-green-600 text-white" : "border border-dashed border-slate-300 bg-white text-slate-400")}>
-                    {ok ? "✓" : "•"}
+                    {ok ? <Check weight="bold" size={13} /> : "•"}
                   </span>
                   <div className="min-w-0">
                     <div className="text-[13px] font-extrabold text-ink">{stage.label}</div>
@@ -71,8 +72,8 @@ export default function ProofExplorer({ receipt }: { receipt: ProofReceipt }) {
             <FieldRow label="match_state" value={receipt.matchState} />
             <FieldRow label="market" value={receipt.marketLabel} />
             <FieldRow label="data_hash" value={receipt.payloadRef} copy />
-            {receipt.merkleStatus && <FieldRow label="merkle_status" value={`${receipt.merkleStatus} ✓`} valueClass="text-green-600" />}
-            {receipt.onChainStatus && <FieldRow label="on_chain_status" value={`${receipt.onChainStatus} ✓`} valueClass="text-green-600" />}
+            {receipt.merkleStatus && <FieldRow label="merkle_status" value={receipt.merkleStatus} valueClass="text-green-600" />}
+            {receipt.onChainStatus && <FieldRow label="on_chain_status" value={receipt.onChainStatus} valueClass="text-green-600" />}
             <FieldRow label="settled_at" value={new Date(receipt.settledAtMs).toISOString()} />
           </div>
         </section>

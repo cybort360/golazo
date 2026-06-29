@@ -1,6 +1,7 @@
 "use client";
 
 import type { Market } from "@/lib/predict/types";
+import { Lightning, Check } from "@phosphor-icons/react/dist/ssr";
 
 export default function MarketPicker({
   market, selected, onSelect,
@@ -18,7 +19,7 @@ export default function MarketPicker({
         />
         <div className="relative">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black tracking-[0.1em] text-neon">⚡ CHAOS PICK</span>
+            <span className="inline-flex items-center gap-1 text-xs font-black tracking-[0.1em] text-neon"><Lightning weight="fill" size={13} /> CHAOS PICK</span>
             {market.rewardBadge && (
               <span className="rounded-[7px] bg-neon px-2.5 py-1 text-[11px] font-black text-ink">
                 {market.rewardBadge}
@@ -80,8 +81,8 @@ export default function MarketPicker({
                   : "border border-[#e2e8f0] bg-white text-ink transition-colors hover:border-slate-300")
               }
             >
-              <div className={active ? "text-[13px] font-extrabold" : "text-[13px] font-bold"}>
-                {opt.label}{active ? " ✓" : ""}
+              <div className={"inline-flex items-center gap-1 " + (active ? "text-[13px] font-extrabold" : "text-[13px] font-bold")}>
+                {opt.label}{active ? <Check weight="bold" size={13} /> : null}
               </div>
               {opt.odds && (
                 <div className="mt-0.5 text-[11px] font-semibold tabular-nums text-slate-400">{opt.odds}</div>

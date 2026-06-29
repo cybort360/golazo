@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ProofReceipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
+import { Check, X } from "@phosphor-icons/react/dist/ssr";
 
 function dateLabel(ms: number): string {
   return new Date(ms).toLocaleDateString([], { day: "2-digit", month: "short" });
@@ -39,11 +40,11 @@ export default function ReceiptsMobile({ receipts }: { receipts: ProofReceipt[] 
           >
             <span
               className={
-                "rounded-[7px] px-2 py-1 text-[10px] font-extrabold " +
+                "inline-flex items-center gap-1 rounded-[7px] px-2 py-1 text-[10px] font-extrabold " +
                 (r.result === "WON" ? "bg-green-600 text-white" : r.result === "LOST" ? "bg-[#fee2e2] text-[#b91c1c]" : "bg-slate-100 text-slate-500")
               }
             >
-              {r.result === "WON" ? "✓ WON" : r.result === "LOST" ? "✗ LOST" : r.result}
+              {r.result === "WON" ? <><Check weight="bold" size={11} /> WON</> : r.result === "LOST" ? <><X weight="bold" size={11} /> LOST</> : r.result}
             </span>
             <div className="min-w-0 flex-1">
               <div className="truncate text-[13px] font-extrabold text-ink">{r.predictionLabel}</div>

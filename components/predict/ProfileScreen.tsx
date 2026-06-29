@@ -3,6 +3,7 @@ import type { ProfileStats } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import ShareButton from "@/components/predict/ShareButton";
 import BadgeShelf from "@/components/predict/BadgeShelf";
+import { SoccerBall, Globe, Lightning, Wallet } from "@phosphor-icons/react/dist/ssr";
 
 function Tile({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
@@ -18,7 +19,7 @@ export default function ProfileScreen({ profile }: { profile: ProfileStats }) {
     <div className="bg-[#f8fafc] lg:hidden">
       {/* ink header — full bleed */}
       <section className="relative overflow-hidden bg-ink px-5 pb-6 pt-6 text-white">
-        <div className="pointer-events-none absolute -bottom-12 -right-8 select-none text-[150px] font-black opacity-[0.06]">⚽</div>
+        <SoccerBall weight="fill" className="pointer-events-none absolute -bottom-14 -right-10 select-none opacity-[0.06]" size={185} />
         <div className="relative">
           <div className="flex items-center gap-3.5">
             <span
@@ -34,7 +35,7 @@ export default function ProfileScreen({ profile }: { profile: ProfileStats }) {
           </div>
           {profile.globalRank !== null && (
             <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-[#2a2a2a] bg-[#171717] px-3 py-1.5 text-[12px] font-bold text-slate-300">
-              🌍 Global rank <span className="font-black text-neon">#{formatPoints(profile.globalRank)}</span>
+              <Globe weight="fill" size={13} /> Global rank <span className="font-black text-neon">#{formatPoints(profile.globalRank)}</span>
             </div>
           )}
           <ShareButton
@@ -51,7 +52,7 @@ export default function ProfileScreen({ profile }: { profile: ProfileStats }) {
         {/* headline stat tiles */}
         <div className="grid grid-cols-3 gap-2.5">
           <Tile label="Accuracy" value={formatAccuracy(profile.accuracy)} accent />
-          <Tile label="Streak" value={`🔥${profile.currentStreak}`} />
+          <Tile label="Streak" value={`${profile.currentStreak}`} />
           <Tile label="Points" value={`+${formatPoints(profile.points)}`} />
         </div>
 
@@ -66,7 +67,7 @@ export default function ProfileScreen({ profile }: { profile: ProfileStats }) {
         {profile.biggestUpset && (
           <div className="rounded-2xl bg-ink px-4 py-4 text-white">
             <div className="flex items-center justify-between">
-              <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-neon">⚡ Biggest upset called</div>
+              <div className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-neon"><Lightning weight="fill" size={11} /> Biggest upset called</div>
               <span className="text-[15px] font-black tabular-nums text-neon">+{formatPoints(profile.biggestUpset.points)}</span>
             </div>
             <div className="mt-1.5 text-[15px] font-extrabold">{profile.biggestUpset.label}</div>
@@ -78,7 +79,7 @@ export default function ProfileScreen({ profile }: { profile: ProfileStats }) {
         <BadgeShelf badges={profile.badges} />
 
         <Link href="/wallet" className="flex items-center justify-between rounded-2xl border border-[#e2e8f0] bg-white px-4 py-3.5 text-sm font-bold shadow-card">
-          <span>◎ Wallet &amp; on-chain rewards</span>
+          <span className="inline-flex items-center gap-1.5"><Wallet weight="fill" size={15} className="text-slate-400" /> Wallet &amp; on-chain rewards</span>
           <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.08em] text-slate-400">Preview</span>
         </Link>
 

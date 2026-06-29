@@ -4,11 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import type { WalletState, WalletReward } from "@/lib/predict/types";
 import { useMe } from "@/components/predict/useMe";
+import { Check, Coin, Gift, Globe, ShieldCheck, Wallet } from "@phosphor-icons/react/dist/ssr";
 
 const PREVIEW_ADDRESS = "7xKX…9fQ2";
 
 function StatusChip({ status, claimed }: { status: WalletReward["status"]; claimed: boolean }) {
-  if (claimed) return <span className="rounded-full bg-green-600 px-2.5 py-1 text-[11px] font-extrabold text-white">✓ Claimed</span>;
+  if (claimed) return <span className="inline-flex items-center gap-1 rounded-full bg-green-600 px-2.5 py-1 text-[11px] font-extrabold text-white"><Check weight="bold" size={11} /> Claimed</span>;
   if (status === "pending") return <span className="rounded-full bg-[#f1f5f9] px-2.5 py-1 text-[11px] font-bold text-slate-500">Pending</span>;
   return null;
 }
@@ -24,8 +25,8 @@ function RewardRow({
   const canClaim = connected && reward.status === "claimable" && !claimed;
   return (
     <div className="flex items-center gap-3 border-b border-[#f1f5f9] px-4 py-3.5 last:border-0">
-      <span className={"flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[16px] " + (reward.isToken ? "bg-ink text-neon" : "bg-[#f1f5f9]")}>
-        {reward.isToken ? "◎" : "🎁"}
+      <span className={"flex h-9 w-9 shrink-0 items-center justify-center rounded-xl " + (reward.isToken ? "bg-ink text-neon" : "bg-[#f1f5f9] text-slate-500")}>
+        {reward.isToken ? <Coin weight="fill" size={17} /> : <Gift weight="fill" size={17} />}
       </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-extrabold text-ink">{reward.label}</div>
@@ -67,7 +68,7 @@ export default function WalletPanel({ wallet }: { wallet: WalletState }) {
       <div className="mx-auto max-w-2xl px-4 py-5 lg:px-8 lg:py-8">
         {!wallet.eligibleRegion ? (
           <div className="rounded-2xl border border-[#e2e8f0] bg-white px-5 py-6 text-center shadow-card">
-            <div className="text-[28px]">🌍</div>
+            <Globe size={30} weight="fill" className="mx-auto text-slate-400" />
             <div className="mt-2 text-[15px] font-black text-ink">Not available in your region yet</div>
             <p className="mt-1.5 text-[13px] font-medium text-slate-500">
               Wallet rewards are rolling out to supported jurisdictions only. You can keep playing free — picks and leagues work everywhere.
@@ -80,7 +81,7 @@ export default function WalletPanel({ wallet }: { wallet: WalletState }) {
               {connected ? (
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-ink text-[18px] text-neon">◎</span>
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-ink text-neon"><Wallet weight="fill" size={20} /></span>
                     <div>
                       <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">Connected · {wallet.network}</div>
                       <div className="font-mono text-[15px] font-extrabold text-ink">{address}</div>
@@ -112,8 +113,8 @@ export default function WalletPanel({ wallet }: { wallet: WalletState }) {
             </div>
 
             {/* compliance disclaimer */}
-            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3 text-[11px] font-semibold leading-relaxed text-slate-500">
-              🛡️ Preview only — not live. Wallet mode and on-chain rewards activate in supported jurisdictions after compliance review. No purchase or wager is ever required, and the core game stays free to play. Token rewards launch on Meteora.
+            <div className="flex items-start gap-2 rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3 text-[11px] font-semibold leading-relaxed text-slate-500">
+              <ShieldCheck weight="fill" size={15} className="mt-px shrink-0 text-slate-400" /> <span>Preview only — not live. Wallet mode and on-chain rewards activate in supported jurisdictions after compliance review. No purchase or wager is ever required, and the core game stays free to play. Token rewards launch on Meteora.</span>
             </div>
           </div>
         )}

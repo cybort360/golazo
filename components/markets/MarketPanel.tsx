@@ -84,7 +84,7 @@ export default function MarketPanel({ match }: { match: Match }) {
     setMsg(null);
     try {
       const sig = await fn();
-      setMsg(`✓ ${label} confirmed`);
+      setMsg(`${label} confirmed`);
       void mirrorTx({ signature: sig, wallet: publicKey.toBase58(), matchId: match.id, marketId, kind: label });
       if (after) {
         try {

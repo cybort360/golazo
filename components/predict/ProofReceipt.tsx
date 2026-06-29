@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ProofReceipt as Receipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 import ShareButton from "@/components/predict/ShareButton";
+import { SealCheck, Check } from "@phosphor-icons/react/dist/ssr";
 
 // Telegram/Discord-friendly share copy for a settled pick (PRD §6.2 communities).
 export function shareCopy(r: Receipt): { title: string; text: string } {
@@ -12,7 +13,7 @@ export function shareCopy(r: Receipt): { title: string; text: string } {
   return {
     title: "Golazo — verified pick",
     text: won
-      ? `Called it ✅ ${r.predictionLabel} — +${formatPoints(r.points)} pts, verified by TxLINE.`
+      ? `Called it. ${r.predictionLabel} — +${formatPoints(r.points)} pts, verified by TxLINE.`
       : `${r.predictionLabel} — ${r.result}. Verified by TxLINE. Prove you know ball:`,
   };
 }
@@ -46,7 +47,7 @@ export default function ProofReceipt({ receipt }: { receipt: Receipt }) {
           <div className="flex items-center justify-between">
             <div className="text-lg font-black tracking-[-0.03em] text-white">GOLAZO</div>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(22,163,74,0.45)] bg-[rgba(22,163,74,0.16)] px-2.5 py-1 text-[11px] font-extrabold tracking-[0.06em] text-[#4ade80]">
-              ✓ VERIFIED
+              <SealCheck weight="fill" size={12} /> VERIFIED
             </span>
           </div>
 
@@ -70,7 +71,7 @@ export default function ProofReceipt({ receipt }: { receipt: Receipt }) {
           </div>
 
           <div className="mt-5 flex items-center gap-2 border-t border-dashed border-[#2a2a2a] py-3.5">
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-green-600 text-[11px] text-white">✓</span>
+            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-[5px] bg-green-600 text-white"><Check weight="bold" size={12} /></span>
             <span className="text-xs font-semibold text-slate-400">
               Verified by <span className="font-bold text-slate-200">TxLINE</span> · settled {settledTime(receipt.settledAtMs)}
             </span>
@@ -113,7 +114,7 @@ export default function ProofReceipt({ receipt }: { receipt: Receipt }) {
             <MonoRow label="settled_at" value={new Date(receipt.settledAtMs).toISOString()} />
             <MonoRow label="data_hash" value={receipt.payloadRef} />
             {receipt.merkleStatus && (
-              <MonoRow label="attestation" value={`${receipt.merkleStatus} ✓`} valueClass="text-green-600" />
+              <MonoRow label="attestation" value={receipt.merkleStatus} valueClass="text-green-600" />
             )}
             {receipt.txUrl && <MonoRow label="transaction" value="view ↗" valueClass="text-blue-600" />}
           </div>

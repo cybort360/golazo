@@ -21,7 +21,7 @@ describe("WalletPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /connect wallet \(preview\)/i }));
     const claim = screen.getAllByRole("button", { name: /claim/i })[0];
     fireEvent.click(claim);
-    expect(screen.getByText(/✓ Claimed/)).toBeInTheDocument();
+    expect(screen.getByText(/Claimed/)).toBeInTheDocument();
   });
 
   it("gates the experience when the region is not eligible", () => {

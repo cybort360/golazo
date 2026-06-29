@@ -5,6 +5,7 @@ import type { Match, MarketId } from "@/lib/predict/types";
 import { buildMarkets } from "@/lib/predict/markets";
 import MarketPicker from "@/components/predict/MarketPicker";
 import { MatchHeaderDesktop } from "@/components/predict/MatchHeader";
+import { Lock } from "@phosphor-icons/react/dist/ssr";
 
 function fmtCountdown(ms: number): string {
   const m = Math.floor(ms / 60000);
@@ -58,7 +59,7 @@ export default function MatchPickDesktop({ match, toggle }: { match: Match; togg
             <span className="text-[11px] font-black uppercase tracking-[0.13em] text-neon">Your slip</span>
             {showLock && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#171717] px-2.5 py-1 text-[11px] font-bold text-slate-300">
-                🔒 <span className="font-black tabular-nums text-neon">{remain === null ? "--:--" : fmtCountdown(remain)}</span>
+                <Lock weight="fill" size={12} /> <span className="font-black tabular-nums text-neon">{remain === null ? "--:--" : fmtCountdown(remain)}</span>
               </span>
             )}
           </div>

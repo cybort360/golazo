@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "@phosphor-icons/react/dist/ssr";
 
 // Shares a URL via the Web Share API where available, otherwise copies it to the
 // clipboard. The path is resolved against the current origin at click time so it
@@ -39,7 +40,7 @@ export default function ShareButton({
 
   return (
     <button type="button" onClick={onShare} className={className}>
-      {copied ? "✓ Link copied" : label}
+      {copied ? <span className="inline-flex items-center gap-1"><Check weight="bold" size={14} /> Link copied</span> : label}
     </button>
   );
 }

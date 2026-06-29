@@ -2,9 +2,10 @@
 import { useMemo } from "react";
 import { hashLeaf, verifyProof, toHex } from "@/lib/txline/merkle";
 import { buildMatchProof, proofForStat } from "@/lib/txline/proof";
+import { Check, X } from "@phosphor-icons/react/dist/ssr";
 
 // Client-side Merkle verification of a match result — the same proof the chain
-// checks inside validate_stat. Shows leaf / root / sibling path and a live ✓.
+// checks inside validate_stat. Shows leaf / root / sibling path and a live result.
 export default function MerkleVerifyPanel({
   matchId,
   marketId,
@@ -42,7 +43,7 @@ export default function MerkleVerifyPanel({
             (data.ok ? "bg-neon text-ink" : "bg-red-500 text-white")
           }
         >
-          {data.ok ? "✓ verified" : "× invalid"}
+          {data.ok ? <span className="inline-flex items-center gap-1"><Check weight="bold" size={11} /> verified</span> : <span className="inline-flex items-center gap-1"><X weight="bold" size={11} /> invalid</span>}
         </span>
       </div>
       <div className="mt-2">

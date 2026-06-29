@@ -58,7 +58,7 @@ export default async function Image({ params }: { params: { pickId: string } }) 
               letterSpacing: 1,
             }}
           >
-            ✓ VERIFIED
+            VERIFIED
           </div>
         </div>
 

@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { House, SoccerBall, Trophy, Gift, Receipt } from "@phosphor-icons/react/dist/ssr";
+import type { Icon } from "@phosphor-icons/react";
 
-// Mobile bottom tab bar. Emoji placeholders stand in for real icons for now.
-const ITEMS = [
-  { href: "/", emoji: "🏠", label: "Home" },
-  { href: "/matches", emoji: "⚽", label: "Matches" },
-  { href: "/leagues", emoji: "🏆", label: "Leagues" },
-  { href: "/pools", emoji: "🎁", label: "Pools" },
-  { href: "/receipts", emoji: "🧾", label: "Receipts" },
+// Mobile bottom tab bar.
+const ITEMS: { href: string; Icon: Icon; label: string }[] = [
+  { href: "/", Icon: House, label: "Home" },
+  { href: "/matches", Icon: SoccerBall, label: "Matches" },
+  { href: "/leagues", Icon: Trophy, label: "Leagues" },
+  { href: "/pools", Icon: Gift, label: "Pools" },
+  { href: "/receipts", Icon: Receipt, label: "Receipts" },
 ];
 
 export default function BottomNav() {
@@ -37,11 +39,11 @@ export default function BottomNav() {
             >
               <span
                 className={
-                  "flex h-10 w-10 items-center justify-center rounded-2xl text-[21px] transition-all " +
-                  (on ? "bg-ink" : "opacity-50")
+                  "flex h-10 w-10 items-center justify-center rounded-2xl transition-all " +
+                  (on ? "bg-ink text-neon" : "text-slate-500")
                 }
               >
-                {it.emoji}
+                <it.Icon size={22} weight={on ? "fill" : "regular"} />
               </span>
               <span
                 className={

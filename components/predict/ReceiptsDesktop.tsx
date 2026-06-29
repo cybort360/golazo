@@ -1,14 +1,15 @@
 import Link from "next/link";
 import type { ProofReceipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
+import { Check, X, SealCheck } from "@phosphor-icons/react/dist/ssr";
 
 function dateLabel(ms: number): string {
   return new Date(ms).toLocaleDateString([], { day: "2-digit", month: "short" });
 }
 
 function ResultChip({ result }: { result: ProofReceipt["result"] }) {
-  if (result === "WON") return <span className="w-[64px] rounded-[7px] bg-green-600 px-2 py-1 text-center text-[10px] font-extrabold text-white">✓ WON</span>;
-  if (result === "LOST") return <span className="w-[64px] rounded-[7px] bg-[#fee2e2] px-2 py-1 text-center text-[10px] font-extrabold text-[#b91c1c]">✗ LOST</span>;
+  if (result === "WON") return <span className="inline-flex w-[64px] items-center justify-center gap-1 rounded-[7px] bg-green-600 px-2 py-1 text-[10px] font-extrabold text-white"><Check weight="bold" size={11} /> WON</span>;
+  if (result === "LOST") return <span className="inline-flex w-[64px] items-center justify-center gap-1 rounded-[7px] bg-[#fee2e2] px-2 py-1 text-[10px] font-extrabold text-[#b91c1c]"><X weight="bold" size={11} /> LOST</span>;
   return <span className="w-[64px] rounded-[7px] bg-slate-100 px-2 py-1 text-center text-[10px] font-extrabold text-slate-500">{result}</span>;
 }
 
@@ -22,7 +23,7 @@ export default function ReceiptsDesktop({ receipts }: { receipts: ProofReceipt[]
     <div className="hidden lg:block">
       {/* ink banner with summary */}
       <div className="relative overflow-hidden bg-ink px-8 py-7 text-white">
-        <div className="pointer-events-none absolute -bottom-8 right-6 select-none text-[120px] font-black opacity-[0.05]">✓</div>
+        <SealCheck weight="fill" className="pointer-events-none absolute -bottom-10 right-6 select-none opacity-[0.05]" size={150} />
         <div className="relative flex items-end justify-between gap-6">
           <div>
             <h1 className="text-[30px] font-black tracking-[-0.04em]">Receipts</h1>
@@ -69,7 +70,7 @@ export default function ReceiptsDesktop({ receipts }: { receipts: ProofReceipt[]
                 </div>
               </div>
               <div className="hidden w-44 items-center gap-1.5 xl:flex">
-                <span className="flex h-4 w-4 items-center justify-center rounded-[4px] bg-green-600 text-[9px] text-white">✓</span>
+                <span className="flex h-4 w-4 items-center justify-center rounded-[4px] bg-green-600 text-white"><Check weight="bold" size={10} /></span>
                 <span className="font-mono text-[11px] text-slate-500">{r.payloadRef}</span>
               </div>
               <span className={"w-16 text-right text-[15px] font-black tabular-nums " + (r.result === "WON" ? "text-[#16a34a]" : "text-slate-400")}>

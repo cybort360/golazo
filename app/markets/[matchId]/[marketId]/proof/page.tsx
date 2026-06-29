@@ -4,6 +4,7 @@ import Link from "next/link";
 import MerkleVerifyPanel from "@/components/markets/MerkleVerifyPanel";
 import { marketPda, vaultPda } from "@/lib/chain/pdas";
 import { CLUSTER } from "@/lib/chain/constants";
+import { Check } from "@phosphor-icons/react/dist/ssr";
 
 // Demo resolved result (mirrors the Mock TxLINE adapter: 2-1 home win). Used as a
 // fallback only — the resolved outcome is read from Postgres once settled.
@@ -150,7 +151,7 @@ export default function MarketProofPage({
                 </span>
                 <span className="flex items-center gap-2 text-[12px]">
                   <span className="font-bold text-ink">{r.prediction}</span>
-                  {r.verified && <span className="font-black text-[#16a34a]">✓</span>}
+                  {r.verified && <Check weight="bold" size={13} className="text-[#16a34a]" />}
                   {r.claimTx && (
                     <a href={explorer("tx", r.claimTx)} target="_blank" rel="noreferrer" className="font-mono text-[#16a34a] hover:underline">
                       {r.claimTx.slice(0, 6)}… ↗

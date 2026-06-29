@@ -3,6 +3,7 @@ import type { Match, League, ProofReceipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 import TeamAvatar from "@/components/predict/TeamAvatar";
 import MeAvatar from "@/components/predict/MeAvatar";
+import { SoccerBall, Lightning, Check } from "@phosphor-icons/react/dist/ssr";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <div className="text-[11px] font-black uppercase tracking-[0.13em] text-ink">{children}</div>;
@@ -70,14 +71,16 @@ export default function HomeDashboard({
     <div className="lg:hidden">
       {/* ink hero — full bleed to the top + edges */}
       <section className="relative overflow-hidden bg-ink px-5 pb-8 pt-7 text-white">
-        <div className="pointer-events-none absolute -bottom-10 -right-8 select-none text-[150px] font-black opacity-[0.06]">⚽</div>
+        <SoccerBall weight="fill" className="pointer-events-none absolute -bottom-12 -right-10 select-none opacity-[0.06]" size={190} />
         <div className="relative">
           <div className="flex items-center justify-between">
             <div className="text-[22px] font-black tracking-[-0.04em]">GOLAZO</div>
             <MeAvatar className="flex h-[36px] w-[36px] items-center justify-center rounded-full border-[1.5px] border-[#334155] bg-[#1e293b] text-[13px] font-extrabold text-neon" />
           </div>
-          <h1 className="mt-5 text-[40px] font-black leading-[1.0] tracking-[-0.045em]">
-            Make picks.<br />Prove you<br />know ball. ⚡
+          <h1 className="mt-5 inline-flex flex-col text-[40px] font-black leading-[1.0] tracking-[-0.045em]">
+            <span>Make picks.</span>
+            <span>Prove you</span>
+            <span className="inline-flex items-center gap-2">know ball.<Lightning weight="fill" size={34} className="text-neon" /></span>
           </h1>
           <div className="mt-6 flex gap-2.5">
             <Link href="/matches" className="rounded-full bg-neon px-5 py-3 text-[14px] font-extrabold text-ink">Make a pick</Link>
@@ -132,7 +135,7 @@ export default function HomeDashboard({
         <div className="mb-2.5"><SectionLabel>Recent proof</SectionLabel></div>
         {receipt ? (
           <Link href={`/r/${receipt.pickId}`} className="flex items-center gap-3 rounded-[14px] bg-ink px-3.5 py-3">
-            <span className="rounded-[7px] bg-green-600 px-2 py-1 text-[10px] font-extrabold text-white">✓ {receipt.result}</span>
+            <span className="inline-flex items-center gap-1 rounded-[7px] bg-green-600 px-2 py-1 text-[10px] font-extrabold text-white"><Check weight="bold" size={11} /> {receipt.result}</span>
             <div className="min-w-0 flex-1">
               <div className="truncate text-[13px] font-bold text-white">
                 {receipt.predictionLabel} · {receipt.home.name} {receipt.homeScore}–{receipt.awayScore}

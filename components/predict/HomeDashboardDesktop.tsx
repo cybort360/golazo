@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Match, League, ProofReceipt, LeagueMember } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 import MatchCard from "@/components/predict/MatchCard";
+import { SoccerBall, Check } from "@phosphor-icons/react/dist/ssr";
 
 function RailRow({ member }: { member: LeagueMember }) {
   return (
@@ -42,7 +43,7 @@ export default function HomeDashboardDesktop({
     <div className="hidden lg:block">
       {/* hero strip */}
       <div className="relative overflow-hidden bg-ink px-8 py-7 text-white">
-        <div className="pointer-events-none absolute -bottom-8 right-6 select-none text-[120px] font-black opacity-[0.05]">⚽</div>
+        <SoccerBall weight="fill" className="pointer-events-none absolute -bottom-10 right-6 select-none opacity-[0.05]" size={150} />
         <div className="relative flex items-center justify-between gap-6">
           <div>
             <h1 className="text-[34px] font-black leading-[1.02] tracking-[-0.045em]">Make picks. Prove you know ball.</h1>
@@ -78,7 +79,7 @@ export default function HomeDashboardDesktop({
                   (i === 0 ? "bg-ink" : "border border-[#e2e8f0] bg-white")
                 }
               >
-                <span className="rounded-[7px] bg-green-600 px-2 py-1 text-[10px] font-extrabold text-white">✓ {r.result}</span>
+                <span className="inline-flex items-center gap-1 rounded-[7px] bg-green-600 px-2 py-1 text-[10px] font-extrabold text-white"><Check weight="bold" size={11} /> {r.result}</span>
                 <span className={"flex-1 truncate text-[13px] font-bold " + (i === 0 ? "text-white" : "text-ink")}>
                   {r.predictionLabel} · {r.home.name} {r.homeScore}–{r.awayScore} {r.away.name}
                 </span>

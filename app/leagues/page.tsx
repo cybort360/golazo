@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { League } from "@/lib/predict/types";
 import { dataSource } from "@/lib/predict/dataSource";
 import LeaguesDesktop from "@/components/predict/LeaguesDesktop";
+import { Globe } from "@phosphor-icons/react/dist/ssr";
 
 export default function LeaguesPage() {
   const [leagues, setLeagues] = useState<League[] | null>(null);
@@ -26,7 +27,7 @@ export default function LeaguesPage() {
           href="/leaderboard"
           className="flex items-center justify-between rounded-2xl border border-[#e2e8f0] bg-white px-4 py-3.5 text-sm font-bold shadow-card hover:border-slate-300"
         >
-          <span>🌍 Global leaderboard</span>
+          <span className="inline-flex items-center gap-1.5"><Globe weight="fill" size={15} className="text-slate-500" /> Global leaderboard</span>
           <span className="text-slate-400">›</span>
         </Link>
         <div className="flex flex-col gap-2">

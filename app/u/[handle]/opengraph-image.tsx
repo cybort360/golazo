@@ -16,7 +16,7 @@ export default async function Image({ params }: { params: { handle: string } }) 
   const stats = known
     ? [
         { k: "Accuracy", v: formatAccuracy(profile.accuracy) },
-        { k: "Streak", v: `${profile.currentStreak} 🔥` },
+        { k: "Streak", v: `${profile.currentStreak}` },
         { k: "Points", v: `+${formatPoints(profile.points)}` },
       ]
     : [];

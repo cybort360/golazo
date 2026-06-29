@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Match } from "@/lib/predict/types";
 import TeamAvatar from "@/components/predict/TeamAvatar";
+import { Check, Lightning } from "@phosphor-icons/react/dist/ssr";
 
 function kickoffLabel(ms: number): string {
   return new Date(ms)
@@ -27,7 +28,7 @@ export default function MatchCard({ match }: { match: Match }) {
   } else if (ht) {
     header = <span className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-amber-500">Half time</span>;
   } else if (ft) {
-    header = <span className="text-[10px] font-extrabold uppercase tracking-[0.05em] text-slate-500">Full time · ✓ settled</span>;
+    header = <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-[0.05em] text-slate-500">Full time · <Check weight="bold" size={11} /> settled</span>;
   } else {
     header = <span className="text-[10px] font-extrabold uppercase tracking-[0.05em] tabular-nums text-slate-400">{kickoffLabel(match.kickoffMs)}</span>;
   }
@@ -61,7 +62,7 @@ export default function MatchCard({ match }: { match: Match }) {
 
       {!ft && (
         <div className="mt-3 text-center text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
-          Winner · O/U · BTTS · <span className="text-ink">Chaos ⚡</span>
+          Winner · O/U · BTTS · <span className="inline-flex items-center gap-0.5 text-ink">Chaos <Lightning weight="fill" size={11} /></span>
         </div>
       )}
 
