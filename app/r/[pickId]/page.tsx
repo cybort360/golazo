@@ -8,6 +8,7 @@ import { dataSource } from "@/lib/predict/dataSource";
 import ProofReceipt from "@/components/predict/ProofReceipt";
 import ReceiptDetailDesktop from "@/components/predict/ReceiptDetailDesktop";
 import LeagueMovement from "@/components/predict/LeagueMovement";
+import { ScreenSkeleton } from "@/components/predict/Skeleton";
 
 export default function ReceiptPage({ params }: { params: { pickId: string } }) {
   const [receipt, setReceipt] = useState<Receipt | null | undefined>(undefined);
@@ -16,7 +17,7 @@ export default function ReceiptPage({ params }: { params: { pickId: string } }) 
   }, [params.pickId]);
 
   if (receipt === undefined) {
-    return <div className="px-4 py-10 text-center text-slate-400">Loading…</div>;
+    return <ScreenSkeleton variant="detail" />;
   }
   if (receipt === null) return notFound();
 

@@ -6,6 +6,7 @@ import type { GlobalLeaderboard as GlobalLeaderboardData } from "@/lib/predict/t
 import { dataSource } from "@/lib/predict/dataSource";
 import GlobalLeaderboard from "@/components/predict/GlobalLeaderboard";
 import GlobalLeaderboardDesktop from "@/components/predict/GlobalLeaderboardDesktop";
+import { ScreenSkeleton } from "@/components/predict/Skeleton";
 
 export default function LeaderboardPage() {
   const [board, setBoard] = useState<GlobalLeaderboardData | null>(null);
@@ -13,7 +14,7 @@ export default function LeaderboardPage() {
     void dataSource.getGlobalLeaderboard().then(setBoard);
   }, []);
 
-  if (board === null) return <div className="px-4 py-10 text-center text-slate-400">Loading…</div>;
+  if (board === null) return <ScreenSkeleton variant="list" />;
 
   return (
     <>

@@ -5,6 +5,7 @@ import type { ProofReceipt } from "@/lib/predict/types";
 import { dataSource } from "@/lib/predict/dataSource";
 import ReceiptsMobile from "@/components/predict/ReceiptsMobile";
 import ReceiptsDesktop from "@/components/predict/ReceiptsDesktop";
+import { ScreenSkeleton } from "@/components/predict/Skeleton";
 
 export default function ReceiptsPage() {
   const [receipts, setReceipts] = useState<ProofReceipt[] | null>(null);
@@ -12,7 +13,7 @@ export default function ReceiptsPage() {
     void dataSource.getRecentReceipts(50).then(setReceipts);
   }, []);
 
-  if (receipts === null) return <div className="px-4 py-10 text-center text-slate-400">Loading…</div>;
+  if (receipts === null) return <ScreenSkeleton variant="list" />;
 
   return (
     <>

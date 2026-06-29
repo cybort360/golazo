@@ -2,6 +2,7 @@
 
 import { dataSource } from "@/lib/predict/dataSource";
 import { usePoll } from "@/components/predict/usePoll";
+import { ScreenSkeleton } from "@/components/predict/Skeleton";
 import HomeDashboard from "@/components/predict/HomeDashboard";
 import HomeDashboardDesktop from "@/components/predict/HomeDashboardDesktop";
 
@@ -15,7 +16,7 @@ export default function Home() {
     return { matches, leagues, receipts };
   });
 
-  if (!data) return <div className="px-4 py-10 text-center text-slate-400">Loading…</div>;
+  if (!data) return <ScreenSkeleton variant="list" />;
 
   return (
     <>

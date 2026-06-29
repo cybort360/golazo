@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { League } from "@/lib/predict/types";
 import { dataSource } from "@/lib/predict/dataSource";
 import LeaguesDesktop from "@/components/predict/LeaguesDesktop";
+import { ScreenSkeleton } from "@/components/predict/Skeleton";
 import { Globe } from "@phosphor-icons/react/dist/ssr";
 
 export default function LeaguesPage() {
@@ -13,7 +14,7 @@ export default function LeaguesPage() {
     void dataSource.getMyLeagues().then(setLeagues);
   }, []);
 
-  if (leagues === null) return <div className="px-4 py-10 text-center text-slate-400">Loading…</div>;
+  if (leagues === null) return <ScreenSkeleton variant="list" />;
 
   return (
     <>

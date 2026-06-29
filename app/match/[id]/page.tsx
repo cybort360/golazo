@@ -7,6 +7,7 @@ import { dataSource } from "@/lib/predict/dataSource";
 import MatchPickScreen from "@/components/predict/MatchPickScreen";
 import MatchPickDesktop from "@/components/predict/MatchPickDesktop";
 import { MatchHeaderMobile, MatchHeaderDesktop } from "@/components/predict/MatchHeader";
+import { ScreenSkeleton } from "@/components/predict/Skeleton";
 import { marketsEnabled } from "@/lib/markets/flags";
 import WalletGate from "@/components/markets/WalletGate";
 import MarketPanel from "@/components/markets/MarketPanel";
@@ -54,7 +55,7 @@ export default function MatchPage({ params }: { params: { id: string } }) {
   }, [params.id]);
 
   if (match === undefined) {
-    return <div className="px-4 py-10 text-center text-slate-400">Loading…</div>;
+    return <ScreenSkeleton variant="detail" />;
   }
   if (match === null) return notFound();
 

@@ -5,6 +5,7 @@ import type { SponsoredPool } from "@/lib/predict/types";
 import { dataSource } from "@/lib/predict/dataSource";
 import PoolsMobile from "@/components/predict/PoolsMobile";
 import PoolsDesktop from "@/components/predict/PoolsDesktop";
+import { ScreenSkeleton } from "@/components/predict/Skeleton";
 
 export default function PoolsPage() {
   const [pools, setPools] = useState<SponsoredPool[] | null>(null);
@@ -12,7 +13,7 @@ export default function PoolsPage() {
     void dataSource.getSponsoredPools().then(setPools);
   }, []);
 
-  if (pools === null) return <div className="px-4 py-10 text-center text-slate-400">Loading…</div>;
+  if (pools === null) return <ScreenSkeleton variant="list" />;
 
   return (
     <>
