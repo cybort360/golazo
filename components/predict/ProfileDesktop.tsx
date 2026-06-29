@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ProfileStats } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import ShareButton from "@/components/predict/ShareButton";
+import ConvertDialog from "@/components/predict/ConvertDialog";
 import BadgeShelf from "@/components/predict/BadgeShelf";
 import { Lightning, Wallet } from "@phosphor-icons/react/dist/ssr";
 
@@ -47,6 +48,10 @@ export default function ProfileDesktop({ profile }: { profile: ProfileStats }) {
               text={`${formatAccuracy(profile.accuracy)} accuracy · ${profile.currentStreak}-pick streak. Prove you know ball.`}
               className="rounded-full bg-neon px-6 py-3 text-[14px] font-extrabold text-ink"
               label="Share profile ▸"
+            />
+            <ConvertDialog
+              className="rounded-full border border-[#2a2a2a] bg-[#171717] px-5 py-3 text-[14px] font-extrabold text-slate-200"
+              label="Edit profile"
             />
           </div>
         </div>

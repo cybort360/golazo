@@ -64,12 +64,10 @@ export default function SideNav() {
             {me?.name ?? "…"} <span className="text-slate-500">›</span>
           </div>
         </Link>
-        {me?.isGhost && (
-          <ConvertDialog
-            className="mt-2.5 w-full rounded-[9px] bg-neon py-2 text-center text-xs font-extrabold text-ink"
-            label="Save my picks"
-          />
-        )}
+        <ConvertDialog
+          className="mt-2.5 w-full rounded-[9px] bg-neon py-2 text-center text-xs font-extrabold text-ink"
+          label={me?.isGhost === false ? "Edit profile" : "Save my picks"}
+        />
       </div>
     </aside>
   );

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ProfileStats } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import ShareButton from "@/components/predict/ShareButton";
+import ConvertDialog from "@/components/predict/ConvertDialog";
 import BadgeShelf from "@/components/predict/BadgeShelf";
 import { SoccerBall, Globe, Lightning, Wallet } from "@phosphor-icons/react/dist/ssr";
 
@@ -38,13 +39,19 @@ export default function ProfileScreen({ profile }: { profile: ProfileStats }) {
               <Globe weight="fill" size={13} /> Global rank <span className="font-black text-neon">#{formatPoints(profile.globalRank)}</span>
             </div>
           )}
-          <ShareButton
-            path={`/u/${profile.handle}`}
-            title={`${profile.displayName} on Golazo`}
-            text={`${formatAccuracy(profile.accuracy)} accuracy · ${profile.currentStreak}-pick streak. Prove you know ball.`}
-            className="mt-4 w-full rounded-full bg-neon py-3 text-center text-[14px] font-extrabold text-ink"
-            label="Share my profile"
-          />
+          <div className="mt-4 flex gap-2">
+            <ShareButton
+              path={`/u/${profile.handle}`}
+              title={`${profile.displayName} on Golazo`}
+              text={`${formatAccuracy(profile.accuracy)} accuracy · ${profile.currentStreak}-pick streak. Prove you know ball.`}
+              className="flex-1 rounded-full bg-neon py-3 text-center text-[14px] font-extrabold text-ink"
+              label="Share my profile"
+            />
+            <ConvertDialog
+              className="rounded-full border border-[#2a2a2a] bg-[#171717] px-4 py-3 text-center text-[14px] font-extrabold text-slate-200"
+              label="Edit"
+            />
+          </div>
         </div>
       </section>
 
