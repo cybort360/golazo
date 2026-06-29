@@ -1,23 +1,25 @@
 import { ImageResponse } from "next/og";
-import { dataSource } from "@/lib/predict/dataSource";
+import { profileByHandle } from "@/lib/predict/profile-server";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 
+export const runtime = "nodejs";
 export const alt = "Golazo player profile";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Branded, per-profile share card — ink + neon lime with headline stats.
+// Branded, per-profile share card — ink + neon lime with headline stats. Resolves
+// the profile by handle so shared /u/<handle> cards show that player (not the viewer).
 export default async function Image({ params }: { params: { handle: string } }) {
-  const profile = await dataSource.getProfile();
-  const known = profile.handle === params.handle.toLowerCase();
-  const name = known ? profile.displayName : "Golazo";
-  const handle = known ? `@${profile.handle}` : "Prove you know ball.";
+  const profile = await profileByHandle(params.handle).catch(() => null);
+  const known = !!profile;
+  const name = known ? profile!.displayName : "Golazo";
+  const handle = known ? `@${profile!.handle}` : "Prove you know ball.";
 
   const stats = known
     ? [
-        { k: "Accuracy", v: formatAccuracy(profile.accuracy) },
-        { k: "Streak", v: `${profile.currentStreak}` },
-        { k: "Points", v: `+${formatPoints(profile.points)}` },
+        { k: "Accuracy", v: formatAccuracy(profile!.accuracy) },
+        { k: "Streak", v: `${profile!.currentStreak}` },
+        { k: "Points", v: `+${formatPoints(profile!.points)}` },
       ]
     : [];
 

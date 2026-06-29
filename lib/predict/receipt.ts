@@ -60,9 +60,7 @@ function toReceipt(p: {
   });
 }
 
-export async function getUserReceipts(limit = 10): Promise<ProofReceipt[]> {
-  const userId = await currentUserId();
-  if (!userId) return [];
+export async function getReceiptsForUser(userId: string, limit = 10): Promise<ProofReceipt[]> {
   const preds = await prisma.prediction.findMany({
     where: { userId, status: { in: ["WON", "LOST", "VOID"] } },
     orderBy: { settledAt: "desc" },
@@ -70,6 +68,12 @@ export async function getUserReceipts(limit = 10): Promise<ProofReceipt[]> {
     include: { match: true },
   });
   return preds.map((p) => toReceipt(p as any));
+}
+
+export async function getUserReceipts(limit = 10): Promise<ProofReceipt[]> {
+  const userId = await currentUserId();
+  if (!userId) return [];
+  return getReceiptsForUser(userId, limit);
 }
 
 export async function getUserReceipt(pickId: string): Promise<ProofReceipt | null> {

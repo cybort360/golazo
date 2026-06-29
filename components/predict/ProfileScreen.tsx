@@ -15,7 +15,7 @@ function Tile({ label, value, accent }: { label: string; value: string; accent?:
   );
 }
 
-export default function ProfileScreen({ profile }: { profile: ProfileStats }) {
+export default function ProfileScreen({ profile, isOwn = false }: { profile: ProfileStats; isOwn?: boolean }) {
   return (
     <div className="bg-[#f8fafc] lg:hidden">
       {/* ink header — full bleed */}
@@ -47,10 +47,12 @@ export default function ProfileScreen({ profile }: { profile: ProfileStats }) {
               className="flex-1 rounded-full bg-neon py-3 text-center text-[14px] font-extrabold text-ink"
               label="Share my profile"
             />
-            <ConvertDialog
-              className="rounded-full border border-[#2a2a2a] bg-[#171717] px-4 py-3 text-center text-[14px] font-extrabold text-slate-200"
-              label="Edit"
-            />
+            {isOwn && (
+              <ConvertDialog
+                className="rounded-full border border-[#2a2a2a] bg-[#171717] px-4 py-3 text-center text-[14px] font-extrabold text-slate-200"
+                label="Edit"
+              />
+            )}
           </div>
         </div>
       </section>

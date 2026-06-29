@@ -16,7 +16,7 @@ function StatCard({ label, value, accent, sub }: { label: string; value: string;
   );
 }
 
-export default function ProfileDesktop({ profile }: { profile: ProfileStats }) {
+export default function ProfileDesktop({ profile, isOwn = false }: { profile: ProfileStats; isOwn?: boolean }) {
   return (
     <div className="hidden lg:block">
       {/* ink banner */}
@@ -49,10 +49,12 @@ export default function ProfileDesktop({ profile }: { profile: ProfileStats }) {
               className="rounded-full bg-neon px-6 py-3 text-[14px] font-extrabold text-ink"
               label="Share profile ▸"
             />
-            <ConvertDialog
-              className="rounded-full border border-[#2a2a2a] bg-[#171717] px-5 py-3 text-[14px] font-extrabold text-slate-200"
-              label="Edit profile"
-            />
+            {isOwn && (
+              <ConvertDialog
+                className="rounded-full border border-[#2a2a2a] bg-[#171717] px-5 py-3 text-[14px] font-extrabold text-slate-200"
+                label="Edit profile"
+              />
+            )}
           </div>
         </div>
       </div>

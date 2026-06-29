@@ -142,6 +142,14 @@ export async function pickLeagueMovement(pickId: string): Promise<LeagueMovement
   return out;
 }
 
+/** A specific user's rank on the global (all-users) board, or null if unknown. */
+export async function userGlobalRank(userId: string): Promise<number | null> {
+  const ids = (await prisma.user.findMany({ select: { id: true } })).map((u) => u.id);
+  if (ids.length === 0) return null;
+  const ranked = rankStandings(await memberStats(ids, null));
+  return ranked.find((m) => m.userId === userId)?.rank ?? null;
+}
+
 export async function myLeagues(): Promise<{ code: string; name: string; memberCount: number }[]> {
   const you = await currentUserId();
   if (!you) return [];
