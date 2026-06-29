@@ -16,7 +16,8 @@ export async function POST(req: Request) {
     if (!signature || !wallet) {
       return NextResponse.json({ ok: false, error: "missing signature/wallet" }, { status: 400 });
     }
-    const txKind = VALID_KINDS.has(kind) ? kind : "STAKE";
+    const normalizedKind = typeof kind === "string" ? kind.toUpperCase() : "";
+    const txKind = VALID_KINDS.has(normalizedKind) ? normalizedKind : "STAKE";
 
     await prisma.wallet.upsert({
       where: { address: wallet },
