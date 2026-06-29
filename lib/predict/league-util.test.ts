@@ -2,9 +2,12 @@ import { describe, it, expect } from "vitest";
 import { generateLeagueCode, initialsFor, colorFor, rankStandings } from "@/lib/predict/league-util";
 
 describe("generateLeagueCode", () => {
-  it("formats as GLZ-XXXXXX with unambiguous chars", () => {
+  it("formats as GLZ-XXXXXXXX with unambiguous chars", () => {
     const code = generateLeagueCode(() => 0);
-    expect(code).toMatch(/^GLZ-[A-HJ-NP-Z2-9]{6}$/);
+    expect(code).toMatch(/^GLZ-[A-HJ-NP-Z2-9]{8}$/);
+  });
+  it("defaults to a CSPRNG and produces varied codes", () => {
+    expect(generateLeagueCode()).not.toBe(generateLeagueCode());
   });
 });
 

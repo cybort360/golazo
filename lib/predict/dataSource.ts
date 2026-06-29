@@ -1,6 +1,7 @@
-// Single import site for screens. Swap `mockDataSource` for the real TxLINE/DB
-// source here once it exists — nothing else changes.
-import { mockDataSource } from "@/lib/predict/mockData";
+// Single import site for screens. Matches now come from the TxLINE-ingested DB
+// (with a mock fallback when the DB is empty); the rest still delegates to the
+// mock until those screens are wired.
+import { dbBackedDataSource } from "@/lib/predict/httpDataSource";
 import type { PredictDataSource } from "@/lib/predict/types";
 
-export const dataSource: PredictDataSource = mockDataSource;
+export const dataSource: PredictDataSource = dbBackedDataSource;

@@ -1,10 +1,21 @@
 // Pure helpers for private leagues (testable, no server-only chain).
+import { randomInt } from "node:crypto";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous 0/O/1/I
+const CODE_LEN = 8;
 
-export function generateLeagueCode(rand: () => number = Math.random): string {
+// Invite codes are access tokens, so default to a CSPRNG. `rand` stays injectable
+// (returns 0..1) for deterministic tests.
+function cryptoRand(): number {
+  return randomInt(0, 1 << 30) / (1 << 30);
+}
+
+export function generateLeagueCode(rand: () => number = cryptoRand): string {
   let s = "";
-  for (let i = 0; i < 6; i++) s += CODE_ALPHABET[Math.floor(rand() * CODE_ALPHABET.length)];
+  for (let i = 0; i < CODE_LEN; i++) {
+    const idx = Math.min(CODE_ALPHABET.length - 1, Math.floor(rand() * CODE_ALPHABET.length));
+    s += CODE_ALPHABET[idx];
+  }
   return `GLZ-${s}`;
 }
 
