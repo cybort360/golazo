@@ -30,7 +30,7 @@ import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountIdempotentInstruction,
-  TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 
@@ -40,7 +40,9 @@ const TXL_MINT = new PublicKey("4Zao8ocPhmMgq7PdsYWyxvqySMGx7xb9cMftPMkEokRG");
 
 const HOST = process.env.TXLINE_HOST ?? "https://txline-dev.txodds.com";
 const RPC = process.env.TXLINE_RPC ?? "https://api.devnet.solana.com";
-const SERVICE_LEVEL = Number(process.env.TXLINE_SERVICE_LEVEL ?? "12");
+// Devnet's pricing matrix exposes one tier: rowId 1 (free, real-time, WC bundle).
+// Mainnet uses 1 (60s delay) / 12 (real-time). Override via env if needed.
+const SERVICE_LEVEL = Number(process.env.TXLINE_SERVICE_LEVEL ?? "1");
 const WEEKS = Number(process.env.TXLINE_WEEKS ?? "4");
 const KEYPAIR_PATH = process.env.SOLANA_KEYPAIR ?? `${homedir()}/.config/solana/id.json`;
 const LEAGUES: string[] = []; // empty = standard free World Cup bundle
@@ -87,16 +89,18 @@ async function main() {
   const ix = (idl as any).instructions?.find((i: any) => i.name === "subscribe");
   console.log("subscribe accounts (from IDL):", ix?.accounts?.map((a: any) => a.name).join(", "));
 
+  // TxL is a Token-2022 mint, so ATAs derive + create under TOKEN_2022_PROGRAM_ID.
   const [pricingMatrix] = PublicKey.findProgramAddressSync([Buffer.from("pricing_matrix")], PROGRAM_ID);
   const [tokenTreasuryPda] = PublicKey.findProgramAddressSync([Buffer.from("token_treasury_v2")], PROGRAM_ID);
-  const userTokenAccount = getAssociatedTokenAddressSync(TXL_MINT, kp.publicKey);
-  const tokenTreasuryVault = getAssociatedTokenAddressSync(TXL_MINT, tokenTreasuryPda, true);
+  const userTokenAccount = getAssociatedTokenAddressSync(TXL_MINT, kp.publicKey, false, TOKEN_2022_PROGRAM_ID);
+  const tokenTreasuryVault = getAssociatedTokenAddressSync(TXL_MINT, tokenTreasuryPda, true, TOKEN_2022_PROGRAM_ID);
 
   const preIx = createAssociatedTokenAccountIdempotentInstruction(
     kp.publicKey,
     userTokenAccount,
     kp.publicKey,
     TXL_MINT,
+    TOKEN_2022_PROGRAM_ID,
   );
 
   const txSig = await program.methods
@@ -108,7 +112,7 @@ async function main() {
       userTokenAccount,
       tokenTreasuryVault,
       tokenTreasuryPda,
-      tokenProgram: TOKEN_PROGRAM_ID,
+      tokenProgram: TOKEN_2022_PROGRAM_ID,
       systemProgram: anchor.web3.SystemProgram.programId,
       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
     })
@@ -124,10 +128,11 @@ async function main() {
     { txSig, walletSignature, leagues: LEAGUES },
     { headers: { Authorization: `Bearer ${jwt}` } },
   );
-  const apiToken: string = act.apiToken ?? act.token ?? act.api_token;
+  // activate returns the token as a bare string (or, defensively, an object).
+  const apiToken: string = typeof act === "string" ? act : act.apiToken ?? act.token ?? act.api_token;
   if (!apiToken) {
     console.log("activate response:", JSON.stringify(act, null, 2));
-    throw new Error("No API token field found in activate response (see above).");
+    throw new Error("No API token found in activate response (see above).");
   }
 
   console.log("\n✅ Done. Paste into .env.local:\n");

@@ -1,144 +1,124 @@
 import { describe, it, expect } from "vitest";
 import {
   mapFixture,
-  mapState,
+  statusIdToState,
   mapStateSnapshot,
-  mapEvent,
+  snapshotToEvents,
   mapFinalResult,
   toMs,
   type RawFixture,
-  type RawScores,
+  type RawScoreRow,
 } from "@/lib/txline/real/map";
 
 const fixture: RawFixture = {
-  Ts: 1_750_000_000_000,
-  StartTime: 1_750_000_500_000,
-  Competition: "World Cup 2026",
-  CompetitionId: 17,
-  Participant1Id: 100,
+  Ts: 1_782_482_168_962,
+  StartTime: 1_782_752_400_000,
+  Competition: "World Cup",
+  CompetitionId: 72,
+  Participant1Id: 2161,
   Participant1: "Brazil",
-  Participant2Id: 200,
-  Participant2: "Argentina",
-  FixtureId: 9001,
+  Participant2Id: 2530,
+  Participant2: "Japan",
+  FixtureId: 18172469,
   Participant1IsHome: true,
 };
 
-// Argentina (p2) away; BRA 2–1 ARG; p1 is home.
-function scoresRow(over: Partial<RawScores>): RawScores {
-  return {
-    fixtureId: 9001,
-    gameState: "F",
-    startTime: 1_750_000_500_000,
-    participant1IsHome: true,
-    participant1Id: 100,
-    participant2Id: 200,
-    action: "score",
-    id: 1,
-    ts: 1_750_010_000_000,
-    seq: 10,
-    scoreSoccer: {
-      Participant1: { Total: { Goals: 2, YellowCards: 1, RedCards: 0, Corners: 6 } },
-      Participant2: { Total: { Goals: 1, YellowCards: 2, RedCards: 0, Corners: 3 } },
-    },
-    ...over,
-  };
+// Per-action snapshot rows (shape from the live devnet API, 2026-06-29).
+// Brazil(P1, home) 2–1 Japan(P2), final, P1 4 corners / P2 1.
+function snapshot(over: { statusId?: number; stats?: Record<string, number>; extra?: RawScoreRow[] } = {}): RawScoreRow[] {
+  const stats = over.stats ?? { "1": 2, "2": 1, "7": 4, "8": 1 };
+  return [
+    { FixtureId: 18172469, Participant1IsHome: true, Action: "comment", Ts: 1, Seq: 1, Data: {}, Stats: {} },
+    { FixtureId: 18172469, Participant1IsHome: true, Action: "status", Ts: 5, Seq: 50, Data: { StatusId: over.statusId ?? 5 } },
+    { FixtureId: 18172469, Participant1IsHome: true, Action: "possession", Ts: 9, Seq: 99, Data: { New: { Clock: { Seconds: 5400 } } }, Stats: stats },
+    ...(over.extra ?? []),
+  ];
 }
 
-describe("mapState", () => {
-  it("maps soccer phase codes to coarse state", () => {
-    expect(mapState("NS")).toBe("NOT_STARTED");
-    expect(mapState("H1")).toBe("LIVE");
-    expect(mapState("HT")).toBe("HT");
-    expect(mapState("F")).toBe("FT");
-    expect(mapState("FET")).toBe("FT");
-    expect(mapState("P")).toBe("POSTPONED");
-    expect(mapState("A")).toBe("VOID");
+describe("statusIdToState", () => {
+  it("maps soccer status ids to coarse state", () => {
+    expect(statusIdToState(1)).toBe("NOT_STARTED");
+    expect(statusIdToState(2)).toBe("LIVE");
+    expect(statusIdToState(3)).toBe("HT");
+    expect(statusIdToState(4)).toBe("LIVE");
+    expect(statusIdToState(5)).toBe("FT");
+    expect(statusIdToState(10)).toBe("FT");
+    expect(statusIdToState(undefined)).toBe("NOT_STARTED");
   });
 });
 
 describe("toMs", () => {
-  it("passes through milliseconds and upscales seconds", () => {
-    expect(toMs(1_750_000_000_000)).toBe(1_750_000_000_000);
-    expect(toMs(1_750_000_000)).toBe(1_750_000_000_000);
+  it("passes ms through and upscales seconds", () => {
+    expect(toMs(1_782_752_400_000)).toBe(1_782_752_400_000);
+    expect(toMs(1_782_752_400)).toBe(1_782_752_400_000);
   });
 });
 
 describe("mapFixture", () => {
   it("orients home/away by Participant1IsHome and derives tickers", () => {
     const f = mapFixture(fixture);
-    expect(f.id).toBe("9001");
-    expect(f.competition).toBe("World Cup 2026");
+    expect(f.id).toBe("18172469");
+    expect(f.competition).toBe("World Cup");
     expect(f.home.name).toBe("Brazil");
     expect(f.home.ticker).toBe("BRA");
-    expect(f.away.name).toBe("Argentina");
-    expect(f.away.ticker).toBe("ARG");
+    expect(f.away.name).toBe("Japan");
+    expect(f.away.ticker).toBe("JAP");
     expect(f.lockMs).toBe(f.kickoffMs);
   });
 
   it("flips home/away when participant1 is the away side", () => {
     const f = mapFixture({ ...fixture, Participant1IsHome: false });
-    expect(f.home.name).toBe("Argentina");
+    expect(f.home.name).toBe("Japan");
     expect(f.away.name).toBe("Brazil");
   });
 });
 
 describe("mapStateSnapshot", () => {
-  it("orients scores to home/away and carries the minute", () => {
-    const snap = mapStateSnapshot(scoresRow({ gameState: "H2", dataSoccer: { Minutes: 67 } }));
+  it("reads phase from the status action and scores from Stats", () => {
+    const snap = mapStateSnapshot(snapshot({ statusId: 4, stats: { "1": 1, "2": 1 } }))!;
     expect(snap.state).toBe("LIVE");
-    expect(snap.minute).toBe(67);
-    expect(snap.homeScore).toBe(2);
+    expect(snap.homeScore).toBe(1);
     expect(snap.awayScore).toBe(1);
+    expect(snap.minute).toBe(90); // 5400s / 60
   });
 
-  it("flips orientation when participant1 is away", () => {
-    const snap = mapStateSnapshot(scoresRow({ participant1IsHome: false }));
-    expect(snap.homeScore).toBe(1); // p2 (away in the row) becomes home
+  it("orients scores to away when participant1 is away", () => {
+    const rows = snapshot({ statusId: 4 }).map((r) => ({ ...r, Participant1IsHome: false }));
+    const snap = mapStateSnapshot(rows)!;
+    expect(snap.homeScore).toBe(1); // P2 goals → home
     expect(snap.awayScore).toBe(2);
+  });
+
+  it("returns null for no rows", () => {
+    expect(mapStateSnapshot([])).toBeNull();
   });
 });
 
-describe("mapEvent", () => {
-  it("flags a home goal and its minute", () => {
-    const e = mapEvent(scoresRow({ gameState: "H2", dataSoccer: { Goal: true, Minutes: 87, Participant: 1 } }));
-    expect(e.type).toBe("goal");
-    expect(e.team).toBe("home");
-    expect(e.minute).toBe(87);
-    expect(e.seq).toBe(10);
-  });
-
-  it("attributes a participant2 goal to away", () => {
-    const e = mapEvent(scoresRow({ gameState: "H2", dataSoccer: { Goal: true, Minutes: 40, Participant: 2 } }));
-    expect(e.team).toBe("away");
+describe("snapshotToEvents", () => {
+  it("emits one current-state event, gated by sinceSeq", () => {
+    const ev = snapshotToEvents(snapshot());
+    expect(ev).toHaveLength(1);
+    expect(ev[0].type).toBe("ft");
+    expect(ev[0].seq).toBe(99);
+    expect(ev[0].homeScore).toBe(2);
+    expect(snapshotToEvents(snapshot(), 99)).toHaveLength(0); // already ingested
   });
 });
 
 describe("mapFinalResult", () => {
-  it("derives goals, stats, availability and proof fields", () => {
-    const snapshot = scoresRow({ gameState: "F" });
-    const goalEvents: RawScores[] = [
-      scoresRow({ seq: 3, dataSoccer: { Goal: true, Minutes: 23, Participant: 1 } }),
-      scoresRow({ seq: 5, dataSoccer: { Goal: true, Minutes: 55, Participant: 2 } }),
-      scoresRow({ seq: 8, dataSoccer: { Goal: true, Minutes: 87, Participant: 1 } }),
-    ];
-    const proof = { ts: 1_750_010_500_000, statToProve: { key: 1, value: 2, period: 0 }, eventStatRoot: "bWVya2xl" };
-    const r = mapFinalResult(snapshot, goalEvents, proof);
-
+  it("builds a final result with stats + availability when FT", () => {
+    const r = mapFinalResult(snapshot({ statusId: 5 }))!;
     expect(r.state).toBe("FT");
     expect(r.homeScore).toBe(2);
     expect(r.awayScore).toBe(1);
-    expect(r.goals).toHaveLength(3);
-    expect(r.goals.some((g) => g.minute === 87 && g.team === "home")).toBe(true); // chaos: after 80'
-    expect(r.stats.home_corners).toBe(6);
-    expect(r.available.chaos).toBe(true);
+    expect(r.stats.home_corners).toBe(4);
+    expect(r.available.winner).toBe(true);
     expect(r.available.corners).toBe(true);
-    expect(r.merkleRoot).toBe("bWVya2xl");
-    expect(r.settledAtMs).toBe(1_750_010_500_000);
+    expect(r.available.chaos).toBe(false); // minutes unavailable from snapshot
+    expect(r.goals).toEqual([]);
   });
 
-  it("marks chaos unavailable without the goal-event trail", () => {
-    const r = mapFinalResult(scoresRow({ gameState: "F" }), [], null);
-    expect(r.available.chaos).toBe(false);
-    expect(r.merkleRoot).toBeNull();
+  it("returns null while the match is still live", () => {
+    expect(mapFinalResult(snapshot({ statusId: 4 }))).toBeNull();
   });
 });
