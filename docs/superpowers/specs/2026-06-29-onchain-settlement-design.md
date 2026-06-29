@@ -2,7 +2,42 @@
 
 **Date:** 2026-06-29
 **Cairn task:** #62 (P2-14)
-**Status:** approved (brainstorm), spec under review
+**Status:** built (devnet deploy pending funds)
+
+---
+
+## REVISION (2026-06-29) — Golazo Markets scope correction (supersedes below where conflicting)
+
+User scope correction split the product into **two modes** and narrowed the
+on-chain piece. This section is authoritative where it differs from the original
+design below.
+
+- **Two modes.** (1) *Golazo Picks* — existing free-to-play social game, unchanged.
+  (2) *Golazo Markets* — devnet-only **YES/NO** binary markets in a **mock SPL
+  token** ("GOLAZO demo credits"), PDA escrow, claim/refund. A "Free Picks |
+  Market Mode" toggle on the match screen switches between them.
+- **Binary market, not N-outcome.** `golazo_predict` stores `yes_total`/`no_total`,
+  status (`Open/Locked/Live/Settling/Settled/Void`), `winning_side`, `keeper`.
+  Still parimutuel (zero rake, pro-rata, refund path when winning side empty).
+- **Keeper-gated `settle`** (was permissionless) — `settle`/`void`/`set_status`
+  require `keeper` signer; `settle` still CPIs into `txline_mock::validate_stat`.
+- **Asset adapter abstraction** (`lib/markets/assets`): `SplAssetAdapter` (live)
+  + `NativeSolAdapter` stub (throws, flag-gated). Swap-ready, native SOL NOT built.
+- **Feature flags** (`lib/markets/flags.ts`): `NEXT_PUBLIC_ENABLE_MARKET_MODE`,
+  `NEXT_PUBLIC_SOLANA_CLUSTER=devnet`, `NEXT_PUBLIC_ENABLE_DEVNET_SPL_ESCROW`,
+  `NEXT_PUBLIC_ENABLE_NATIVE_SOL_SETTLEMENT=false`, `NEXT_PUBLIC_ENABLE_MAINNET_MARKETS=false`.
+- **Postgres (Prisma) index layer.** Chain = source of truth for escrow/positions/
+  settlement; Postgres mirrors it (every tx written with signature/wallet/market/
+  metadata) and powers screens, receipts, leagues, history. Server-only client,
+  Node runtime. Models: User, Wallet, Match, Market, MarketPosition, TxlineEvent,
+  Settlement, ProofReceipt, Transaction, PrivateLeague + LeagueMember. Neon for
+  deployed envs; local Postgres for dev.
+- **Stat keys are binary** (`home_win`/`over25`/`btts` = 0/1) so `settle`'s
+  `claimed_value` maps directly to `winning_side`.
+- **Toolchain:** see [[anchor-sbf-edition2024-fix]] memory. 8 anchor program tests
+  + 142 vitest tests green.
+
+---
 
 ## 1. Goal
 
