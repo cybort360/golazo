@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Match, League, ProofReceipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 import TeamAvatar from "@/components/predict/TeamAvatar";
+import MeAvatar from "@/components/predict/MeAvatar";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <div className="text-[11px] font-black uppercase tracking-[0.13em] text-ink">{children}</div>;
@@ -73,7 +74,7 @@ export default function HomeDashboard({
         <div className="relative">
           <div className="flex items-center justify-between">
             <div className="text-[22px] font-black tracking-[-0.04em]">GOLAZO</div>
-            <Link href="/u/jordan" aria-label="Your profile" className="flex h-[36px] w-[36px] items-center justify-center rounded-full border-[1.5px] border-[#334155] bg-[#1e293b] text-[13px] font-extrabold text-neon">JK</Link>
+            <MeAvatar className="flex h-[36px] w-[36px] items-center justify-center rounded-full border-[1.5px] border-[#334155] bg-[#1e293b] text-[13px] font-extrabold text-neon" />
           </div>
           <h1 className="mt-5 text-[40px] font-black leading-[1.0] tracking-[-0.045em]">
             Make picks.<br />Prove you<br />know ball. ⚡

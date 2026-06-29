@@ -4,6 +4,7 @@ import { ensureUser, currentUserId } from "@/lib/predict/session";
 import { generateLeagueCode, rankStandings, rankedToMember, type MemberStat, type RankedMember } from "@/lib/predict/league-util";
 import { computeDelta } from "@/lib/predict/leaderboard-delta";
 import type { League, GlobalLeaderboard, LeagueMember } from "@/lib/predict/types";
+import { publicName } from "@/lib/predict/identity";
 
 // Private leagues (PRD §6.3): create / join via code + a private leaderboard
 // ranked by points earned from settled picks.
@@ -77,7 +78,7 @@ async function memberStats(userIds: string[], you: string | null): Promise<Membe
     const a = agg.get(u.id)!;
     return {
       userId: u.id,
-      name: u.displayName ?? u.handle ?? `Player ${u.anonId?.slice(0, 4) ?? "?"}`,
+      name: publicName(u),
       points: a.points,
       won: wins.get(u.id) ?? 0,
       settled: a.settled,

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { WalletState, WalletReward } from "@/lib/predict/types";
+import { useMe } from "@/components/predict/useMe";
 
 const PREVIEW_ADDRESS = "7xKX…9fQ2";
 
@@ -44,6 +45,7 @@ function RewardRow({
 }
 
 export default function WalletPanel({ wallet }: { wallet: WalletState }) {
+  const me = useMe();
   const [connected, setConnected] = useState(wallet.connected);
   const [claimed, setClaimed] = useState<Record<string, boolean>>({});
   const address = connected ? wallet.address ?? PREVIEW_ADDRESS : null;
@@ -54,7 +56,7 @@ export default function WalletPanel({ wallet }: { wallet: WalletState }) {
       {/* ink header — full bleed */}
       <div className="bg-ink px-5 py-5 text-white lg:px-8 lg:py-6">
         <div className="flex items-center justify-between text-[13px] font-bold text-slate-400">
-          <Link href="/u/jordan" className="transition-colors hover:text-white">‹ Profile</Link>
+          <Link href={me?.profileHref ?? "/leagues"} className="transition-colors hover:text-white">‹ Profile</Link>
           <span className="rounded-full border border-[#2a2a2a] bg-[#171717] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-neon">Preview</span>
         </div>
         <div className="mt-4 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Wallet mode</div>

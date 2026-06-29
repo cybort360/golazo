@@ -4,7 +4,8 @@ import { currentUserId } from "@/lib/predict/session";
 import { getUserReceipts } from "@/lib/predict/receipt";
 import { buildProfile } from "@/lib/predict/profile";
 import { globalLeaderboardUi } from "@/lib/predict/league";
-import { initialsFor, colorFor } from "@/lib/predict/league-util";
+import { colorFor } from "@/lib/predict/league-util";
+import { publicName, publicInitials, profileSlug } from "@/lib/predict/identity";
 import type { ProfileStats } from "@/lib/predict/types";
 
 // Real public profile for the current user, derived from their settled picks.
@@ -22,13 +23,12 @@ export async function profileUi(): Promise<ProfileStats | null> {
   const board = await globalLeaderboardUi();
   const globalRank = board?.you.isYou ? board.you.rank : null;
 
-  const handle = user.handle ?? `player-${(user.anonId ?? userId).slice(0, 6)}`;
-  const displayName = user.displayName ?? (user.handle ? user.handle : "Anonymous baller");
+  const displayName = publicName({ ...user, id: userId });
 
   return buildProfile(receipts, {
-    handle: handle.toLowerCase(),
+    handle: profileSlug({ ...user, id: userId }),
     displayName,
-    initials: initialsFor(displayName),
+    initials: publicInitials(displayName),
     color: colorFor(userId),
     tagline: "Prove you know ball.",
     globalRank,

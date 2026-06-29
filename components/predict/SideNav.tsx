@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMe } from "@/components/predict/useMe";
 
 // Persistent desktop sidebar (canvas "Desktop layouts"). Hidden below lg, where
 // the top SiteNav takes over.
@@ -17,6 +18,7 @@ const ITEMS = [
 
 export default function SideNav() {
   const pathname = usePathname();
+  const me = useMe();
   if (pathname?.startsWith("/admin") || pathname?.startsWith("/tg")) return null;
 
   const isActive = (href: string) =>
@@ -44,10 +46,10 @@ export default function SideNav() {
         })}
       </nav>
       <div className="mt-auto rounded-[13px] border border-[#262626] bg-[#171717] p-3.5">
-        <Link href="/u/jordan" className="block">
+        <Link href={me?.profileHref ?? "/leagues"} className="block">
           <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">Playing as</div>
           <div className="mt-1 flex items-center justify-between text-sm font-extrabold">
-            Guest · Jordan <span className="text-slate-500">›</span>
+            {me?.name ?? "…"} <span className="text-slate-500">›</span>
           </div>
         </Link>
         <button
