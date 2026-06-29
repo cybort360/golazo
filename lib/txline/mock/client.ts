@@ -126,6 +126,11 @@ function buildEvents(f: ScriptedFixture, now: number): TxlineLiveEvent[] {
     } else {
       push({ tsMs: kickoffMs + 95 * 60_000, minute: 90, type: "ft", state: "FT", homeScore: home, awayScore: away });
     }
+  } else if (f.phase === "live") {
+    // A state tick so the latest event carries the running clock (not just the
+    // last discrete event), so derived `minute` reflects the live minute.
+    const m = f.liveMinute ?? null;
+    push({ tsMs: kickoffMs + (m ?? 0) * 60_000, minute: m, type: "state", state: "LIVE", homeScore: home, awayScore: away });
   }
   return events;
 }
