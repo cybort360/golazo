@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import type { League, LeagueMember } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
+import LeagueDialog from "@/components/predict/LeagueDialog";
+import CopyButton from "@/components/predict/CopyButton";
 
 function Avatar({ member, size = 28 }: { member: LeagueMember; size?: number }) {
   if (member.isYou) {
@@ -47,7 +49,7 @@ function Preview({ league }: { league: League }) {
             <div className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">Invite code</div>
             <div className="text-[16px] font-black tracking-[0.04em] tabular-nums text-neon">{league.code}</div>
           </div>
-          <button type="button" className="rounded-[9px] bg-neon px-3.5 py-2 text-[12px] font-black text-ink">Share invite</button>
+          <CopyButton value={league.code} label="Share invite" className="rounded-[9px] bg-neon px-3.5 py-2 text-[12px] font-black text-ink" />
         </div>
       </div>
 
@@ -89,12 +91,10 @@ export default function LeaguesDesktop({ leagues }: { leagues: League[] }) {
       <div className="mx-auto grid max-w-5xl grid-cols-[360px_minmax(0,1fr)] items-start gap-x-7 px-8 py-8">
         {/* left column, stacked across rows so the preview can align to the list row */}
         <h1 className="col-start-1 row-start-1 mb-4 text-[26px] font-black tracking-[-0.03em]">Your leagues</h1>
-        <button
-          type="button"
+        <LeagueDialog
           className="col-start-1 row-start-2 w-full rounded-2xl bg-ink px-4 py-3.5 text-center text-sm font-black text-neon transition-transform hover:-translate-y-0.5"
-        >
-          + Create or join a league
-        </button>
+          label="+ Create or join a league"
+        />
         <div className="col-start-1 row-start-3 mt-3 flex flex-col gap-2">
           {leagues.map((l, i) => {
             const active = i === selIdx;

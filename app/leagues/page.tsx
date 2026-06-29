@@ -6,6 +6,7 @@ import type { League } from "@/lib/predict/types";
 import { dataSource } from "@/lib/predict/dataSource";
 import LeaguesDesktop from "@/components/predict/LeaguesDesktop";
 import { ScreenSkeleton } from "@/components/predict/Skeleton";
+import LeagueDialog from "@/components/predict/LeagueDialog";
 import { Globe } from "@phosphor-icons/react/dist/ssr";
 
 export default function LeaguesPage() {
@@ -21,9 +22,7 @@ export default function LeaguesPage() {
       {/* mobile (<lg) — create on top, then list */}
       <div className="mx-auto flex max-w-2xl flex-col gap-3 px-4 py-6 md:px-8 md:py-8 lg:hidden">
         <h1 className="text-xl font-black tracking-tight">Your leagues</h1>
-        <button type="button" className="rounded-2xl bg-ink px-4 py-3.5 text-sm font-black text-neon">
-          ＋ Create or join a league
-        </button>
+        <LeagueDialog className="rounded-2xl bg-ink px-4 py-3.5 text-sm font-black text-neon" label="＋ Create or join a league" />
         <Link
           href="/leaderboard"
           className="flex items-center justify-between rounded-2xl border border-[#e2e8f0] bg-white px-4 py-3.5 text-sm font-bold shadow-card hover:border-slate-300"

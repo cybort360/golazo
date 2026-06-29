@@ -1,6 +1,7 @@
 import type { GlobalLeaderboard as GlobalLeaderboardData, LeagueMember } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import { Medal, Flame, Globe } from "@phosphor-icons/react/dist/ssr";
+import SegTabs from "@/components/predict/SegTabs";
 
 const MEDAL_COLORS = ["#f5b301", "#cbd5e1", "#cd7f32"]; // gold / silver / bronze
 
@@ -56,10 +57,7 @@ export default function GlobalLeaderboardDesktop({ board }: { board: GlobalLeade
 
       {/* toggle + column headers */}
       <div className="flex items-center justify-between px-8 pb-2 pt-6">
-        <div className="flex rounded-xl bg-[#e9eef4] p-1">
-          <button type="button" className="rounded-[9px] bg-white px-5 py-2 text-[13px] font-extrabold text-ink shadow-card">This week</button>
-          <button type="button" className="px-5 py-2 text-[13px] font-bold text-slate-500">All time</button>
-        </div>
+        <SegTabs tabs={["This week", "All time"]} />
         <div className="flex items-center text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
           <span className="w-24 text-right">Accuracy</span>
           <span className="w-20 text-right">Streak</span>

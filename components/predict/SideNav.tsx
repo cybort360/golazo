@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMe } from "@/components/predict/useMe";
+import ConvertDialog from "@/components/predict/ConvertDialog";
 import {
   House,
   SoccerBall,
@@ -63,12 +64,12 @@ export default function SideNav() {
             {me?.name ?? "…"} <span className="text-slate-500">›</span>
           </div>
         </Link>
-        <button
-          type="button"
-          className="mt-2.5 w-full rounded-[9px] bg-neon py-2 text-center text-xs font-extrabold text-ink"
-        >
-          Save my picks
-        </button>
+        {me?.isGhost && (
+          <ConvertDialog
+            className="mt-2.5 w-full rounded-[9px] bg-neon py-2 text-center text-xs font-extrabold text-ink"
+            label="Save my picks"
+          />
+        )}
       </div>
     </aside>
   );

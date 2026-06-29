@@ -3,6 +3,7 @@ import { formatPoints } from "@/lib/predict/labels";
 import { prizeKindLabel, formatCloses } from "@/lib/predict/pools";
 import PoolCard from "@/components/predict/PoolCard";
 import { Trophy, Star, Check, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
+import SoonButton from "@/components/predict/SoonButton";
 
 function FeaturedHero({ pool }: { pool: SponsoredPool }) {
   return (
@@ -26,7 +27,7 @@ function FeaturedHero({ pool }: { pool: SponsoredPool }) {
               <Check weight="bold" size={13} /> Joined{pool.yourRank ? ` · ranked #${pool.yourRank}` : ""}
             </span>
           ) : (
-            <button type="button" className="rounded-full bg-neon px-6 py-2.5 text-[14px] font-extrabold text-ink">Join free ▸</button>
+            <SoonButton label="Join free ▸" className="rounded-full bg-neon px-6 py-2.5 text-[14px] font-extrabold text-ink" />
           )}
           <span className="text-[13px] font-semibold text-slate-400">{formatPoints(pool.entrants)} entered · {formatCloses(pool.closesAtMs)}</span>
         </div>
@@ -49,7 +50,7 @@ export default function PoolsDesktop({ pools }: { pools: SponsoredPool[] }) {
             <div className="mt-1 flex items-center gap-2 text-[28px] font-black tracking-[-0.03em]">Prize pools <Trophy weight="fill" size={26} className="text-neon" /></div>
             <div className="mt-1 text-[13px] font-semibold text-slate-400">{formatPoints(pools.length)} open · sponsored &amp; creator-run</div>
           </div>
-          <button type="button" className="rounded-full bg-neon px-5 py-2.5 text-[14px] font-extrabold text-ink">＋ Run your own pool</button>
+          <SoonButton label="＋ Run your own pool" className="rounded-full bg-neon px-5 py-2.5 text-[14px] font-extrabold text-ink" />
         </div>
       </div>
 

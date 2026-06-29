@@ -3,6 +3,7 @@ import { formatPoints } from "@/lib/predict/labels";
 import { prizeKindLabel, formatCloses } from "@/lib/predict/pools";
 import PoolCard from "@/components/predict/PoolCard";
 import { Trophy, Star, Check, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
+import SoonButton from "@/components/predict/SoonButton";
 
 function FeaturedHero({ pool }: { pool: SponsoredPool }) {
   return (
@@ -29,7 +30,7 @@ function FeaturedHero({ pool }: { pool: SponsoredPool }) {
               <Check weight="bold" size={12} /> Joined{pool.yourRank ? ` · #${pool.yourRank}` : ""}
             </span>
           ) : (
-            <button type="button" className="rounded-full bg-neon px-4 py-2 text-[12px] font-extrabold text-ink">Join free ▸</button>
+            <SoonButton label="Join free ▸" className="rounded-full bg-neon px-4 py-2 text-[12px] font-extrabold text-ink" />
           )}
         </div>
       </div>
@@ -58,9 +59,7 @@ export default function PoolsMobile({ pools }: { pools: SponsoredPool[] }) {
 
         {rest.map((p) => <PoolCard key={p.id} pool={p} />)}
 
-        <button type="button" className="mt-1 rounded-2xl border border-[#e2e8f0] bg-white px-4 py-3.5 text-center text-sm font-black text-ink shadow-card">
-          ＋ Run your own pool
-        </button>
+        <SoonButton label="＋ Run your own pool" className="mt-1 rounded-2xl border border-[#e2e8f0] bg-white px-4 py-3.5 text-center text-sm font-black text-ink shadow-card" />
       </div>
     </div>
   );

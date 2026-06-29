@@ -1,6 +1,8 @@
 import type { League, LeagueMember } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import { Flame } from "@phosphor-icons/react/dist/ssr";
+import CopyButton from "@/components/predict/CopyButton";
+import SegTabs from "@/components/predict/SegTabs";
 
 function Row({ member, index }: { member: LeagueMember; index: number }) {
   const you = member.isYou;
@@ -47,7 +49,7 @@ export default function LeagueLeaderboardDesktop({ league }: { league: League })
             <div className="rounded-[13px] border border-dashed border-[#333] bg-[#171717] px-4 py-3">
               <div className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">Invite code</div>
               <div className="text-[18px] font-black tracking-[0.04em] tabular-nums text-neon">{league.code}</div>
-              <button type="button" className="mt-1.5 w-full rounded-[9px] bg-neon py-1.5 text-center text-[12px] font-black text-ink">Share invite ▸</button>
+              <CopyButton value={league.code} label="Share invite ▸" className="mt-1.5 w-full rounded-[9px] bg-neon py-1.5 text-center text-[12px] font-black text-ink" />
             </div>
           </div>
         </div>
@@ -55,10 +57,7 @@ export default function LeagueLeaderboardDesktop({ league }: { league: League })
 
       {/* toggle + column headers */}
       <div className="flex items-center justify-between px-8 pb-2 pt-6">
-        <div className="flex rounded-xl bg-[#e9eef4] p-1">
-          <button type="button" className="rounded-[9px] bg-white px-5 py-2 text-[13px] font-extrabold text-ink shadow-card">This week</button>
-          <button type="button" className="px-5 py-2 text-[13px] font-bold text-slate-500">All time</button>
-        </div>
+        <SegTabs tabs={["This week", "All time"]} />
         <div className="flex items-center text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
           <span className="w-24 text-right">Accuracy</span>
           <span className="w-20 text-right">Streak</span>

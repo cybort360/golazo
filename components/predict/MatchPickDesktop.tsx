@@ -5,7 +5,8 @@ import type { Match, MarketId } from "@/lib/predict/types";
 import { buildMarkets } from "@/lib/predict/markets";
 import MarketPicker from "@/components/predict/MarketPicker";
 import { MatchHeaderDesktop } from "@/components/predict/MatchHeader";
-import { Lock } from "@phosphor-icons/react/dist/ssr";
+import { submitPicks } from "@/lib/predict/submitPicks";
+import { Lock, CheckCircle } from "@phosphor-icons/react/dist/ssr";
 
 function fmtCountdown(ms: number): string {
   const m = Math.floor(ms / 60000);
@@ -17,9 +18,25 @@ export default function MatchPickDesktop({ match, toggle }: { match: Match; togg
   const markets = buildMarkets(match);
   const [winner, totals, btts, chaos] = markets;
   const [picks, setPicks] = useState<Partial<Record<MarketId, string>>>({});
-  const select = (id: MarketId, optionId: string) =>
+  const [status, setStatus] = useState<"idle" | "saving" | "done" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const select = (id: MarketId, optionId: string) => {
+    setStatus("idle");
     setPicks((p) => ({ ...p, [id]: optionId }));
+  };
   const count = Object.keys(picks).length;
+
+  async function lock() {
+    if (count === 0 || status === "saving") return;
+    setStatus("saving");
+    setError(null);
+    const res = await submitPicks(match, markets, picks);
+    if (res.ok) setStatus("done");
+    else {
+      setError(res.error);
+      setStatus("error");
+    }
+  }
 
   const finished = match.state === "FT" || match.state === "VOID";
 
@@ -82,10 +99,25 @@ export default function MatchPickDesktop({ match, toggle }: { match: Match; togg
           </div>
 
           <div className="px-5 pb-5 pt-2">
-            <button type="button" className="w-full rounded-2xl bg-neon px-4 py-3.5 text-center text-[15px] font-black text-ink">
-              Lock my picks · {count} selected
+            <button
+              type="button"
+              onClick={lock}
+              disabled={count === 0 || status === "saving" || status === "done"}
+              className={
+                "flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-center text-[15px] font-black transition-colors disabled:cursor-not-allowed " +
+                (status === "done" ? "bg-green-600 text-white" : "bg-neon text-ink disabled:opacity-50")
+              }
+            >
+              {status === "done" && <CheckCircle weight="fill" size={17} />}
+              {status === "saving" ? "Locking…" : status === "done" ? "Picks locked" : `Lock my picks · ${count} selected`}
             </button>
-            <p className="mt-2.5 text-center text-[11px] font-semibold text-slate-500">Playing as guest · no signup needed</p>
+            <p className="mt-2.5 text-center text-[11px] font-semibold text-slate-500">
+              {status === "error"
+                ? error ?? "Couldn't save — try again"
+                : status === "done"
+                ? "Settles automatically · see Receipts"
+                : "Playing as guest · no signup needed"}
+            </p>
           </div>
         </aside>
       </div>

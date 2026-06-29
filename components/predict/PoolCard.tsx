@@ -2,6 +2,7 @@ import type { SponsoredPool } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 import { prizeKindLabel, formatCloses } from "@/lib/predict/pools";
 import { Users, Star, Trophy, Check } from "@phosphor-icons/react/dist/ssr";
+import SoonButton from "@/components/predict/SoonButton";
 
 export default function PoolCard({ pool }: { pool: SponsoredPool }) {
   return (
@@ -31,9 +32,7 @@ export default function PoolCard({ pool }: { pool: SponsoredPool }) {
             <Check weight="bold" size={12} /> Joined{pool.yourRank ? ` · #${pool.yourRank}` : ""}
           </span>
         ) : (
-          <button type="button" className="rounded-full bg-neon px-4 py-1.5 text-[12px] font-extrabold text-ink">
-            Join free ▸
-          </button>
+          <SoonButton label="Join free ▸" className="rounded-full bg-neon px-4 py-1.5 text-[12px] font-extrabold text-ink" />
         )}
       </div>
     </div>

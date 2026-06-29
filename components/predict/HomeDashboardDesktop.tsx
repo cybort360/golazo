@@ -3,6 +3,7 @@ import type { Match, League, ProofReceipt, LeagueMember } from "@/lib/predict/ty
 import { formatPoints } from "@/lib/predict/labels";
 import MatchCard from "@/components/predict/MatchCard";
 import { SoccerBall, Check } from "@phosphor-icons/react/dist/ssr";
+import CopyButton from "@/components/predict/CopyButton";
 
 function RailRow({ member }: { member: LeagueMember }) {
   return (
@@ -111,7 +112,7 @@ export default function HomeDashboardDesktop({
                     <div className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">Invite</div>
                     <div className="text-[15px] font-black tracking-[0.04em] tabular-nums text-neon">{league.code}</div>
                   </div>
-                  <button type="button" className="rounded-[9px] bg-neon px-3.5 py-2 text-[12px] font-black text-ink">Share</button>
+                  <CopyButton value={league.code} label="Share" className="rounded-[9px] bg-neon px-3.5 py-2 text-[12px] font-black text-ink" />
                 </div>
               </div>
 

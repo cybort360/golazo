@@ -1,6 +1,8 @@
 import type { League, LeagueMember } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import { Gear, Flame } from "@phosphor-icons/react/dist/ssr";
+import CopyButton from "@/components/predict/CopyButton";
+import SegTabs from "@/components/predict/SegTabs";
 
 function Avatar({ member }: { member: LeagueMember }) {
   if (member.isYou) {
@@ -45,22 +47,13 @@ export default function LeagueLeaderboard({ league }: { league: League }) {
             <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">Invite code</div>
             <div className="text-[19px] font-black tracking-[0.04em] tabular-nums text-neon">{league.code}</div>
           </div>
-          <button type="button" className="rounded-[11px] bg-neon px-4 py-2.5 text-[13px] font-black text-ink">
-            Share invite
-          </button>
+          <CopyButton value={league.code} label="Share invite" className="rounded-[11px] bg-neon px-4 py-2.5 text-[13px] font-black text-ink" />
         </div>
       </div>
 
       {/* toggle */}
       <div className="px-4 pb-1 pt-3.5">
-        <div className="flex rounded-xl bg-[#e9eef4] p-1">
-          <button type="button" className="flex-1 rounded-[9px] bg-white py-2 text-center text-[13px] font-extrabold text-ink shadow-card">
-            This week
-          </button>
-          <button type="button" className="flex-1 py-2 text-center text-[13px] font-bold text-slate-500">
-            All time
-          </button>
-        </div>
+        <SegTabs tabs={["This week", "All time"]} block />
       </div>
 
       {/* rows */}
