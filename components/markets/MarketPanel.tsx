@@ -143,16 +143,10 @@ export default function MarketPanel({ match }: { match: Match }) {
       <p className="mt-2 text-[16px] font-extrabold">{question}</p>
 
       {/* pool + balance */}
-      <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+      <div className="mt-3 grid grid-cols-2 gap-2 text-center">
         <div className="rounded-xl bg-[#15151a] py-2">
           <div className="text-[9px] uppercase tracking-wide text-slate-500">Pool</div>
           <div className="text-[15px] font-black tabular-nums">{formatAmount(pool, 6)}</div>
-        </div>
-        <div className="rounded-xl bg-[#15151a] py-2">
-          <div className="text-[9px] uppercase tracking-wide text-slate-500">YES</div>
-          <div className="text-[15px] font-black tabular-nums text-neon">
-            {Math.round(impliedProbability(1, yesTotal, noTotal) * 100)}%
-          </div>
         </div>
         <div className="rounded-xl bg-[#15151a] py-2">
           <div className="text-[9px] uppercase tracking-wide text-slate-500">Balance</div>
@@ -160,69 +154,72 @@ export default function MarketPanel({ match }: { match: Match }) {
         </div>
       </div>
 
-      {/* market not opened yet */}
-      {!state && (
+      {/* YES / NO selector (always visible) with live implied odds */}
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        {([1, 0] as const).map((s) => {
+          const pct = Math.round(impliedProbability(s, yesTotal, noTotal) * 100);
+          const active = side === s;
+          return (
+            <button
+              key={s}
+              onClick={() => setSide(s)}
+              className={
+                "flex flex-col items-center rounded-xl py-2.5 " +
+                (active ? "bg-neon text-ink" : "bg-[#1c1c22] text-slate-200")
+              }
+            >
+              <span className="text-[16px] font-black">{s === 1 ? "YES" : "NO"}</span>
+              <span className={"text-[11px] font-bold " + (active ? "text-ink/70" : "text-slate-500")}>
+                {pct}%
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* amount + payout */}
+      <div className="mt-3 flex items-center gap-2">
+        <input
+          inputMode="decimal"
+          value={amountStr}
+          onChange={(e) => setAmountStr(e.target.value)}
+          className="w-full rounded-xl bg-[#15151a] px-3 py-2.5 text-[15px] font-bold text-white outline-none"
+          placeholder="Amount"
+        />
+        <span className="text-[13px] font-bold text-slate-400">GOLAZO</span>
+      </div>
+      <div className="mt-1.5 text-[12px] font-semibold text-slate-400">
+        Est. payout if {side === 1 ? "YES" : "NO"} wins:{" "}
+        <span className="text-neon">{formatAmount(payout, 6)} GOLAZO</span>
+      </div>
+
+      {/* stake (opens the market first if it doesn't exist yet) + faucet */}
+      <div className="mt-3 grid grid-cols-2 gap-2">
         <button
-          disabled={!!busy}
-          onClick={() => run("init_market", () => initMarket(golazo!, publicKey!, match.id, marketId, question, lockTs))}
-          className="mt-4 w-full rounded-full bg-neon py-3 text-[14px] font-extrabold text-ink disabled:opacity-50"
+          disabled={!!busy || (!!state && !canStake(status, lockTs))}
+          onClick={() =>
+            run(state ? "stake" : "init_market", async () => {
+              if (!state) {
+                await initMarket(golazo!, publicKey!, match.id, marketId, question, lockTs);
+              }
+              return stake(golazo!, publicKey!, match.id, marketId, side, amount);
+            })
+          }
+          className="rounded-full bg-neon py-2.5 text-[13px] font-extrabold text-ink disabled:opacity-40"
         >
-          {busy === "init_market" ? "Opening…" : "Open this market"}
+          {busy ? "…" : state ? `Stake ${side === 1 ? "YES" : "NO"}` : "Open & stake"}
         </button>
-      )}
+        <button
+          disabled={!!busy || balance > 0n}
+          onClick={() => run("faucet", () => faucet(golazo!, publicKey!, FAUCET_AMOUNT))}
+          className="rounded-full border border-slate-600 py-2.5 text-[13px] font-bold text-slate-200 disabled:opacity-40"
+        >
+          {busy === "faucet" ? "…" : "Faucet 100"}
+        </button>
+      </div>
 
       {state && (
         <>
-          {/* YES / NO */}
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            {([1, 0] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setSide(s)}
-                className={
-                  "rounded-xl py-3 text-[15px] font-black " +
-                  (side === s ? "bg-neon text-ink" : "bg-[#1c1c22] text-slate-200")
-                }
-              >
-                {s === 1 ? "YES" : "NO"}
-              </button>
-            ))}
-          </div>
-
-          {/* amount + payout */}
-          <div className="mt-3 flex items-center gap-2">
-            <input
-              inputMode="decimal"
-              value={amountStr}
-              onChange={(e) => setAmountStr(e.target.value)}
-              className="w-full rounded-xl bg-[#15151a] px-3 py-2.5 text-[15px] font-bold text-white outline-none"
-              placeholder="Amount"
-            />
-            <span className="text-[13px] font-bold text-slate-400">GOLAZO</span>
-          </div>
-          <div className="mt-1.5 text-[12px] font-semibold text-slate-400">
-            Est. payout if {side === 1 ? "YES" : "NO"} wins:{" "}
-            <span className="text-neon">{formatAmount(payout, 6)} GOLAZO</span>
-          </div>
-
-          {/* actions */}
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <button
-              disabled={!!busy || !canStake(status, lockTs)}
-              onClick={() => run("stake", () => stake(golazo!, publicKey!, match.id, marketId, side, amount))}
-              className="rounded-full bg-neon py-2.5 text-[13px] font-extrabold text-ink disabled:opacity-40"
-            >
-              {busy === "stake" ? "Staking…" : "Stake"}
-            </button>
-            <button
-              disabled={!!busy || balance > 0n}
-              onClick={() => run("faucet", () => faucet(golazo!, publicKey!, FAUCET_AMOUNT))}
-              className="rounded-full border border-slate-600 py-2.5 text-[13px] font-bold text-slate-200 disabled:opacity-40"
-            >
-              {busy === "faucet" ? "…" : "Faucet 100"}
-            </button>
-          </div>
-
           {/* keeper settle + claim/refund */}
           <div className="mt-2 grid grid-cols-2 gap-2">
             {canClaim(status) ? (

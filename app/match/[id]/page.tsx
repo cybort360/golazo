@@ -6,6 +6,7 @@ import type { Match } from "@/lib/predict/types";
 import { dataSource } from "@/lib/predict/dataSource";
 import MatchPickScreen from "@/components/predict/MatchPickScreen";
 import MatchPickDesktop from "@/components/predict/MatchPickDesktop";
+import { MatchHeaderMobile, MatchHeaderDesktop } from "@/components/predict/MatchHeader";
 import { marketsEnabled } from "@/lib/markets/flags";
 import WalletGate from "@/components/markets/WalletGate";
 import MarketPanel from "@/components/markets/MarketPanel";
@@ -14,19 +15,21 @@ type Mode = "picks" | "market";
 
 function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
   return (
-    <div className="mx-auto mt-4 flex w-[calc(100%-2rem)] max-w-md items-center rounded-full border border-[#e2e8f0] bg-white p-1 lg:max-w-lg">
-      {(["picks", "market"] as const).map((m) => (
-        <button
-          key={m}
-          onClick={() => onChange(m)}
-          className={
-            "flex-1 rounded-full py-2 text-[13px] font-extrabold transition " +
-            (mode === m ? "bg-ink text-neon" : "text-slate-500")
-          }
-        >
-          {m === "picks" ? "Free Picks" : "Market Mode"}
-        </button>
-      ))}
+    <div className="flex justify-center">
+      <div className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 p-1">
+        {(["picks", "market"] as const).map((m) => (
+          <button
+            key={m}
+            onClick={() => onChange(m)}
+            className={
+              "rounded-full px-4 py-1.5 text-[12px] font-extrabold transition " +
+              (mode === m ? "bg-ink text-neon shadow-sm" : "text-slate-500 hover:text-slate-700")
+            }
+          >
+            {m === "picks" ? "Free Picks" : "Market Mode"}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -45,14 +48,30 @@ export default function MatchPage({ params }: { params: { id: string } }) {
   }
   if (match === null) return notFound();
 
+  const toggle = showMarket ? <ModeToggle mode={mode} onChange={setMode} /> : undefined;
+
   if (showMarket && mode === "market") {
     return (
       <>
-        <ModeToggle mode={mode} onChange={setMode} />
-        <div className="mx-auto mt-4 w-[calc(100%-2rem)] max-w-md pb-10 lg:max-w-lg">
-          <WalletGate>
-            <MarketPanel match={match} />
-          </WalletGate>
+        {/* mobile (<lg) */}
+        <div className="lg:hidden">
+          <MatchHeaderMobile match={match} />
+          <div className="px-4 pt-4">{toggle}</div>
+          <div className="px-4 pb-10 pt-4">
+            <WalletGate>
+              <MarketPanel match={match} />
+            </WalletGate>
+          </div>
+        </div>
+        {/* desktop (lg+) */}
+        <div className="hidden lg:block">
+          <MatchHeaderDesktop match={match} />
+          <div className="mx-auto max-w-6xl px-8 pt-6">{toggle}</div>
+          <div className="mx-auto max-w-lg px-8 pb-12 pt-6">
+            <WalletGate>
+              <MarketPanel match={match} />
+            </WalletGate>
+          </div>
         </div>
       </>
     );
@@ -60,13 +79,12 @@ export default function MatchPage({ params }: { params: { id: string } }) {
 
   return (
     <>
-      {showMarket && <ModeToggle mode={mode} onChange={setMode} />}
       {/* mobile (<lg) */}
       <div className="lg:hidden">
-        <MatchPickScreen match={match} />
+        <MatchPickScreen match={match} toggle={toggle} />
       </div>
       {/* desktop (lg+) */}
-      <MatchPickDesktop match={match} />
+      <MatchPickDesktop match={match} toggle={toggle} />
     </>
   );
 }

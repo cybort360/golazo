@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState, type ReactNode } from "react";
 import type { Match, MarketId } from "@/lib/predict/types";
 import { buildMarkets } from "@/lib/predict/markets";
-import { matchStateLabel } from "@/lib/predict/labels";
 import MarketPicker from "@/components/predict/MarketPicker";
-import TeamAvatar from "@/components/predict/TeamAvatar";
+import { MatchHeaderDesktop } from "@/components/predict/MatchHeader";
 
 function fmtCountdown(ms: number): string {
   const m = Math.floor(ms / 60000);
@@ -14,7 +12,7 @@ function fmtCountdown(ms: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export default function MatchPickDesktop({ match }: { match: Match }) {
+export default function MatchPickDesktop({ match, toggle }: { match: Match; toggle?: ReactNode }) {
   const markets = buildMarkets(match);
   const [winner, totals, btts, chaos] = markets;
   const [picks, setPicks] = useState<Partial<Record<MarketId, string>>>({});
@@ -22,9 +20,7 @@ export default function MatchPickDesktop({ match }: { match: Match }) {
     setPicks((p) => ({ ...p, [id]: optionId }));
   const count = Object.keys(picks).length;
 
-  const liveLabel = matchStateLabel(match);
   const finished = match.state === "FT" || match.state === "VOID";
-  const score = match.homeScore !== null && match.awayScore !== null ? `${match.homeScore} – ${match.awayScore}` : "vs";
 
   const [remain, setRemain] = useState<number | null>(null);
   useEffect(() => {
@@ -41,32 +37,9 @@ export default function MatchPickDesktop({ match }: { match: Match }) {
 
   return (
     <div className="hidden lg:block">
-      {/* ink match header */}
-      <div className="bg-ink px-8 pb-7 pt-5 text-white">
-        <div className="flex items-center justify-between text-[13px] font-bold text-slate-400">
-          <Link href="/matches" className="transition-colors hover:text-white">‹ Back to matches</Link>
-          <span className="font-semibold">{match.competition} · {match.round}</span>
-        </div>
-        <div className="mx-auto mt-5 flex max-w-2xl items-center justify-between">
-          <div className="w-32 text-center">
-            <TeamAvatar team={match.home} size={56} />
-            <div className="mt-2 text-[15px] font-extrabold">{match.home.name}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-[44px] font-black leading-none tracking-[-0.04em] tabular-nums">{score}</div>
-            {liveLabel && (
-              <div className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-extrabold text-neon">
-                <span className="glz-blink h-1.5 w-1.5 rounded-full bg-neon" />{liveLabel}
-              </div>
-            )}
-            {!liveLabel && match.phaseLabel && <div className="mt-2 text-[12px] font-semibold text-slate-500">{match.phaseLabel}</div>}
-          </div>
-          <div className="w-32 text-center">
-            <TeamAvatar team={match.away} size={56} />
-            <div className="mt-2 text-[15px] font-extrabold">{match.away.name}</div>
-          </div>
-        </div>
-      </div>
+      <MatchHeaderDesktop match={match} />
+
+      {toggle && <div className="mx-auto max-w-6xl px-8 pt-6">{toggle}</div>}
 
       {/* markets + slip */}
       <div className="mx-auto grid max-w-6xl grid-cols-[1fr_340px] items-start gap-7 px-8 py-7">
