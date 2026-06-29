@@ -1,0 +1,5 @@
+# The Solana SBF toolchain ships a rust fork pinned at 1.79. Use cargo's
+# MSRV-aware resolver (host cargo >= 1.84) so dependency versions are chosen to
+# be compatible with rust-version = "1.79", avoiding edition2024 / MSRV bumps.
+[resolver]
+incompatible-rust-versions = "fallback"
