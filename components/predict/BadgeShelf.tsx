@@ -1,7 +1,19 @@
 import type { Badge } from "@/lib/predict/types";
+import { Crown, Sparkle, HandPalm, Target, SoccerBall, Flame, Medal } from "@phosphor-icons/react/dist/ssr";
+import type { Icon } from "@phosphor-icons/react";
+
+const BADGE_ICONS: Record<string, Icon> = {
+  chaos_king: Crown,
+  underdog_prophet: Sparkle,
+  clean_sheet_demon: HandPalm,
+  sharpshooter: Target,
+  goal_machine: SoccerBall,
+  on_fire: Flame,
+};
 
 function BadgeTile({ badge }: { badge: Badge }) {
   const earned = badge.earned;
+  const Ic = BADGE_ICONS[badge.id] ?? Medal;
   return (
     <div
       data-testid={`badge-${badge.id}`}
@@ -14,7 +26,7 @@ function BadgeTile({ badge }: { badge: Badge }) {
           : "border border-dashed border-slate-200 bg-slate-50")
       }
     >
-      <span className={"text-[26px] leading-none " + (earned ? "" : "opacity-30 grayscale")}>{badge.icon}</span>
+      <Ic size={26} weight={earned ? "fill" : "regular"} className={earned ? "text-ink" : "text-slate-300"} />
       <div className={"text-[11px] font-extrabold leading-tight " + (earned ? "text-ink" : "text-slate-400")}>
         {badge.name}
       </div>

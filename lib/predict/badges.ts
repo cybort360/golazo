@@ -43,16 +43,17 @@ export function buildBadges(receipts: ProofReceipt[]): Badge[] {
     progress?: { current: number; target: number },
   ): Badge => ({ id, name, icon, description, earned, progress: progress ?? null });
 
+  // `icon` is a key only — BadgeShelf maps it (and the badge id) to a Phosphor icon.
   return [
-    make("chaos_king", "Chaos King", "👑", "Win a Chaos pick", chaosWins >= 1),
-    make("underdog_prophet", "Underdog Prophet", "🔮", "Win a high-reward pick (80+ pts)", topUpsetPoints >= 80),
-    make("clean_sheet_demon", "Clean Sheet Demon", "🧤", "Call a match that ends in a clean sheet", cleanSheetWins >= 1),
-    make("sharpshooter", "Sharpshooter", "🎯", "Hit 75%+ accuracy (3+ settled)",
+    make("chaos_king", "Chaos King", "crown", "Win a Chaos pick", chaosWins >= 1),
+    make("underdog_prophet", "Underdog Prophet", "sparkle", "Win a high-reward pick (80+ pts)", topUpsetPoints >= 80),
+    make("clean_sheet_demon", "Clean Sheet Demon", "hand", "Call a match that ends in a clean sheet", cleanSheetWins >= 1),
+    make("sharpshooter", "Sharpshooter", "target", "Hit 75%+ accuracy (3+ settled)",
       settled.length >= 3 && accuracy >= 0.75,
       { current: Math.round(accuracy * 100), target: 75 }),
-    make("goal_machine", "Goal Machine", "⚽", "Win 3 Total Goals picks",
+    make("goal_machine", "Goal Machine", "ball", "Win 3 Total Goals picks",
       totalsWins >= 3, { current: totalsWins, target: 3 }),
-    make("on_fire", "On Fire", "🔥", "Reach a 3-pick winning streak",
+    make("on_fire", "On Fire", "flame", "Reach a 3-pick winning streak",
       streak >= 3, { current: streak, target: 3 }),
   ];
 }
