@@ -13,6 +13,7 @@
 import type {
   TxlineFixture,
   TxlineLiveEvent,
+  TxlineEventType,
   TxlineMatchState,
   TxlineStateSnapshot,
   TxlineFinalResult,
@@ -226,6 +227,85 @@ export function snapshotToEvents(rows: RawScoreRow[], sinceSeq?: number): Txline
   ];
 }
 
+function clockMinuteOf(r: RawScoreRow): number | null {
+  const secs = r.Data?.New?.Clock?.Seconds ?? r.Data?.Clock?.Seconds;
+  return typeof secs === "number" ? Math.floor(secs / 60) : null;
+}
+
+// Stream mapper for the SSE path. Walks the rolling row buffer in seq order and
+// emits a "goal" event (with minute + team) the instant a side's cumulative goal
+// tally rises — something the per-action snapshot can't see, and exactly what
+// the Chaos market (goal after the 80th minute) needs. A trailing "state" event
+// carries the live clock/score. Idempotent: re-deriving from the full buffer
+// yields the same events (each keyed by its row's real Seq); callers filter by
+// `sinceSeq` and rely on the append-only log's unique (matchId, seq).
+export function rowsToStreamEvents(rows: RawScoreRow[], sinceSeq = 0): TxlineLiveEvent[] {
+  if (rows.length === 0) return [];
+  const fixtureId = String(rows[0].FixtureId);
+  const p1IsHome = rows[0].Participant1IsHome ?? true;
+  const sorted = [...rows].sort((a, b) => a.Seq - b.Seq);
+
+  let p1g = 0;
+  let p2g = 0;
+  let statusId: number | undefined;
+  let minute: number | null = null;
+  const out: TxlineLiveEvent[] = [];
+  const goalSeqs = new Set<number>();
+
+  for (const r of sorted) {
+    if (r.Action === "status" && r.Data?.StatusId != null) statusId = r.Data.StatusId;
+    const m = clockMinuteOf(r);
+    if (m != null) minute = m;
+
+    let goalTeam: "home" | "away" | null = null;
+    if (r.Stats && (r.Stats["1"] != null || r.Stats["2"] != null)) {
+      const n1 = r.Stats["1"] ?? p1g;
+      const n2 = r.Stats["2"] ?? p2g;
+      if (n1 > p1g) goalTeam = p1IsHome ? "home" : "away";
+      else if (n2 > p2g) goalTeam = p1IsHome ? "away" : "home";
+      p1g = n1;
+      p2g = n2;
+    }
+
+    if (!goalTeam) continue;
+    goalSeqs.add(r.Seq);
+    if (r.Seq <= sinceSeq) continue;
+    out.push({
+      fixtureId,
+      seq: r.Seq,
+      tsMs: toMs(r.Ts),
+      minute,
+      type: "goal",
+      state: statusIdToState(statusId),
+      homeScore: p1IsHome ? p1g : p2g,
+      awayScore: p1IsHome ? p2g : p1g,
+      team: goalTeam,
+      payload: { source: "sse", team: goalTeam },
+    });
+  }
+
+  // Trailing current-state event (live clock/score/state). Skip when the latest
+  // row was itself a goal — that event already carries the current state, and a
+  // duplicate seq would collide with the append-only unique key.
+  const d = deriveState(sorted);
+  if (d.seq > sinceSeq && !goalSeqs.has(d.seq)) {
+    const type: TxlineEventType = d.state === "FT" ? "ft" : d.state === "HT" ? "ht" : "state";
+    out.push({
+      fixtureId,
+      seq: d.seq,
+      tsMs: d.tsMs,
+      minute: d.minute,
+      type,
+      state: d.state,
+      homeScore: d.homeGoals,
+      awayScore: d.awayGoals,
+      payload: { source: "sse" },
+    });
+  }
+
+  return out.sort((a, b) => a.seq - b.seq);
+}
+
 export function mapFinalResult(rows: RawScoreRow[]): TxlineFinalResult | null {
   if (rows.length === 0) return null;
   const d = deriveState(rows);
@@ -234,15 +314,21 @@ export function mapFinalResult(rows: RawScoreRow[]): TxlineFinalResult | null {
   const stats: Record<string, number> = {
     home_goals: d.homeGoals,
     away_goals: d.awayGoals,
+    total_goals: d.homeGoals + d.awayGoals,
+    btts: d.homeGoals > 0 && d.awayGoals > 0 ? 1 : 0,
     home_corners: d.homeCorners,
     away_corners: d.awayCorners,
   };
+  // Availability is keyed by the stat each market needs (see state.ts). Score-
+  // derived markets are reliable from the snapshot; the goal-minute log (chaos)
+  // is NOT in the snapshot — settle enriches `late_goal` from the SSE event log,
+  // so default it unavailable here (chaos VOIDs unless the live log was captured).
   const available: Record<string, boolean> = {
-    winner: true,
-    totals: true,
+    home_goals: true,
+    away_goals: true,
+    total_goals: true,
     btts: true,
-    corners: d.homeCorners + d.awayCorners > 0,
-    chaos: false, // goal minutes unavailable from snapshot (needs stream/historical)
+    late_goal: false,
   };
   return {
     fixtureId: String(rows[0].FixtureId),

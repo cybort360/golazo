@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   resolvePick,
   matchToFinal,
+  goalLogFromEvents,
   marketLockMs,
   isMarketLocked,
   LATE_GOAL_MINUTE,
@@ -156,5 +157,35 @@ describe("matchToFinal + lock", () => {
       expect(isMarketLocked(match, m, 899_999)).toBe(false);
       expect(isMarketLocked(match, m, 900_000)).toBe(true);
     }
+  });
+});
+
+describe("goalLogFromEvents", () => {
+  // Append-only event log: kickoff, two goals (home 23', away 84'), FT.
+  const log = [
+    { type: "kickoff", minute: 0, homeScore: 0, awayScore: 0 },
+    { type: "goal", minute: 23, homeScore: 1, awayScore: 0 },
+    { type: "state", minute: 70, homeScore: 1, awayScore: 0 },
+    { type: "goal", minute: 84, homeScore: 1, awayScore: 1 },
+    { type: "ft", minute: 90, homeScore: 1, awayScore: 1 },
+  ];
+
+  it("extracts goal minutes and infers the scoring team from the score delta", () => {
+    expect(goalLogFromEvents(log)).toEqual([
+      { minute: 23, team: "home" },
+      { minute: 84, team: "away" },
+    ]);
+  });
+
+  it("feeds the Chaos resolver — a goal after the 80th minute resolves YES", () => {
+    const goals = goalLogFromEvents(log);
+    const final: MatchFinal = { state: "FT", homeScore: 1, awayScore: 1, goals };
+    expect(resolvePick(final, "chaos", "yes")).toBe("WON");
+    expect(resolvePick(final, "chaos", "no")).toBe("LOST");
+  });
+
+  it("returns an empty log for a goalless match (0-0 → no late goal)", () => {
+    const goalless = [{ type: "ft", minute: 90, homeScore: 0, awayScore: 0 }];
+    expect(goalLogFromEvents(goalless)).toEqual([]);
   });
 });

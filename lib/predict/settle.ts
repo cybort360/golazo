@@ -1,9 +1,39 @@
 import "server-only";
 import { prisma } from "@/lib/db/client";
 import { getTxlineClient } from "@/lib/txline";
-import type { TxlineClient } from "@/lib/txline/client";
+import type { TxlineClient, TxlineFinalResult } from "@/lib/txline/client";
 import { decidePrediction } from "@/lib/predict/settle-decide";
+import { goalLogFromEvents } from "@/lib/predict/resolve";
 import type { MarketId } from "@/lib/predict/types";
+
+/**
+ * The verified goal-minute log lives in the append-only event log (the SSE feed
+ * records each goal as it happens — the snapshot can't). Enrich the TxLINE final
+ * with it so the Chaos market (goal after 80') resolves on real data. If the log
+ * is incomplete (fewer goals captured than the final score — e.g. SSE never ran
+ * for this fixture), mark `late_goal` unavailable so Chaos VOIDs honestly rather
+ * than guessing.
+ */
+async function enrichGoalLog(fixtureId: string, final: TxlineFinalResult): Promise<TxlineFinalResult> {
+  const events = await prisma.txlineEvent.findMany({
+    where: { matchId: fixtureId },
+    orderBy: { seq: "asc" },
+    select: { type: true, minute: true, homeScore: true, awayScore: true },
+  });
+  const fromLog = goalLogFromEvents(events);
+  const totalGoals = (final.homeScore ?? 0) + (final.awayScore ?? 0);
+
+  if (fromLog.length >= totalGoals) {
+    // Captured every goal (a 0-0 trivially qualifies) → authoritative minute log.
+    return { ...final, goals: fromLog, available: { ...final.available, late_goal: true } };
+  }
+  if (final.goals.length >= totalGoals && final.goals.length > 0) {
+    // Client supplied a complete log (e.g. the mock) → trust it.
+    return { ...final, available: { ...final.available, late_goal: true } };
+  }
+  // Neither source has the full goal log → can't resolve Chaos.
+  return { ...final, available: { ...final.available, late_goal: false } };
+}
 
 // Deterministic auto-settlement (PRD §6.3). Runs each open prediction's resolver
 // against the verified TxLINE final, writes status/points/proof onto the
@@ -23,8 +53,9 @@ export async function settleMatch(
   fixtureId: string,
   client: TxlineClient = getTxlineClient(),
 ): Promise<SettleCounts> {
-  const final = await client.finalResult(fixtureId);
-  if (!final) return { ...ZERO }; // not settle-eligible yet
+  const raw = await client.finalResult(fixtureId);
+  if (!raw) return { ...ZERO }; // not settle-eligible yet
+  const final = await enrichGoalLog(fixtureId, raw);
 
   const match = await prisma.match.findUnique({
     where: { id: fixtureId },

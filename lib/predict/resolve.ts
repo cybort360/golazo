@@ -26,6 +26,30 @@ export interface MatchFinal {
   available?: Partial<Record<MarketId, boolean>>;
 }
 
+/**
+ * Reconstruct the goal log (minute + team) from the append-only event log. Goal
+ * events carry the running score, so the scoring team is the side whose tally
+ * rose. This is the verified source of goal minutes for the Chaos market — the
+ * snapshot can't carry them; the SSE stream records them as they happen.
+ */
+export function goalLogFromEvents(
+  events: { type: string; minute: number | null; homeScore: number | null; awayScore: number | null }[],
+): GoalEvent[] {
+  let prevHome = 0;
+  let prevAway = 0;
+  const out: GoalEvent[] = [];
+  for (const e of events) {
+    if (e.type !== "goal") continue;
+    const home = e.homeScore ?? prevHome;
+    const away = e.awayScore ?? prevAway;
+    const team: "home" | "away" = home > prevHome ? "home" : away > prevAway ? "away" : "home";
+    if (e.minute != null) out.push({ minute: e.minute, team });
+    prevHome = home;
+    prevAway = away;
+  }
+  return out;
+}
+
 /** Build a resolver input from a Match plus the goal log / availability flags. */
 export function matchToFinal(
   match: Match,

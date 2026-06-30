@@ -11,6 +11,7 @@ import {
   snapshotToEvents,
   mapFinalResult,
   coerceRows,
+  rowsToStreamEvents,
   type RawFixture,
   type RawScoreRow,
 } from "@/lib/txline/real/map";
@@ -118,7 +119,9 @@ export class RealTxlineClient implements TxlineClient {
     const buffer: RawScoreRow[] = [...(await this.snapshot(fixtureId))];
     let lastSeq = 0;
     const flush = async () => {
-      const events = snapshotToEvents(buffer, lastSeq);
+      // rowsToStreamEvents emits goal events (with minute) + the live state, so
+      // the Chaos goal log fills in as goals happen — not possible from polling.
+      const events = rowsToStreamEvents(buffer, lastSeq);
       if (events.length === 0) return;
       lastSeq = Math.max(lastSeq, ...events.map((e) => e.seq));
       await onBatch(events);

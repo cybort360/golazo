@@ -6,10 +6,12 @@ import {
   snapshotToEvents,
   mapFinalResult,
   coerceRows,
+  rowsToStreamEvents,
   toMs,
   type RawFixture,
   type RawScoreRow,
 } from "@/lib/txline/real/map";
+import { goalLogFromEvents, resolvePick, type MatchFinal } from "@/lib/predict/resolve";
 
 const fixture: RawFixture = {
   Ts: 1_782_482_168_962,
@@ -113,14 +115,64 @@ describe("mapFinalResult", () => {
     expect(r.homeScore).toBe(2);
     expect(r.awayScore).toBe(1);
     expect(r.stats.home_corners).toBe(4);
-    expect(r.available.winner).toBe(true);
-    expect(r.available.corners).toBe(true);
-    expect(r.available.chaos).toBe(false); // minutes unavailable from snapshot
+    expect(r.stats.total_goals).toBe(3);
+    // availability is keyed by the stat each market needs (see state.ts)
+    expect(r.available.home_goals).toBe(true);
+    expect(r.available.total_goals).toBe(true);
+    expect(r.available.btts).toBe(true);
+    expect(r.available.late_goal).toBe(false); // goal minutes not in snapshot; settle enriches
     expect(r.goals).toEqual([]);
   });
 
   it("returns null while the match is still live", () => {
     expect(mapFinalResult(snapshot({ statusId: 4 }))).toBeNull();
+  });
+});
+
+describe("rowsToStreamEvents (goal-minute extraction)", () => {
+  // Brazil(P1, home). status H2 live, clock 83', then P1 scores (Stats "1": 1).
+  function liveRows(): RawScoreRow[] {
+    return [
+      { FixtureId: 1, Participant1IsHome: true, Action: "status", Ts: 1, Seq: 10, Data: { StatusId: 4 } },
+      { FixtureId: 1, Participant1IsHome: true, Action: "possession", Ts: 2, Seq: 20, Data: { Clock: { Seconds: 4980 } }, Stats: { "1": 0, "2": 0 } },
+      { FixtureId: 1, Participant1IsHome: true, Action: "goal", Ts: 3, Seq: 30, Data: { Clock: { Seconds: 4980 } }, Stats: { "1": 1, "2": 0 } },
+    ];
+  }
+
+  it("emits a goal event with the minute the goal was scored", () => {
+    const events = rowsToStreamEvents(liveRows());
+    const goal = events.find((e) => e.type === "goal")!;
+    expect(goal).toBeDefined();
+    expect(goal.minute).toBe(83); // 4980s / 60
+    expect(goal.team).toBe("home"); // P1 is home and P1's tally rose
+    expect(goal.homeScore).toBe(1);
+    expect(goal.seq).toBe(30);
+  });
+
+  it("orients the scoring team by Participant1IsHome", () => {
+    const rows = liveRows().map((r) => ({ ...r, Participant1IsHome: false }));
+    const goal = rowsToStreamEvents(rows).find((e) => e.type === "goal")!;
+    expect(goal.team).toBe("away"); // P1 scored but P1 is away
+  });
+
+  it("does not re-emit goals already seen (sinceSeq)", () => {
+    const events = rowsToStreamEvents(liveRows(), 30);
+    expect(events.find((e) => e.type === "goal")).toBeUndefined();
+  });
+
+  it("is idempotent — re-deriving yields the same goal seqs", () => {
+    const a = rowsToStreamEvents(liveRows()).filter((e) => e.type === "goal").map((e) => e.seq);
+    const b = rowsToStreamEvents(liveRows()).filter((e) => e.type === "goal").map((e) => e.seq);
+    expect(a).toEqual(b);
+  });
+
+  it("chains end-to-end: SSE rows → stored events → goal log → Chaos resolves", () => {
+    // The shape rowsToStreamEvents emits is exactly what storeEvents persists and
+    // goalLogFromEvents reads back, so a late goal (83') unlocks the Chaos market.
+    const events = rowsToStreamEvents(liveRows());
+    const goals = goalLogFromEvents(events);
+    const final: MatchFinal = { state: "FT", homeScore: 1, awayScore: 0, goals };
+    expect(resolvePick(final, "chaos", "yes")).toBe("WON");
   });
 });
 
