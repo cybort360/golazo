@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { SoccerBall } from "@phosphor-icons/react/dist/ssr";
 import SideNav from "@/components/predict/SideNav";
 import BottomNav from "@/components/predict/BottomNav";
 import IntroModal from "@/components/IntroModal";
@@ -49,8 +50,16 @@ export default function RootLayout({
   return (
     <html lang="en" className={sans.variable}>
       <body className="min-h-screen bg-[#f8fafc] pb-[68px] font-sans text-slate-900 antialiased lg:pb-0">
+        {/* Ambient pitch watermark: big + very subtle, bleeding off the bottom-
+            right of the canvas so empty pages don't read as a flat white void.
+            Behind content (z-0), desktop-only, non-interactive. */}
+        <SoccerBall
+          weight="fill"
+          aria-hidden
+          className="pointer-events-none fixed -bottom-24 -right-20 z-0 hidden h-[420px] w-[420px] text-slate-900/[0.04] xl:h-[520px] xl:w-[520px] lg:block"
+        />
         <SideNav />
-        <main className="lg:pl-[230px]">{children}</main>
+        <main className="relative z-10 lg:pl-[230px]">{children}</main>
         <BottomNav />
         <IntroModal />
       </body>
