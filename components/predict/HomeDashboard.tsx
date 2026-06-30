@@ -104,7 +104,7 @@ export default function HomeDashboard({
           </div>
         ) : (
           <Link href="/matches" className="block rounded-2xl border border-[#e2e8f0] bg-white px-4 py-4 text-sm font-medium text-slate-500 shadow-card">
-            No live matches right now — browse all fixtures ▸
+            No live matches right now. Browse all fixtures ▸
           </Link>
         )}
       </section>

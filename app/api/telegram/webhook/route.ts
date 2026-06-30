@@ -30,8 +30,8 @@ function playButton(): unknown {
 }
 
 const WELCOME =
-  "👋 <b>Golazo</b> — predict the World Cup, win SOL.\n\n" +
-  "No wallet needed — your Telegram is your login. Tap below to play 👇";
+  "👋 <b>Golazo</b>: predict the World Cup, win SOL.\n\n" +
+  "No wallet needed. Your Telegram is your login. Tap below to play 👇";
 
 export async function POST(request: Request) {
   // Fail closed: no secret configured → reject (don't run an open endpoint that

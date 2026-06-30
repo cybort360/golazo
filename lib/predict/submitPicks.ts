@@ -27,6 +27,6 @@ export async function submitPicks(
     }
     return { ok: true };
   } catch {
-    return { ok: false, error: "Network error — try again" };
+    return { ok: false, error: "Network error, try again" };
   }
 }

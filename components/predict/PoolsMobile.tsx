@@ -54,7 +54,7 @@ export default function PoolsMobile({ pools }: { pools: SponsoredPool[] }) {
 
         {/* compliance note */}
         <div className="flex items-start gap-1.5 rounded-xl border border-dashed border-slate-200 bg-white px-3.5 py-2.5 text-[11px] font-semibold text-slate-500">
-          <ShieldCheck weight="fill" size={14} className="mt-px shrink-0 text-slate-400" /> Always free to enter. Prizes are merch, access &amp; perks — never cash or wagering.
+          <ShieldCheck weight="fill" size={14} className="mt-px shrink-0 text-slate-400" /> Always free to enter. Prizes are merch, access &amp; perks, never cash or wagering.
         </div>
 
         {rest.map((p) => <PoolCard key={p.id} pool={p} />)}

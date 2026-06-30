@@ -12,10 +12,10 @@ import { SealCheck, Check } from "@phosphor-icons/react/dist/ssr";
 export function shareCopy(r: Receipt): { title: string; text: string } {
   const won = r.result === "WON";
   return {
-    title: "Golazo — verified pick",
+    title: "Golazo · verified pick",
     text: won
-      ? `Called it. ${r.predictionLabel} — +${formatPoints(r.points)} pts, verified by TxLINE.`
-      : `${r.predictionLabel} — ${r.result}. Verified by TxLINE. Prove you know ball:`,
+      ? `Called it. ${r.predictionLabel}, +${formatPoints(r.points)} pts, verified by TxLINE.`
+      : `${r.predictionLabel}: ${r.result}. Verified by TxLINE. Prove you know ball:`,
   };
 }
 

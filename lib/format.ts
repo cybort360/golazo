@@ -2,7 +2,7 @@
 
 export function formatPrice(value: string): string {
   const n = Number.parseFloat(value);
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "-";
   if (n >= 1)
     return `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   if (n >= 0.01) return `$${n.toFixed(4)}`;
@@ -11,7 +11,7 @@ export function formatPrice(value: string): string {
 }
 
 export function compactUsd(n: number): string {
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "-";
   const abs = Math.abs(n);
   if (abs >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
   if (abs >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
@@ -30,7 +30,7 @@ export function formatSol(n: number): string {
 }
 
 export function formatUsd(n: number): string {
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "-";
   // Show cents for small amounts so a few-dollar pool doesn't round to "$0".
   const maximumFractionDigits = Math.abs(n) < 100 ? 2 : 0;
   return n.toLocaleString("en-US", {

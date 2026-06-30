@@ -8,8 +8,8 @@ import { SealCheck, Check } from "@phosphor-icons/react/dist/ssr";
 
 function shareText(r: ProofReceipt): string {
   return r.result === "WON"
-    ? `Called it. ${r.predictionLabel} — +${formatPoints(r.points)} pts, verified by TxLINE.`
-    : `${r.predictionLabel} — ${r.result}. Verified by TxLINE. Prove you know ball:`;
+    ? `Called it. ${r.predictionLabel}, +${formatPoints(r.points)} pts, verified by TxLINE.`
+    : `${r.predictionLabel}: ${r.result}. Verified by TxLINE. Prove you know ball:`;
 }
 
 function VRow({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
@@ -92,7 +92,7 @@ export default function ReceiptDetailDesktop({ receipt }: { receipt: ProofReceip
           <div className="flex gap-3">
             <ShareButton
               path={`/r/${receipt.pickId}`}
-              title="Golazo — verified pick"
+              title="Golazo · verified pick"
               text={shareText(receipt)}
               label="Share receipt"
               className="flex-1 rounded-xl bg-neon py-3 text-center text-sm font-black text-ink"

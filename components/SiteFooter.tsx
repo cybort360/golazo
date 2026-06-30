@@ -11,7 +11,7 @@ export default function SiteFooter() {
               Join the Golazo community
             </h2>
             <p className="text-sm text-slate-500">
-              Make picks, climb your league, and prove you know ball — first on Telegram and X.
+              Make picks, climb your league, and prove you know ball. First on Telegram and X.
             </p>
           </div>
           <SocialLinks variant="chip" />

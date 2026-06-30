@@ -51,7 +51,7 @@ export function buildProfile(receipts: ProofReceipt[], identity: ProfileIdentity
     const cur = counts[k] ?? { picks: 0, points: 0 };
     counts[k] = { picks: cur.picks + 1, points: cur.points + r.points };
   }
-  let favoriteMarket = "—";
+  let favoriteMarket = "-";
   let best = { picks: -1, points: -1 };
   for (const k of Object.keys(counts)) {
     const v = counts[k];

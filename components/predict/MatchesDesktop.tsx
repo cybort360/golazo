@@ -31,7 +31,7 @@ export default function MatchesDesktop({ matches }: { matches: Match[] }) {
         <div className="relative flex items-end justify-between gap-6">
           <div>
             <h1 className="text-[30px] font-black tracking-[-0.04em]">Matches</h1>
-            <p className="mt-1 text-sm font-semibold text-slate-400">Pick before kickoff — Winner, Over/Under, BTTS and the Chaos special.</p>
+            <p className="mt-1 text-sm font-semibold text-slate-400">Pick before kickoff: Winner, Over/Under, BTTS and the Chaos special.</p>
           </div>
           <div className="flex shrink-0 gap-2">
             <span className="rounded-full bg-neon px-4 py-2 text-[13px] font-extrabold text-ink">Today</span>

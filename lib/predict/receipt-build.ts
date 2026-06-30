@@ -39,7 +39,7 @@ export function buildReceipt(i: ReceiptInput): ProofReceipt {
     matchState: (STATES as string[]).includes(i.matchState) ? (i.matchState as MatchState) : "FT",
     marketLabel: `${i.marketId} · ${i.optionId}`,
     statKeys: `home_g=${home}, away_g=${away}`,
-    payloadRef: i.proofRef ?? "—",
+    payloadRef: i.proofRef ?? "-",
     // Picks are verified by TxLINE (data layer), not anchored on-chain — the
     // on-chain Market mode owns Merkle/tx anchoring. Be honest in the proof view.
     merkleStatus: i.proofRef ? "valid" : null,

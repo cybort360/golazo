@@ -67,7 +67,7 @@ function saveKv(key: string, value: unknown): Promise<WriteResult> {
 // so the write can be retried authenticated rather than lost.
 function onWriteError(ui: AdminUI, status: number, context: string): void {
   if (status === 401) {
-    ui.showToast("error", "Session expired — please log in again");
+    ui.showToast("error", "Session expired. Please log in again");
     setTimeout(() => {
       window.location.href = "/admin/login";
     }, 1000);

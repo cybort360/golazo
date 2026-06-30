@@ -113,7 +113,7 @@ export default function MatchPickDesktop({ match, toggle }: { match: Match; togg
             </button>
             <p className="mt-2.5 text-center text-[11px] font-semibold text-slate-500">
               {status === "error"
-                ? error ?? "Couldn't save — try again"
+                ? error ?? "Couldn't save, try again"
                 : status === "done"
                 ? "Settles automatically · see Receipts"
                 : "Playing as guest · no signup needed"}

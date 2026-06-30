@@ -146,9 +146,9 @@ export const FIXTURE_WALLET: WalletState = {
   address: null,
   network: "Solana",
   rewards: [
-    { id: "chaos-cup", label: "Chaos Cup — season Pro access", source: "Chaos Cup", amount: null, isToken: false, status: "claimable" },
+    { id: "chaos-cup", label: "Chaos Cup · season Pro access", source: "Chaos Cup", amount: null, isToken: false, status: "claimable" },
     { id: "glz-drop", label: "Weekly streak token drop", source: "Global leaderboard", amount: "1,000 $GOLAZO", isToken: true, status: "claimable" },
-    { id: "megapool", label: "Matchday Megapool — entry confirmed", source: "Matchday Megapool", amount: null, isToken: false, status: "pending" },
+    { id: "megapool", label: "Matchday Megapool · entry confirmed", source: "Matchday Megapool", amount: null, isToken: false, status: "pending" },
   ],
 };
 

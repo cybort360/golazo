@@ -114,7 +114,7 @@ export default function WalletPanel({ wallet }: { wallet: WalletState }) {
 
             {/* compliance disclaimer */}
             <div className="flex items-start gap-2 rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3 text-[11px] font-semibold leading-relaxed text-slate-500">
-              <ShieldCheck weight="fill" size={15} className="mt-px shrink-0 text-slate-400" /> <span>Preview only — not live. Wallet mode and on-chain rewards activate in supported jurisdictions after compliance review. No purchase or wager is ever required, and the core game stays free to play. Token rewards launch on Meteora.</span>
+              <ShieldCheck weight="fill" size={15} className="mt-px shrink-0 text-slate-400" /> <span>Preview only. Not live. Wallet mode and on-chain rewards activate in supported jurisdictions after compliance review. No purchase or wager is ever required, and the core game stays free to play. Token rewards launch on Meteora.</span>
             </div>
           </div>
         )}

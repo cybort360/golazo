@@ -59,7 +59,7 @@ export default function PoolsDesktop({ pools }: { pools: SponsoredPool[] }) {
 
         {/* compliance note */}
         <div className="mt-4 flex items-start gap-2 rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3 text-[12px] font-semibold text-slate-500">
-          <ShieldCheck weight="fill" size={15} className="mt-px shrink-0 text-slate-400" /> Pools are always free to enter. Prizes are merch, access &amp; perks — never cash or real-money wagering.
+          <ShieldCheck weight="fill" size={15} className="mt-px shrink-0 text-slate-400" /> Pools are always free to enter. Prizes are merch, access &amp; perks, never cash or real-money wagering.
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-5 xl:grid-cols-3">

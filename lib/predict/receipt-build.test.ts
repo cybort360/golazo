@@ -42,7 +42,7 @@ describe("buildReceipt", () => {
   it("marks merkle unverified and uses a placeholder ref when no proof", () => {
     const r = buildReceipt({ ...base, proofRef: null });
     expect(r.merkleStatus).toBeNull();
-    expect(r.payloadRef).toBe("—");
+    expect(r.payloadRef).toBe("-");
   });
 
   it("defaults null scores to 0 and tolerates an odd state", () => {

@@ -36,13 +36,13 @@ const SLIDES: Slide[] = [
     icon: SoccerBall,
     kicker: "The game",
     title: "Welcome to Golazo",
-    body: "Make picks before kick-off. Prove you know ball. Every result is verified — no trust required.",
+    body: "Make picks before kick-off. Prove you know ball. Every result is verified. No trust required.",
   },
   {
     icon: Sparkle,
     kicker: "Signature market",
     title: "The Chaos Pick",
-    body: "Alongside Winner, Total goals, and BTTS — every match has a signature Chaos Pick. High risk. Maximum points.",
+    body: "Alongside Winner, Total goals, and BTTS, every match has a signature Chaos Pick. High risk. Maximum points.",
   },
   {
     icon: ChartLineUp,
@@ -54,13 +54,13 @@ const SLIDES: Slide[] = [
     icon: SealCheck,
     kicker: "Verified",
     title: "Verified by TxLINE",
-    body: "Every settled result is verified by TxLINE and anchored on-chain. Share your proof receipt — it's permanent.",
+    body: "Every settled result is verified by TxLINE and anchored on-chain. Share your proof receipt. It's permanent.",
   },
   {
     icon: Trophy,
     kicker: "Compete",
     title: "Climb private leagues",
-    body: "Create or join a private league with friends. The leaderboard resets each round — anyone can rise to the top.",
+    body: "Create or join a private league with friends. The leaderboard resets each round, so anyone can rise to the top.",
   },
 ];
 

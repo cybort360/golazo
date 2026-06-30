@@ -68,7 +68,7 @@ export default function MatchPickScreen({ match, toggle }: { match: Match; toggl
         </button>
         <p className="mt-2.5 text-center text-xs font-semibold text-slate-400">
           {status === "error"
-            ? error ?? "Couldn't save — try again"
+            ? error ?? "Couldn't save, try again"
             : status === "done"
             ? "Verified results settle automatically. Track them in Receipts."
             : "Playing as guest · no signup needed"}
