@@ -35,9 +35,9 @@ const FAUCET_AMOUNT = 100_000_000n; // 100 GOLAZO
 
 function marketsFor(match: Match) {
   return [
-    { id: "home_win", q: `Will ${match.home.name} win?` },
-    { id: "over25", q: "Over 2.5 total goals?" },
-    { id: "btts", q: "Both teams to score?" },
+    { id: "home_win", label: `${match.home.ticker} WIN`, q: `Will ${match.home.name} win?` },
+    { id: "over25", label: "OVER 2.5", q: "Over 2.5 total goals?" },
+    { id: "btts", label: "BTTS", q: "Both teams to score?" },
   ];
 }
 
@@ -189,11 +189,11 @@ export default function MarketPanel({ match }: { match: Match }) {
             key={m.id}
             onClick={() => setMarketId(m.id)}
             className={
-              "rounded-full px-3 py-1 text-[12px] font-bold " +
+              "rounded-full px-3 py-1 text-[12px] font-bold uppercase tracking-wide " +
               (m.id === marketId ? "bg-neon text-ink" : "bg-[#1c1c22] text-slate-300")
             }
           >
-            {m.id}
+            {m.label}
           </button>
         ))}
       </div>
