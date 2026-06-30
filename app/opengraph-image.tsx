@@ -66,6 +66,8 @@ export default function Image() {
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           <div
             style={{
+              display: "flex",
+              flexWrap: "wrap",
               fontSize: 76,
               fontWeight: 800,
               lineHeight: 1.05,
@@ -73,7 +75,7 @@ export default function Image() {
               maxWidth: 900,
             }}
           >
-            Make picks.{" "}
+            <span>Make picks.&nbsp;</span>
             <span style={{ color: "#d4ff3f" }}>Prove you know ball.</span>
           </div>
           <div style={{ fontSize: 32, color: "rgba(255,255,255,0.75)" }}>

@@ -15,6 +15,9 @@ const securityHeaders = [
 const nextConfig = {
   poweredByHeader: false, // drop the X-Powered-By: Next.js header
   compress: true, // gzip responses
+  // Type safety is enforced by tsc; lint is run separately (`npm run lint`) so a
+  // style nit never blocks a production/deploy build.
+  eslint: { ignoreDuringBuilds: true },
   experimental: { instrumentationHook: true }, // enable instrumentation.ts (live TxLINE autosync)
   images: {
     remotePatterns: [
