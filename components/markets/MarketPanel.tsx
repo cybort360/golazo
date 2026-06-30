@@ -1,7 +1,8 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import type { Match } from "@/lib/predict/types";
 import { MARKET_DISCLAIMER } from "@/lib/markets/flags";
 import { formatAmount, parseAmount, GOLAZO_SPL } from "@/lib/markets/assets/types";
@@ -44,8 +45,14 @@ function marketsFor(match: Match) {
 // Demo binary result (matches the Mock TxLINE adapter's 2-1 home win).
 const DEMO_RESULT: Record<string, 0 | 1> = { home_win: 1, over25: 1, btts: 0 };
 
+// A wallet needs a little devnet SOL to cover network fees + account rent.
+// Below this, transactions fail simulation and Phantom shows a scary generic
+// "unsafe" warning — so we gate on it and offer a one-tap airdrop instead.
+const MIN_SOL_LAMPORTS = 0.02 * LAMPORTS_PER_SOL;
+
 export default function MarketPanel({ match }: { match: Match }) {
   const { publicKey, connected } = useWallet();
+  const { connection } = useConnection();
   const golazo = useGolazoProgram();
   const txline = useTxlineProgram();
   const markets = useMemo(() => marketsFor(match), [match]);
@@ -54,6 +61,7 @@ export default function MarketPanel({ match }: { match: Match }) {
   const [amountStr, setAmountStr] = useState("10");
   const [side, setSide] = useState<0 | 1>(1);
   const [balance, setBalance] = useState<bigint>(0n);
+  const [sol, setSol] = useState(0);
   const [state, setState] = useState<MarketState | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -62,13 +70,33 @@ export default function MarketPanel({ match }: { match: Match }) {
 
   const refresh = useCallback(async () => {
     if (!golazo || !publicKey) return;
-    const [bal, mkt] = await Promise.all([
-      getGolazoBalance(golazo.provider.connection, publicKey),
+    const [bal, mkt, lamports] = await Promise.all([
+      getGolazoBalance(connection, publicKey),
       fetchMarket(golazo, match.id, marketId),
+      connection.getBalance(publicKey).catch(() => 0),
     ]);
     setBalance(bal);
     setState(mkt);
-  }, [golazo, publicKey, match.id, marketId]);
+    setSol(lamports);
+  }, [golazo, publicKey, connection, match.id, marketId]);
+
+  const lowSol = sol < MIN_SOL_LAMPORTS;
+
+  const getDevnetSol = async () => {
+    if (!publicKey) return;
+    setBusy("airdrop");
+    setMsg(null);
+    try {
+      const sig = await connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL);
+      await connection.confirmTransaction(sig, "confirmed");
+      setMsg("Airdropped 1 devnet SOL");
+      await refresh();
+    } catch {
+      setMsg("× Devnet airdrop is rate-limited — grab some at faucet.solana.com, then retry");
+    } finally {
+      setBusy(null);
+    }
+  };
 
   useEffect(() => {
     void refresh();
@@ -211,6 +239,34 @@ export default function MarketPanel({ match }: { match: Match }) {
         </div>
       </div>
 
+      {/* devnet SOL gate — keep users away from Phantom's scary "can't simulate"
+          dialog by funding fees up front (devnet only, not real money) */}
+      {lowSol && (
+        <div className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3.5 py-3">
+          <div className="text-[12px] font-bold text-amber-200">This wallet has no devnet SOL</div>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-amber-200/80">
+            Solana needs a little SOL to cover network fees. Grab some free (devnet only — not real money), then stake.
+          </p>
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={getDevnetSol}
+              disabled={!!busy}
+              className="rounded-full bg-amber-400 px-3 py-1.5 text-[12px] font-black text-ink disabled:opacity-40"
+            >
+              {busy === "airdrop" ? "…" : "Get 1 devnet SOL"}
+            </button>
+            <a
+              href="https://faucet.solana.com"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-amber-400/50 px-3 py-1.5 text-[12px] font-bold text-amber-200"
+            >
+              Faucet ↗
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* YES / NO selector (always visible) with live implied odds */}
       <div className="mt-4 grid grid-cols-2 gap-2">
         {([1, 0] as const).map((s) => {
@@ -253,7 +309,7 @@ export default function MarketPanel({ match }: { match: Match }) {
       {/* stake (opens the market first if it doesn't exist yet) + faucet */}
       <div className="mt-3 grid grid-cols-2 gap-2">
         <button
-          disabled={!!busy || (!!state && !canStake(status, lockTs))}
+          disabled={!!busy || lowSol || (!!state && !canStake(status, lockTs))}
           onClick={() =>
             run(state ? "stake" : "init_market", async () => {
               if (!state) {
@@ -267,7 +323,7 @@ export default function MarketPanel({ match }: { match: Match }) {
           {busy ? "…" : state ? `Stake ${side === 1 ? "YES" : "NO"}` : "Open & stake"}
         </button>
         <button
-          disabled={!!busy || balance > 0n}
+          disabled={!!busy || lowSol || balance > 0n}
           onClick={() => run("faucet", () => faucet(golazo!, publicKey!, FAUCET_AMOUNT))}
           className="rounded-full border border-slate-600 py-2.5 text-[13px] font-bold text-slate-200 disabled:opacity-40"
         >
@@ -281,7 +337,7 @@ export default function MarketPanel({ match }: { match: Match }) {
           <div className="mt-2 grid grid-cols-2 gap-2">
             {canClaim(status) ? (
               <button
-                disabled={!!busy}
+                disabled={!!busy || lowSol}
                 onClick={() => run("claim", () => claim(golazo!, publicKey!, match.id, marketId, "claim"), indexReceipt("claim"))}
                 className="rounded-full bg-neon py-2.5 text-[13px] font-extrabold text-ink disabled:opacity-40"
               >
@@ -289,7 +345,7 @@ export default function MarketPanel({ match }: { match: Match }) {
               </button>
             ) : canRefund(status) ? (
               <button
-                disabled={!!busy}
+                disabled={!!busy || lowSol}
                 onClick={() => run("refund", () => claim(golazo!, publicKey!, match.id, marketId, "refund"), indexReceipt("refund"))}
                 className="rounded-full bg-amber-400 py-2.5 text-[13px] font-extrabold text-ink disabled:opacity-40"
               >
@@ -297,7 +353,7 @@ export default function MarketPanel({ match }: { match: Match }) {
               </button>
             ) : (
               <button
-                disabled={!!busy || status === MARKET_STATUS.SETTLED}
+                disabled={!!busy || lowSol || status === MARKET_STATUS.SETTLED}
                 onClick={() => run("settle", () => settleMarket(golazo!, txline!, publicKey!, match.id, marketId, DEMO_RESULT), indexSettlement)}
                 className="rounded-full border border-neon py-2.5 text-[13px] font-bold text-neon disabled:opacity-40"
               >
