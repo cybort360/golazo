@@ -18,6 +18,7 @@ export interface ReceiptInput {
   home: MatchTeam;
   away: MatchTeam;
   fixtureId: string;
+  picker?: ProofReceipt["picker"];
 }
 
 const STATES: MatchState[] = ["NOT_STARTED", "LIVE", "HT", "FT", "SUSPENDED", "POSTPONED", "VOID"];
@@ -45,5 +46,6 @@ export function buildReceipt(i: ReceiptInput): ProofReceipt {
     onChainStatus: null,
     settledAtMs: i.settledAtMs,
     txUrl: null,
+    picker: i.picker,
   };
 }

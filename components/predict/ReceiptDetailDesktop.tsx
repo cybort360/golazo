@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ProofReceipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 import ShareButton from "@/components/predict/ShareButton";
+import PlayerLink from "@/components/predict/PlayerLink";
 import LeagueMovement from "@/components/predict/LeagueMovement";
 import { SealCheck, Check } from "@phosphor-icons/react/dist/ssr";
 
@@ -24,6 +25,9 @@ export default function ReceiptDetailDesktop({ receipt }: { receipt: ProofReceip
   const won = receipt.result === "WON";
   const resultColor = won ? "text-neon" : receipt.result === "LOST" ? "text-[#f87171]" : "text-slate-300";
   const score = `${receipt.home.name} ${receipt.homeScore}–${receipt.awayScore} ${receipt.away.name}`;
+  const p = receipt.picker;
+  const mine = !p || p.isYou;
+  const predLabel = mine ? "Your prediction" : `${p.name}'s prediction`;
 
   return (
     <div className="hidden lg:block">
@@ -44,7 +48,12 @@ export default function ReceiptDetailDesktop({ receipt }: { receipt: ProofReceip
               <div className="text-xl font-black tracking-[-0.03em] text-white">GOLAZO</div>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(22,163,74,0.45)] bg-[rgba(22,163,74,0.16)] px-3 py-1.5 text-[12px] font-extrabold tracking-[0.06em] text-[#4ade80]"><SealCheck weight="fill" size={13} /> VERIFIED</span>
             </div>
-            <div className="mt-7 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Your prediction</div>
+            {p && !p.isYou && (
+              <div className="mt-4 text-[13px] font-semibold text-slate-400">
+                by <PlayerLink handle={p.handle} className="font-bold text-neon">{p.name}</PlayerLink>
+              </div>
+            )}
+            <div className="mt-7 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">{predLabel}</div>
             <div className="mt-2 text-xl font-extrabold text-white">{receipt.predictionLabel}</div>
             <div className={"glz-rise mt-3 text-[80px] font-black leading-[0.85] tracking-[-0.05em] " + resultColor}>{receipt.result}</div>
             <div className="mt-6 flex items-end justify-between">

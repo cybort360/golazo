@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ProofReceipt as Receipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 import ShareButton from "@/components/predict/ShareButton";
+import PlayerLink from "@/components/predict/PlayerLink";
 import { SealCheck, Check } from "@phosphor-icons/react/dist/ssr";
 
 // Telegram/Discord-friendly share copy for a settled pick (PRD §6.2 communities).
@@ -34,6 +35,9 @@ function MonoRow({ label, value, valueClass }: { label: string; value: string; v
 export default function ProofReceipt({ receipt }: { receipt: Receipt }) {
   const [open, setOpen] = useState(true);
   const score = `${receipt.home.name} ${receipt.homeScore}–${receipt.awayScore} ${receipt.away.name}`;
+  const p = receipt.picker;
+  const mine = !p || p.isYou;
+  const predLabel = mine ? "Your prediction" : `${p.name}'s prediction`;
 
   return (
     <div className="w-full">
@@ -51,7 +55,12 @@ export default function ProofReceipt({ receipt }: { receipt: Receipt }) {
             </span>
           </div>
 
-          <div className="mt-5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Your prediction</div>
+          {p && !p.isYou && (
+            <div className="mt-3 text-[13px] font-semibold text-slate-400">
+              by <PlayerLink handle={p.handle} className="font-bold text-neon">{p.name}</PlayerLink>
+            </div>
+          )}
+          <div className="mt-5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">{predLabel}</div>
           <div className="mt-1.5 text-lg font-extrabold text-white">{receipt.predictionLabel}</div>
           <div className="glz-rise mt-2.5 text-[64px] font-black leading-[0.9] tracking-[-0.05em] text-neon">
             {receipt.result}

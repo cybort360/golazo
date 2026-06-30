@@ -62,6 +62,13 @@ export interface ProofReceipt {
   onChainStatus: string | null;
   settledAtMs: number;
   txUrl: string | null;
+  // Who made the pick — lets a shared receipt show + link to its author's
+  // profile. isYou drives "Your prediction" vs "<name>'s prediction" copy.
+  picker?: {
+    handle?: string; // /u/<handle>
+    name: string;
+    isYou: boolean;
+  };
 }
 
 export interface LeagueMember {

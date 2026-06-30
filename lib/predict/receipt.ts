@@ -2,7 +2,23 @@ import "server-only";
 import { prisma } from "@/lib/db/client";
 import { currentUserId } from "@/lib/predict/session";
 import { buildReceipt } from "@/lib/predict/receipt-build";
+import { publicName, profileSlug } from "@/lib/predict/identity";
 import type { ProofReceipt, MatchTeam } from "@/lib/predict/types";
+
+type PickerUser = {
+  id: string;
+  handle: string | null;
+  displayName: string | null;
+  anonId: string | null;
+};
+
+function picker(u: PickerUser, viewerId: string | null): ProofReceipt["picker"] {
+  return {
+    handle: profileSlug(u),
+    name: publicName(u),
+    isYou: !!viewerId && u.id === viewerId,
+  };
+}
 
 // Build ProofReceipts for the current user from settled Predictions + their
 // match. The Prediction row is the settlement record (status/points/proofRef).
@@ -31,17 +47,21 @@ function team(name: string, ticker: string | null, flag: string | null, color: s
   };
 }
 
-function toReceipt(p: {
-  id: string;
-  predictionLabel: string;
-  marketId: string;
-  optionId: string;
-  status: ProofReceipt["result"];
-  points: number;
-  proofRef: string | null;
-  settledAt: Date | null;
-  match: MatchRow;
-}): ProofReceipt {
+function toReceipt(
+  p: {
+    id: string;
+    predictionLabel: string;
+    marketId: string;
+    optionId: string;
+    status: ProofReceipt["result"];
+    points: number;
+    proofRef: string | null;
+    settledAt: Date | null;
+    match: MatchRow;
+    user?: PickerUser;
+  },
+  viewerId: string | null,
+): ProofReceipt {
   return buildReceipt({
     pickId: p.id,
     predictionLabel: p.predictionLabel,
@@ -57,6 +77,7 @@ function toReceipt(p: {
     home: team(p.match.homeTeam, p.match.homeTicker, p.match.homeFlag, p.match.homeColor),
     away: team(p.match.awayTeam, p.match.awayTicker, p.match.awayFlag, p.match.awayColor),
     fixtureId: p.match.id,
+    picker: p.user ? picker(p.user, viewerId) : undefined,
   });
 }
 
@@ -65,9 +86,9 @@ export async function getReceiptsForUser(userId: string, limit = 10): Promise<Pr
     where: { userId, status: { in: ["WON", "LOST", "VOID"] } },
     orderBy: { settledAt: "desc" },
     take: limit,
-    include: { match: true },
+    include: { match: true, user: true },
   });
-  return preds.map((p) => toReceipt(p as any));
+  return preds.map((p) => toReceipt(p as any, userId));
 }
 
 export async function getUserReceipts(limit = 10): Promise<ProofReceipt[]> {
@@ -81,9 +102,9 @@ export async function getUserReceipt(pickId: string): Promise<ProofReceipt | nul
   if (!userId) return null;
   const p = await prisma.prediction.findFirst({
     where: { id: pickId, userId },
-    include: { match: true },
+    include: { match: true, user: true },
   });
-  return p ? toReceipt(p as any) : null;
+  return p ? toReceipt(p as any, userId) : null;
 }
 
 /**
@@ -92,9 +113,10 @@ export async function getUserReceipt(pickId: string): Promise<ProofReceipt | nul
  * Telegram/Discord (P2-13). Only settled picks have a meaningful receipt.
  */
 export async function getReceiptById(pickId: string): Promise<ProofReceipt | null> {
+  const viewerId = await currentUserId();
   const p = await prisma.prediction.findFirst({
     where: { id: pickId, status: { in: ["WON", "LOST", "VOID"] } },
-    include: { match: true },
+    include: { match: true, user: true },
   });
-  return p ? toReceipt(p as any) : null;
+  return p ? toReceipt(p as any, viewerId) : null;
 }
