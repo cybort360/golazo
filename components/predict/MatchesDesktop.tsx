@@ -1,5 +1,7 @@
 import type { Match } from "@/lib/predict/types";
 import MatchCard from "@/components/predict/MatchCard";
+import MatchDateTabs from "@/components/predict/MatchDateTabs";
+import type { DateFilter } from "@/lib/predict/matchFilter";
 import { SoccerBall } from "@phosphor-icons/react/dist/ssr";
 
 function Group({ label, dot, matches }: { label: string; dot?: boolean; matches: Match[] }) {
@@ -18,7 +20,15 @@ function Group({ label, dot, matches }: { label: string; dot?: boolean; matches:
   );
 }
 
-export default function MatchesDesktop({ matches }: { matches: Match[] }) {
+export default function MatchesDesktop({
+  matches,
+  filter,
+  onFilter,
+}: {
+  matches: Match[];
+  filter: DateFilter;
+  onFilter: (v: DateFilter) => void;
+}) {
   const inPlay = matches.filter((m) => m.state === "LIVE" || m.state === "HT");
   const upcoming = matches.filter((m) => m.state === "NOT_STARTED");
   const finished = matches.filter((m) => m.state === "FT" || m.state === "VOID");
@@ -33,19 +43,23 @@ export default function MatchesDesktop({ matches }: { matches: Match[] }) {
             <h1 className="text-[30px] font-black tracking-[-0.04em]">Matches</h1>
             <p className="mt-1 text-sm font-semibold text-slate-400">Pick before kickoff: Winner, Over/Under, BTTS and the Chaos special.</p>
           </div>
-          <div className="flex shrink-0 gap-2">
-            <span className="rounded-full bg-neon px-4 py-2 text-[13px] font-extrabold text-ink">Today</span>
-            <span className="rounded-full border border-[#2a2a2a] bg-[#171717] px-4 py-2 text-[13px] font-bold text-slate-300">Tomorrow</span>
-            <span className="rounded-full border border-[#2a2a2a] bg-[#171717] px-4 py-2 text-[13px] font-bold text-slate-300">This week</span>
-          </div>
+          <MatchDateTabs value={filter} onChange={onFilter} tone="dark" />
         </div>
       </div>
 
       {/* grouped grids */}
       <div className="px-8 py-7">
-        <Group label="In-play now" dot matches={inPlay} />
-        <Group label="Upcoming" matches={upcoming} />
-        <Group label="Results" matches={finished} />
+        {matches.length > 0 ? (
+          <>
+            <Group label="In-play now" dot matches={inPlay} />
+            <Group label="Upcoming" matches={upcoming} />
+            <Group label="Results" matches={finished} />
+          </>
+        ) : (
+          <div className="rounded-2xl border border-[#e2e8f0] bg-white px-6 py-16 text-center text-sm font-medium text-slate-400">
+            No matches {filter === "week" ? "this week" : filter}.
+          </div>
+        )}
       </div>
     </div>
   );
