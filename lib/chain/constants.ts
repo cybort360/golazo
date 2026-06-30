@@ -1,4 +1,4 @@
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, clusterApiUrl } from "@solana/web3.js";
 
 // Devnet program IDs. Read from env when present, else fall back to the pinned
 // keypair-derived IDs baked into the Anchor workspace (Anchor.toml / declare_id).
@@ -6,6 +6,11 @@ export const CLUSTER = (process.env.NEXT_PUBLIC_SOLANA_CLUSTER ?? "devnet") as
   | "devnet"
   | "mainnet-beta"
   | "testnet";
+
+// RPC endpoint. Defaults to the public cluster RPC, but public devnet is heavily
+// rate-limited — set NEXT_PUBLIC_SOLANA_RPC to a dedicated devnet endpoint
+// (Helius/QuickNode/etc.) in any hosted deploy.
+export const RPC_ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC || clusterApiUrl(CLUSTER);
 
 export const TXLINE_MOCK_PROGRAM = new PublicKey(
   process.env.NEXT_PUBLIC_TXLINE_MOCK_PROGRAM || "Go73N2JanmNjxJz7rGdTcd1PzgTZCuM9uRC11jvQGV7w",
