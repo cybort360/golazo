@@ -72,9 +72,10 @@ export default function HomeDashboardDesktop({
               <>
                 <span className="h-2 w-2 rounded-full bg-slate-300" />
                 <span className="text-[11px] font-black uppercase tracking-[0.13em] text-ink">Up next</span>
+                <span className="text-slate-300">·</span>
                 <KickoffCountdown
                   kickoffMs={upcoming.kickoffMs}
-                  className="ml-auto text-[11px] font-bold tabular-nums text-slate-500"
+                  className="text-[11px] font-bold tabular-nums text-slate-500"
                 />
               </>
             ) : (

@@ -33,7 +33,11 @@ export default function KickoffCountdown({
   const secs = Math.floor((ms % 60_000) / 1000);
 
   const label =
-    days > 0 ? `${days}d ${hours}h` : hours > 0 ? `${hours}h ${mins}m` : `${mins}m ${secs}s`;
+    days > 0
+      ? `${days}d ${hours}h ${mins}m`
+      : hours > 0
+      ? `${hours}h ${mins}m ${secs}s`
+      : `${mins}m ${secs}s`;
 
   return (
     <span className={className}>
