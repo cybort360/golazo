@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ProofReceipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
-import { Check, X, SealCheck } from "@phosphor-icons/react/dist/ssr";
+import { Check, X, SealCheck, Receipt } from "@phosphor-icons/react/dist/ssr";
 
 function dateLabel(ms: number): string {
   return new Date(ms).toLocaleDateString([], { day: "2-digit", month: "short" });
@@ -48,6 +48,18 @@ export default function ReceiptsDesktop({ receipts }: { receipts: ProofReceipt[]
 
       {/* list */}
       <div className="px-8 py-7">
+        {total === 0 ? (
+          <div className="rounded-2xl border border-[#e2e8f0] bg-white px-6 py-20 text-center">
+            <Receipt weight="duotone" size={42} className="mx-auto text-slate-300" />
+            <div className="mt-3 text-[16px] font-extrabold text-ink">No receipts yet</div>
+            <p className="mx-auto mt-1 max-w-md text-sm font-medium text-slate-500">
+              Make a pick, and the moment the match settles your verified proof receipt lands here, every result checked against TxLINE.
+            </p>
+            <Link href="/matches" className="mt-5 inline-block rounded-xl bg-neon px-6 py-3 text-sm font-black text-ink transition-transform hover:-translate-y-0.5">
+              Make your first pick
+            </Link>
+          </div>
+        ) : (
         <div className="overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white">
           <div className="flex items-center gap-4 border-b border-[#eef2f7] px-5 py-3 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
             <span className="w-[64px]">Result</span>
@@ -80,6 +92,7 @@ export default function ReceiptsDesktop({ receipts }: { receipts: ProofReceipt[]
             </Link>
           ))}
         </div>
+        )}
       </div>
     </div>
   );

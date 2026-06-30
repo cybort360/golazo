@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ProofReceipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
-import { Check, X } from "@phosphor-icons/react/dist/ssr";
+import { Check, X, Receipt } from "@phosphor-icons/react/dist/ssr";
 
 function dateLabel(ms: number): string {
   return new Date(ms).toLocaleDateString([], { day: "2-digit", month: "short" });
@@ -32,6 +32,18 @@ export default function ReceiptsMobile({ receipts }: { receipts: ProofReceipt[] 
       </div>
 
       <div className="flex flex-col gap-2.5">
+        {total === 0 && (
+          <div className="rounded-2xl border border-[#e2e8f0] bg-white px-5 py-14 text-center shadow-card">
+            <Receipt weight="duotone" size={38} className="mx-auto text-slate-300" />
+            <div className="mt-3 text-[15px] font-extrabold text-ink">No receipts yet</div>
+            <p className="mx-auto mt-1 max-w-xs text-[13px] font-medium text-slate-500">
+              Make a pick, and your verified proof receipt lands here once the match settles.
+            </p>
+            <Link href="/matches" className="mt-4 inline-block rounded-xl bg-neon px-5 py-2.5 text-sm font-black text-ink">
+              Make your first pick
+            </Link>
+          </div>
+        )}
         {receipts.map((r) => (
           <Link
             key={r.pickId}
