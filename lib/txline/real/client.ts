@@ -10,9 +10,11 @@ import {
   mapStateSnapshot,
   snapshotToEvents,
   mapFinalResult,
+  coerceRows,
   type RawFixture,
   type RawScoreRow,
 } from "@/lib/txline/real/map";
+import { readSse } from "@/lib/txline/sse";
 
 // Real TxLINE client — consumes the live REST API (OpenAPI v1.5.2) through the
 // same seam the mock implements. The one-time access bootstrap (guest JWT →
@@ -85,8 +87,9 @@ export class RealTxlineClient implements TxlineClient {
     return (await this.fixtures()).find((f) => f.id === id) ?? null;
   }
 
-  // Poll the per-action snapshot for current state/score (the /updates endpoint
-  // is an SSE stream, not request/response — used later for low-latency live).
+  // Poll the per-action snapshot for current state/score. This is the baseline
+  // path; streamEvents() below consumes the /updates SSE feed for low-latency
+  // live, priming from this same snapshot on connect.
   private snapshot(fixtureId: string) {
     return this.get<RawScoreRow[]>(`/api/scores/snapshot/${fixtureId}`).then((r) => r ?? []);
   }
@@ -101,5 +104,53 @@ export class RealTxlineClient implements TxlineClient {
 
   async finalResult(fixtureId: string): Promise<TxlineFinalResult | null> {
     return mapFinalResult(await this.snapshot(fixtureId));
+  }
+
+  // Live, push-based feed via TxLINE SSE (/api/scores/updates/{id}). Primes the
+  // buffer from the current snapshot so state is correct on connect, then keeps
+  // a rolling row buffer and re-derives the current event as rows stream in.
+  // Re-uses the same tested mappers as the poll path; only the latency differs.
+  async streamEvents(
+    fixtureId: string,
+    onBatch: (events: TxlineLiveEvent[]) => void | Promise<void>,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    const buffer: RawScoreRow[] = [...(await this.snapshot(fixtureId))];
+    let lastSeq = 0;
+    const flush = async () => {
+      const events = snapshotToEvents(buffer, lastSeq);
+      if (events.length === 0) return;
+      lastSeq = Math.max(lastSeq, ...events.map((e) => e.seq));
+      await onBatch(events);
+    };
+    await flush(); // emit primed state immediately
+
+    const token = env("TXLINE_API_TOKEN");
+    const connect = (jwt: string) =>
+      fetch(`${this.base()}/api/scores/updates/${fixtureId}`, {
+        headers: { Authorization: `Bearer ${jwt}`, "X-Api-Token": token, Accept: "text/event-stream" },
+        cache: "no-store",
+        signal,
+      });
+    let r = await connect(await this.getJwt());
+    if (r.status === 401) r = await connect(await this.getJwt(true)); // refresh once
+    if (!r.ok || !r.body) throw new Error(`TxLINE updates/${fixtureId} → HTTP ${r.status}`);
+
+    await readSse(
+      r.body as ReadableStream<Uint8Array>,
+      async (payload) => {
+        let json: unknown;
+        try {
+          json = JSON.parse(payload);
+        } catch {
+          return; // keep-alive / non-JSON line
+        }
+        const rows = coerceRows(json);
+        if (rows.length === 0) return;
+        buffer.push(...rows);
+        await flush();
+      },
+      signal,
+    );
   }
 }

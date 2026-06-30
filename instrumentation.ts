@@ -11,6 +11,7 @@ export async function register() {
   const intervalMs = Number(process.env.TXLINE_AUTOSYNC_MS ?? "30000");
   const { syncAll } = await import("@/lib/predict/ingest");
   const { settleFinished } = await import("@/lib/predict/settle");
+  const { reconcileLiveStreams } = await import("@/lib/predict/live-stream");
 
   let running = false;
   const tick = async () => {
@@ -19,6 +20,8 @@ export async function register() {
     try {
       await syncAll();
       await settleFinished();
+      // Open/close the low-latency SSE streams for whatever is now in-play.
+      await reconcileLiveStreams();
     } catch (e) {
       console.error("[txline autosync]", (e as Error)?.message ?? e);
     } finally {
@@ -28,5 +31,6 @@ export async function register() {
 
   setTimeout(tick, 5_000); // first run shortly after boot
   setInterval(tick, Number.isFinite(intervalMs) ? intervalMs : 30_000);
-  console.log(`[txline autosync] enabled, every ${intervalMs}ms`);
+  const sse = process.env.TXLINE_SSE === "off" ? "off" : "on";
+  console.log(`[txline autosync] enabled, every ${intervalMs}ms · SSE live feed ${sse}`);
 }

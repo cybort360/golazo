@@ -51,6 +51,26 @@ export interface RawScoreRow {
   Stats?: Record<string, number>;
 }
 
+function isRow(x: unknown): x is RawScoreRow {
+  return !!x && typeof x === "object" && "FixtureId" in (x as object) && "Seq" in (x as object);
+}
+
+// Normalize one SSE frame payload (parsed JSON) into score rows. The updates
+// stream may deliver a single row object or a batch array, and providers often
+// wrap batches in a `rows`/`data`/`updates`/`items` envelope — tolerate all.
+export function coerceRows(json: unknown): RawScoreRow[] {
+  if (json == null) return [];
+  if (Array.isArray(json)) return json.filter(isRow);
+  if (typeof json === "object") {
+    if (isRow(json)) return [json as RawScoreRow];
+    const o = json as Record<string, unknown>;
+    for (const key of ["rows", "data", "updates", "items"]) {
+      if (Array.isArray(o[key])) return (o[key] as unknown[]).filter(isRow);
+    }
+  }
+  return [];
+}
+
 // ---- helpers ----------------------------------------------------------------
 
 // TxLINE timestamps are int64; tolerate either seconds or milliseconds.

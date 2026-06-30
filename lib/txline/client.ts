@@ -102,4 +102,15 @@ export interface TxlineClient {
   liveEvents(fixtureId: string, sinceSeq?: number): Promise<TxlineLiveEvent[]>;
   /** Verified final result + proof metadata; null until the fixture is final. */
   finalResult(fixtureId: string): Promise<TxlineFinalResult | null>;
+  /**
+   * Subscribe to the low-latency live feed (TxLINE SSE). Primes from the current
+   * snapshot, then pushes new events as they arrive (sub-second vs. the poll).
+   * Resolves when the stream ends or `signal` aborts. Optional: clients without
+   * a push feed simply omit it and callers fall back to polling.
+   */
+  streamEvents?(
+    fixtureId: string,
+    onBatch: (events: TxlineLiveEvent[]) => void | Promise<void>,
+    signal?: AbortSignal,
+  ): Promise<void>;
 }

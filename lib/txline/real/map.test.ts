@@ -5,6 +5,7 @@ import {
   mapStateSnapshot,
   snapshotToEvents,
   mapFinalResult,
+  coerceRows,
   toMs,
   type RawFixture,
   type RawScoreRow,
@@ -120,5 +121,29 @@ describe("mapFinalResult", () => {
 
   it("returns null while the match is still live", () => {
     expect(mapFinalResult(snapshot({ statusId: 4 }))).toBeNull();
+  });
+});
+
+describe("coerceRows (SSE frame normalization)", () => {
+  const row: RawScoreRow = { FixtureId: 18172469, Participant1IsHome: true, Action: "goal", Ts: 7, Seq: 70, Stats: { "1": 1, "2": 0 } };
+
+  it("wraps a single row object", () => {
+    expect(coerceRows(row)).toEqual([row]);
+  });
+
+  it("passes through an array of rows", () => {
+    expect(coerceRows([row, row])).toEqual([row, row]);
+  });
+
+  it("unwraps common batch envelopes", () => {
+    expect(coerceRows({ rows: [row] })).toEqual([row]);
+    expect(coerceRows({ updates: [row] })).toEqual([row]);
+  });
+
+  it("drops non-row payloads (keep-alives, junk)", () => {
+    expect(coerceRows(null)).toEqual([]);
+    expect(coerceRows({ ping: true })).toEqual([]);
+    expect(coerceRows([{ nope: 1 }])).toEqual([]);
+    expect(coerceRows("heartbeat")).toEqual([]);
   });
 });

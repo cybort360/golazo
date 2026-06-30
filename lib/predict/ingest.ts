@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/db/client";
 import { getTxlineClient } from "@/lib/txline";
-import type { TxlineClient, TxlineFixture } from "@/lib/txline/client";
+import type { TxlineClient, TxlineFixture, TxlineLiveEvent } from "@/lib/txline/client";
 import { latestEventPatch } from "@/lib/predict/ingest-derive";
 
 // TxLINE ingestion (PRD §10.3): pull fixtures + live updates into Postgres,
@@ -43,21 +43,12 @@ export async function syncFixtures(client: TxlineClient = getTxlineClient()): Pr
 }
 
 /**
- * Ingest new live events for one fixture (append-only, idempotent by seq) and
- * recompute the derived Match state from the latest event.
+ * Persist a batch of live events (append-only, idempotent by seq) and recompute
+ * the derived Match state from the FULL stored log. Shared by the poll path
+ * (ingestEvents) and the SSE push path (live-stream manager) so both behave
+ * identically — only how events arrive differs.
  */
-export async function ingestEvents(
-  fixtureId: string,
-  client: TxlineClient = getTxlineClient(),
-): Promise<number> {
-  const last = await prisma.txlineEvent.findFirst({
-    where: { matchId: fixtureId },
-    orderBy: { seq: "desc" },
-    select: { seq: true },
-  });
-  const since = last?.seq ?? 0;
-  const events = await client.liveEvents(fixtureId, since);
-
+export async function storeEvents(fixtureId: string, events: TxlineLiveEvent[]): Promise<number> {
   if (events.length > 0) {
     await prisma.txlineEvent.createMany({
       data: events.map((e) => ({
@@ -85,6 +76,24 @@ export async function ingestEvents(
     await prisma.match.update({ where: { id: fixtureId }, data: patch });
   }
   return events.length;
+}
+
+/**
+ * Ingest new live events for one fixture (append-only, idempotent by seq) and
+ * recompute the derived Match state from the latest event.
+ */
+export async function ingestEvents(
+  fixtureId: string,
+  client: TxlineClient = getTxlineClient(),
+): Promise<number> {
+  const last = await prisma.txlineEvent.findFirst({
+    where: { matchId: fixtureId },
+    orderBy: { seq: "desc" },
+    select: { seq: true },
+  });
+  const since = last?.seq ?? 0;
+  const events = await client.liveEvents(fixtureId, since);
+  return storeEvents(fixtureId, events);
 }
 
 /** Full sync: fixtures + events for every fixture. Returns counts. */
