@@ -1,0 +1,6 @@
+# The Next.js app doesn't need the Anchor Rust workspace to build — the program
+# IDLs are vendored in lib/chain/idl/. Excluding it also avoids uploading the
+# local test-ledger's socket files (which break the upload).
+anchor
+planning
+*.log
