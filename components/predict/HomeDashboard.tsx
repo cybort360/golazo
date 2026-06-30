@@ -3,14 +3,11 @@ import type { Match, League, ProofReceipt } from "@/lib/predict/types";
 import { formatPoints } from "@/lib/predict/labels";
 import TeamAvatar from "@/components/predict/TeamAvatar";
 import MeAvatar from "@/components/predict/MeAvatar";
+import KickoffCountdown from "@/components/predict/KickoffCountdown";
 import { SoccerBall, Lightning, Check } from "@phosphor-icons/react/dist/ssr";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <div className="text-[11px] font-black uppercase tracking-[0.13em] text-ink">{children}</div>;
-}
-
-function kickoffTime(ms: number): string {
-  return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).replace(/\s?[AP]M$/i, "");
 }
 
 function LiveCard({ match }: { match: Match }) {
@@ -48,7 +45,10 @@ function NextRow({ match }: { match: Match }) {
         <TeamAvatar team={match.home} size={28} />
         <span className="text-[13px] font-semibold text-slate-400">vs</span>
         <TeamAvatar team={match.away} size={28} />
-        <span className="ml-1 text-[12px] font-extrabold tabular-nums text-slate-500">Kicks off {kickoffTime(match.kickoffMs)}</span>
+        <KickoffCountdown
+          kickoffMs={match.kickoffMs}
+          className="ml-1 text-[12px] font-extrabold tabular-nums text-slate-500"
+        />
       </div>
       <span className="rounded-full bg-ink px-3 py-1.5 text-[12px] font-extrabold text-neon">Pick ▸</span>
     </Link>
@@ -62,7 +62,7 @@ export default function HomeDashboard({
   leagues: League[];
   receipts: ProofReceipt[];
 }) {
-  const live = matches.find((m) => m.state === "LIVE");
+  const live = matches.find((m) => m.state === "LIVE" || m.state === "HT");
   const next = matches.find((m) => m.state === "NOT_STARTED");
   const receipt = receipts[0] ?? null;
   const league = leagues[0] ?? null;
@@ -93,8 +93,19 @@ export default function HomeDashboard({
       {/* live now */}
       <section>
         <div className="mb-2.5 flex items-center gap-2">
-          <span className="glz-pulse h-2 w-2 rounded-full bg-neon" />
-          <SectionLabel>Live now</SectionLabel>
+          {live ? (
+            <>
+              <span className="glz-pulse h-2 w-2 rounded-full bg-neon" />
+              <SectionLabel>Live now</SectionLabel>
+            </>
+          ) : next ? (
+            <>
+              <span className="h-2 w-2 rounded-full bg-slate-300" />
+              <SectionLabel>Up next</SectionLabel>
+            </>
+          ) : (
+            <SectionLabel>Matches</SectionLabel>
+          )}
           <Link href="/matches" className="ml-auto text-[11px] font-bold text-slate-500">See all</Link>
         </div>
         {live || next ? (
@@ -104,7 +115,7 @@ export default function HomeDashboard({
           </div>
         ) : (
           <Link href="/matches" className="block rounded-2xl border border-[#e2e8f0] bg-white px-4 py-4 text-sm font-medium text-slate-500 shadow-card">
-            No live matches right now. Browse all fixtures ▸
+            No matches scheduled right now. Browse all fixtures ▸
           </Link>
         )}
       </section>

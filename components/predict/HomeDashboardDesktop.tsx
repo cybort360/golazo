@@ -4,6 +4,7 @@ import { formatPoints } from "@/lib/predict/labels";
 import MatchCard from "@/components/predict/MatchCard";
 import { SoccerBall, Check } from "@phosphor-icons/react/dist/ssr";
 import CopyButton from "@/components/predict/CopyButton";
+import KickoffCountdown from "@/components/predict/KickoffCountdown";
 
 function RailRow({ member }: { member: LeagueMember }) {
   return (
@@ -35,7 +36,7 @@ export default function HomeDashboardDesktop({
   leagues: League[];
   receipts: ProofReceipt[];
 }) {
-  const live = matches.find((m) => m.state === "LIVE");
+  const live = matches.find((m) => m.state === "LIVE" || m.state === "HT");
   const upcoming = matches.find((m) => m.state === "NOT_STARTED");
   const cards = [live, upcoming].filter((m): m is Match => Boolean(m));
   const league = leagues[0] ?? null;
@@ -62,12 +63,36 @@ export default function HomeDashboardDesktop({
         {/* left */}
         <div>
           <div className="mb-3 flex items-center gap-2">
-            <span className="glz-pulse h-2 w-2 rounded-full bg-neon" />
-            <span className="text-[11px] font-black uppercase tracking-[0.13em] text-ink">Live now</span>
+            {live ? (
+              <>
+                <span className="glz-pulse h-2 w-2 rounded-full bg-neon" />
+                <span className="text-[11px] font-black uppercase tracking-[0.13em] text-ink">Live now</span>
+              </>
+            ) : upcoming ? (
+              <>
+                <span className="h-2 w-2 rounded-full bg-slate-300" />
+                <span className="text-[11px] font-black uppercase tracking-[0.13em] text-ink">Up next</span>
+                <KickoffCountdown
+                  kickoffMs={upcoming.kickoffMs}
+                  className="ml-auto text-[11px] font-bold tabular-nums text-slate-500"
+                />
+              </>
+            ) : (
+              <span className="text-[11px] font-black uppercase tracking-[0.13em] text-ink">Matches</span>
+            )}
           </div>
-          <div className="grid grid-cols-2 gap-3.5">
-            {cards.map((m) => <MatchCard key={m.id} match={m} />)}
-          </div>
+          {cards.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3.5">
+              {cards.map((m) => <MatchCard key={m.id} match={m} />)}
+            </div>
+          ) : (
+            <Link
+              href="/matches"
+              className="block rounded-2xl border border-[#e2e8f0] bg-white px-5 py-10 text-center text-sm font-medium text-slate-500 shadow-card"
+            >
+              No matches scheduled right now. Browse all fixtures ▸
+            </Link>
+          )}
 
           <div className="mb-3 mt-6 text-[11px] font-black uppercase tracking-[0.13em] text-ink">Recent proof</div>
           <div className="flex flex-col gap-2.5">
