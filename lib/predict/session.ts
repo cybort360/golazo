@@ -17,11 +17,28 @@ export async function currentUserId(): Promise<string | null> {
 
 /** Resolve the current user, creating a ghost (and setting the cookie) if needed. */
 export async function ensureUser(): Promise<{ id: string; isGhost: boolean }> {
-  const existingId = cookies().get(COOKIE)?.value;
-  if (existingId) {
-    const u = await prisma.user.findUnique({ where: { id: existingId }, select: { id: true, isGhost: true } });
+  const cookieId = cookies().get(COOKIE)?.value;
+
+  // Normal path: middleware already set glz_uid on the document load, so every
+  // tab shares one id. Upsert keyed on it is idempotent — concurrent requests
+  // from the same browser converge on a single ghost instead of racing to make
+  // one each. Existing accounts (cookie = their user.id) are found unchanged.
+  if (cookieId) {
+    // Atomic, idempotent create keyed on the stable cookie id. ON CONFLICT DO
+    // NOTHING means concurrent tabs from one browser converge on a single ghost
+    // — no find-then-create race, no spurious unique-constraint errors. Existing
+    // accounts (cookie = their user.id) already have a row, so this is a no-op.
+    await prisma.$executeRaw`
+      INSERT INTO "User" ("id", "handle", "isGhost", "anonId")
+      VALUES (${cookieId}, ${"ghost_" + cookieId.slice(0, 8)}, true, ${cookieId})
+      ON CONFLICT ("id") DO NOTHING
+    `;
+    const u = await prisma.user.findUnique({ where: { id: cookieId }, select: { id: true, isGhost: true } });
     if (u) return u;
   }
+
+  // Fallback: no cookie (e.g. a direct API hit with no prior document load).
+  // Create and set it here, as before.
   const anonId = randomUUID();
   const user = await prisma.user.create({
     data: { handle: `ghost_${anonId.slice(0, 8)}`, isGhost: true, anonId },
