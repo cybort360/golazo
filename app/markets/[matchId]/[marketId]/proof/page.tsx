@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import MerkleVerifyPanel from "@/components/markets/MerkleVerifyPanel";
-import { marketPda, vaultPda } from "@/lib/chain/pdas";
+import { marketPda, vaultPda, matchRootPda } from "@/lib/chain/pdas";
 import { CLUSTER } from "@/lib/chain/constants";
 import { Check } from "@phosphor-icons/react/dist/ssr";
 
@@ -137,7 +137,13 @@ export default function MarketProofPage({
       )}
 
       <div className="mt-4">
-        <MerkleVerifyPanel matchId={matchId} marketId={marketId} stats={DEMO_RESULT} />
+        <MerkleVerifyPanel
+          matchId={matchId}
+          marketId={marketId}
+          stats={DEMO_RESULT}
+          onChainRoot={data?.settlement?.merkleRoot ?? null}
+          rootExplorerUrl={explorer("address", matchRootPda(matchId).toBase58())}
+        />
       </div>
 
       {data && data.receipts.length > 0 && (
