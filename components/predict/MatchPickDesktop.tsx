@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { Match, MarketId } from "@/lib/predict/types";
 import { buildMarkets } from "@/lib/predict/markets";
 import MarketPicker from "@/components/predict/MarketPicker";
+import MarketConsensus from "@/components/predict/MarketConsensus";
 import { MatchHeaderDesktop } from "@/components/predict/MatchHeader";
 import { submitPicks } from "@/lib/predict/submitPicks";
 import { Lock, CheckCircle } from "@phosphor-icons/react/dist/ssr";
@@ -62,6 +63,7 @@ export default function MatchPickDesktop({ match, toggle }: { match: Match; togg
       {/* markets + slip */}
       <div className="mx-auto grid max-w-6xl grid-cols-[1fr_340px] items-start gap-7 px-8 py-7">
         <div className="flex flex-col gap-5">
+          <MarketConsensus match={match} />
           <MarketPicker market={winner} selected={picks.winner ?? null} onSelect={(o) => select("winner", o)} />
           <div className="grid grid-cols-2 gap-5">
             <MarketPicker market={totals} selected={picks.totals ?? null} onSelect={(o) => select("totals", o)} />

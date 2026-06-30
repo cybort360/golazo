@@ -87,6 +87,15 @@ export interface TxlineFinalResult {
   settledAtMs: number;
 }
 
+// Consensus odds as implied probabilities (0..1), demargined. Sourced from the
+// TxLINE odds feed; powers the "market consensus" view (PRD analytics angle).
+export interface TxlineOdds {
+  fixtureId: string;
+  updatedMs: number;
+  winner?: { home: number; draw: number; away: number };
+  totals?: { line: number; over: number; under: number };
+}
+
 /**
  * The TxLINE integration surface. Keep this minimal and provider-agnostic so the
  * real client is a drop-in. Reads only — settlement/escrow live on-chain + in our
@@ -102,6 +111,8 @@ export interface TxlineClient {
   liveEvents(fixtureId: string, sinceSeq?: number): Promise<TxlineLiveEvent[]>;
   /** Verified final result + proof metadata; null until the fixture is final. */
   finalResult(fixtureId: string): Promise<TxlineFinalResult | null>;
+  /** Consensus odds as implied probabilities; null when none are posted. */
+  odds?(fixtureId: string): Promise<TxlineOdds | null>;
   /**
    * Subscribe to the low-latency live feed (TxLINE SSE). Primes from the current
    * snapshot, then pushes new events as they arrive (sub-second vs. the poll).

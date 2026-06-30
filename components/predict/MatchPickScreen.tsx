@@ -5,6 +5,7 @@ import type { Match, MarketId } from "@/lib/predict/types";
 import { buildMarkets } from "@/lib/predict/markets";
 import { submitPicks } from "@/lib/predict/submitPicks";
 import MarketPicker from "@/components/predict/MarketPicker";
+import MarketConsensus from "@/components/predict/MarketConsensus";
 import { MatchHeaderMobile } from "@/components/predict/MatchHeader";
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
 
@@ -39,6 +40,10 @@ export default function MatchPickScreen({ match, toggle }: { match: Match; toggl
       <MatchHeaderMobile match={match} />
 
       {toggle && <div className="px-4 pt-4">{toggle}</div>}
+
+      <div className="px-4 pt-4">
+        <MarketConsensus match={match} />
+      </div>
 
       {/* markets */}
       <div className="flex flex-col gap-3.5 px-4 pb-4 pt-4">

@@ -4,7 +4,9 @@ import type {
   TxlineLiveEvent,
   TxlineStateSnapshot,
   TxlineFinalResult,
+  TxlineOdds,
 } from "@/lib/txline/client";
+import { parseOdds, type RawOddsRow } from "@/lib/txline/real/odds";
 import {
   mapFixture,
   mapStateSnapshot,
@@ -105,6 +107,16 @@ export class RealTxlineClient implements TxlineClient {
 
   async finalResult(fixtureId: string): Promise<TxlineFinalResult | null> {
     return mapFinalResult(await this.snapshot(fixtureId));
+  }
+
+  // Consensus odds → implied probabilities. Orientation (part1/part2 → home/away)
+  // comes from the fixtures snapshot's Participant1IsHome.
+  async odds(fixtureId: string): Promise<TxlineOdds | null> {
+    const rows = (await this.get<RawOddsRow[]>(`/api/odds/snapshot/${fixtureId}`)) ?? [];
+    if (rows.length === 0) return null;
+    const raw = (await this.get<RawFixture[]>("/api/fixtures/snapshot")) ?? [];
+    const fx = raw.find((f) => String(f.FixtureId) === String(fixtureId));
+    return parseOdds(String(fixtureId), rows, fx?.Participant1IsHome ?? true);
   }
 
   // Live, push-based feed via TxLINE SSE (/api/scores/updates/{id}). Primes the

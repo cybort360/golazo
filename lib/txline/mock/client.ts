@@ -6,6 +6,7 @@ import type {
   TxlineMatchState,
   TxlineStateSnapshot,
   TxlineGoal,
+  TxlineOdds,
 } from "@/lib/txline/client";
 import {
   COMPETITION,
@@ -152,6 +153,26 @@ export class MockTxlineClient implements TxlineClient {
   async fixture(id: string): Promise<TxlineFixture | null> {
     const f = findFixture(id);
     return f ? toFixture(f, Date.now()) : null;
+  }
+
+  // Plausible consensus odds for the demo, deterministically seeded off the
+  // fixture id so each match shows a stable, distinct market read.
+  async odds(fixtureId: string): Promise<TxlineOdds | null> {
+    const f = findFixture(fixtureId);
+    if (!f) return null;
+    let h = 0;
+    for (let i = 0; i < fixtureId.length; i++) h = (h * 31 + fixtureId.charCodeAt(i)) >>> 0;
+    const homeEdge = 0.30 + ((h % 30) / 100); // 0.30..0.59
+    const draw = 0.24 + (((h >> 3) % 8) / 100); // 0.24..0.31
+    const home = (1 - draw) * homeEdge;
+    const away = 1 - draw - home;
+    const over = 0.42 + (((h >> 5) % 26) / 100); // 0.42..0.67
+    return {
+      fixtureId,
+      updatedMs: Date.now(),
+      winner: { home, draw, away },
+      totals: { line: 2.5, over, under: 1 - over },
+    };
   }
 
   async state(fixtureId: string): Promise<TxlineStateSnapshot | null> {
