@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Icon, type IconName } from "@/components/Icon";
+import {
+  SoccerBall,
+  Sparkle,
+  ChartLineUp,
+  SealCheck,
+  Trophy,
+  X,
+  ArrowLeft,
+  ArrowRight,
+} from "@phosphor-icons/react/dist/ssr";
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 
 const STORAGE_KEY = "golazo_intro_seen";
 const OPEN_EVENT = "golazo:open-intro";
@@ -15,34 +25,40 @@ export function openIntro(): void {
 }
 
 interface Slide {
-  icon: IconName;
+  icon: PhosphorIcon;
+  kicker: string;
   title: string;
   body: string;
 }
 
 const SLIDES: Slide[] = [
   {
-    icon: "football",
+    icon: SoccerBall,
+    kicker: "The game",
     title: "Welcome to Golazo",
     body: "Make picks before kick-off. Prove you know ball. Every result is verified — no trust required.",
   },
   {
-    icon: "sparkles",
+    icon: Sparkle,
+    kicker: "Signature market",
     title: "The Chaos Pick",
     body: "Alongside Winner, Total goals, and BTTS — every match has a signature Chaos Pick. High risk. Maximum points.",
   },
   {
-    icon: "chart",
+    icon: ChartLineUp,
+    kicker: "Live",
     title: "Follow it live",
     body: "Watch live match states update in real time. See how your picks are tracking minute by minute.",
   },
   {
-    icon: "check",
+    icon: SealCheck,
+    kicker: "Verified",
     title: "Verified by TxLINE",
     body: "Every settled result is verified by TxLINE and anchored on-chain. Share your proof receipt — it's permanent.",
   },
   {
-    icon: "trophy",
+    icon: Trophy,
+    kicker: "Compete",
     title: "Climb private leagues",
     body: "Create or join a private league with friends. The leaderboard resets each round — anyone can rise to the top.",
   },
@@ -121,6 +137,7 @@ export default function IntroModal() {
   if (!open || isAdmin) return null;
 
   const slide = SLIDES[index];
+  const SlideIcon = slide.icon;
 
   return (
     <div
@@ -134,81 +151,95 @@ export default function IntroModal() {
         type="button"
         aria-label="Close introduction"
         onClick={dismiss}
-        className="absolute inset-0 cursor-default bg-slate-900/40 backdrop-blur-sm"
+        className="absolute inset-0 cursor-default bg-ink/70 backdrop-blur-sm"
       />
 
-      {/* card */}
-      <div className="reveal relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-card-md sm:p-8">
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label="Skip"
-          className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-        >
-          <Icon name="close" size={16} />
-        </button>
+      {/* card — ink ticket with a neon glow, matching the receipt aesthetic */}
+      <div className="reveal relative w-full max-w-md overflow-hidden rounded-[24px] border border-[#2a2a2a] bg-ink px-6 pb-6 pt-6 shadow-card-md sm:px-8 sm:pb-8 sm:pt-7">
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ background: "radial-gradient(120% 55% at 50% -10%,rgba(212,255,63,0.18),transparent 60%)" }}
+        />
 
-        {/* slide content (re-keyed so it gently re-animates each step) */}
-        <div key={index} className="reveal flex flex-col items-center text-center">
-          <span className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-green-50 text-green-600">
-            <Icon name={slide.icon} size={26} strokeWidth={1.8} />
-          </span>
-          <h2
-            id="intro-title"
-            className="text-lg font-semibold tracking-tight text-slate-900"
-          >
-            {slide.title}
-          </h2>
-          <p className="mt-2 min-h-[3.5rem] max-w-xs text-sm leading-relaxed text-slate-500">
-            {slide.body}
-          </p>
-        </div>
-
-        {/* progress dots */}
-        <div className="mt-5 flex items-center justify-center gap-1.5">
-          {SLIDES.map((s, i) => (
-            <button
-              key={s.title}
-              type="button"
-              aria-label={`Go to slide ${i + 1}`}
-              onClick={() => setIndex(i)}
-              className={cx(
-                "h-1.5 rounded-full transition-all",
-                i === index ? "w-5 bg-green-600" : "w-1.5 bg-slate-200 hover:bg-slate-300",
-              )}
-            />
-          ))}
-        </div>
-
-        {/* footer */}
-        <div className="mt-6 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={dismiss}
-            className="text-sm font-medium text-slate-400 transition-colors hover:text-slate-600"
-          >
-            Skip
-          </button>
-          <div className="flex items-center gap-2">
-            {index > 0 && (
+        <div className="relative">
+          {/* header: wordmark + step counter */}
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-black tracking-[-0.03em] text-white">GOLAZO</div>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-bold uppercase tracking-[0.12em] tabular-nums text-slate-500">
+                {index + 1} / {SLIDES.length}
+              </span>
               <button
                 type="button"
-                onClick={prev}
-                className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50"
+                onClick={dismiss}
+                aria-label="Skip"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-[#171717] hover:text-slate-300"
               >
-                <Icon name="left" size={14} />
-                Back
+                <X weight="bold" size={15} />
               </button>
-            )}
+            </div>
+          </div>
+
+          {/* slide content (re-keyed so it gently re-animates each step) */}
+          <div key={index} className="reveal mt-7">
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[rgba(212,255,63,0.25)] bg-[rgba(212,255,63,0.1)] text-neon">
+              <SlideIcon weight="fill" size={26} />
+            </span>
+            <div className="mt-5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">{slide.kicker}</div>
+            <h2 id="intro-title" className="mt-1.5 text-2xl font-black tracking-[-0.03em] text-white">
+              {slide.title}
+            </h2>
+            <p className="mt-2.5 min-h-[3.5rem] text-[14px] leading-relaxed text-slate-400">
+              {slide.body}
+            </p>
+          </div>
+
+          {/* progress dots */}
+          <div className="mt-6 flex items-center gap-1.5 border-t border-dashed border-[#2a2a2a] pt-5">
+            {SLIDES.map((s, i) => (
+              <button
+                key={s.title}
+                type="button"
+                aria-label={`Go to slide ${i + 1}`}
+                onClick={() => setIndex(i)}
+                className={cx(
+                  "h-1.5 rounded-full transition-all",
+                  i === index ? "w-5 bg-neon" : "w-1.5 bg-[#2a2a2a] hover:bg-[#3a3a3a]",
+                )}
+              />
+            ))}
+          </div>
+
+          {/* footer */}
+          <div className="mt-5 flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={next}
-              autoFocus
-              className="inline-flex items-center gap-1.5 rounded-full bg-green-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700"
+              onClick={dismiss}
+              className="text-sm font-bold text-slate-500 transition-colors hover:text-slate-300"
             >
-              {last ? "Start exploring" : "Next"}
-              {!last && <Icon name="right" size={14} strokeWidth={2.5} />}
+              Skip
             </button>
+            <div className="flex items-center gap-2">
+              {index > 0 && (
+                <button
+                  type="button"
+                  onClick={prev}
+                  className="inline-flex items-center gap-1 rounded-xl border border-[#2a2a2a] bg-[#171717] px-4 py-2.5 text-sm font-bold text-slate-200 transition-colors hover:bg-[#1f1f1f]"
+                >
+                  <ArrowLeft weight="bold" size={14} />
+                  Back
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={next}
+                autoFocus
+                className="inline-flex items-center gap-1.5 rounded-xl bg-neon px-5 py-2.5 text-sm font-black text-ink transition-transform hover:-translate-y-0.5"
+              >
+                {last ? "Start exploring" : "Next"}
+                {!last && <ArrowRight weight="bold" size={14} />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
