@@ -9,6 +9,7 @@ import type {
   ProfileStats,
   SponsoredPool,
   WalletState,
+  ActivePickGroup,
 } from "@/lib/predict/types";
 
 // DB-backed data source for the Picks screens. Everything is REAL: matches come
@@ -104,5 +105,10 @@ export const dbBackedDataSource: PredictDataSource = {
   async getReceipt(pickId) {
     const d = await getJson(`/api/predict/receipts/${encodeURIComponent(pickId)}`);
     return d?.ok && d.receipt ? (d.receipt as ProofReceipt) : null;
+  },
+
+  async getActivePicks(): Promise<ActivePickGroup[]> {
+    const d = await getJson("/api/predict/picks");
+    return d?.ok && Array.isArray(d.groups) ? (d.groups as ActivePickGroup[]) : [];
   },
 };

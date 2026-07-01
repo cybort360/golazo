@@ -43,6 +43,20 @@ export interface Market {
 
 export type PickResult = "PENDING" | "WON" | "LOST" | "VOID";
 
+// An active (not-yet-settled) pick and its match, for the "My Picks" surface.
+export interface ActivePick {
+  pickId: string;
+  marketId: MarketId;
+  marketTitle: string; // "Match winner"
+  optionLabel: string; // stored predictionLabel, e.g. "Over 2.5"
+  createdAtMs: number;
+}
+
+export interface ActivePickGroup {
+  match: Match;         // reuse the UI Match (built via dbMatchToUi)
+  picks: ActivePick[];  // fixed market order: winner, totals, btts, chaos
+}
+
 export interface ProofReceipt {
   pickId: string;
   predictionLabel: string; // "Over 2.5 goals"
@@ -189,4 +203,5 @@ export interface PredictDataSource {
   getWalletState(): Promise<WalletState>;
   getRecentReceipts(limit?: number): Promise<ProofReceipt[]>;
   getReceipt(pickId: string): Promise<ProofReceipt | null>;
+  getActivePicks(): Promise<ActivePickGroup[]>;
 }

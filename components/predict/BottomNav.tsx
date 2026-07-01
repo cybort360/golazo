@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, SoccerBall, Trophy, Gift, Receipt } from "@phosphor-icons/react/dist/ssr";
+import { House, SoccerBall, ListChecks, Trophy, Gift, Receipt } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
 
 // Mobile bottom tab bar.
 const ITEMS: { href: string; Icon: Icon; label: string }[] = [
   { href: "/", Icon: House, label: "Home" },
   { href: "/matches", Icon: SoccerBall, label: "Matches" },
+  { href: "/picks", Icon: ListChecks, label: "Picks" },
   { href: "/leagues", Icon: Trophy, label: "Leagues" },
   { href: "/pools", Icon: Gift, label: "Pools" },
   { href: "/receipts", Icon: Receipt, label: "Receipts" },

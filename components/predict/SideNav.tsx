@@ -7,6 +7,7 @@ import ConvertDialog from "@/components/predict/ConvertDialog";
 import {
   House,
   SoccerBall,
+  ListChecks,
   Trophy,
   Ranking,
   Gift,
@@ -20,6 +21,7 @@ import type { Icon } from "@phosphor-icons/react";
 const ITEMS: { href: string; label: string; Icon: Icon }[] = [
   { href: "/", label: "Home", Icon: House },
   { href: "/matches", label: "Matches", Icon: SoccerBall },
+  { href: "/picks", label: "My picks", Icon: ListChecks },
   { href: "/leagues", label: "My leagues", Icon: Trophy },
   { href: "/leaderboard", label: "Leaderboard", Icon: Ranking },
   { href: "/pools", label: "Prize pools", Icon: Gift },

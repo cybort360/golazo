@@ -222,4 +222,16 @@ export const mockDataSource: PredictDataSource = {
   },
   async getRecentReceipts(limit = 10) { return RECEIPTS.slice(0, limit); },
   async getReceipt(pickId) { return RECEIPTS.find((r) => r.pickId === pickId) ?? null; },
+  async getActivePicks() {
+    // Sample active picks on the first upcoming/live matches.
+    return MATCHES.filter((m) => m.state !== "FT" && m.state !== "VOID")
+      .slice(0, 2)
+      .map((match) => ({
+        match,
+        picks: [
+          { pickId: `${match.id}-winner`, marketId: "winner" as const, marketTitle: "Match winner", optionLabel: match.home.name, createdAtMs: Date.now() },
+          { pickId: `${match.id}-totals`, marketId: "totals" as const, marketTitle: "Total goals · 2.5", optionLabel: "Over", createdAtMs: Date.now() },
+        ],
+      }));
+  },
 };
