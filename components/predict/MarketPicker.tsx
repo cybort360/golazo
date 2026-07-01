@@ -4,11 +4,12 @@ import type { Market } from "@/lib/predict/types";
 import { Lightning, Check } from "@phosphor-icons/react/dist/ssr";
 
 export default function MarketPicker({
-  market, selected, onSelect,
+  market, selected, onSelect, disabled = false,
 }: {
   market: Market;
   selected: string | null;
   onSelect: (optionId: string) => void;
+  disabled?: boolean;
 }) {
   if (market.hero) {
     return (
@@ -42,11 +43,13 @@ export default function MarketPicker({
                   key={opt.id}
                   type="button"
                   aria-pressed={active}
+                  disabled={disabled}
                   onClick={() => onSelect(opt.id)}
                   className={
-                    active
+                    (disabled ? "cursor-not-allowed opacity-50 " : "") +
+                    (active
                       ? "glz-pulse flex-1 rounded-xl bg-neon py-3.5 text-center text-[15px] font-black text-ink"
-                      : "flex-1 rounded-xl border border-[#2a2a2a] bg-[#171717] py-3.5 text-center text-[15px] font-extrabold text-slate-200"
+                      : "flex-1 rounded-xl border border-[#2a2a2a] bg-[#171717] py-3.5 text-center text-[15px] font-extrabold text-slate-200")
                   }
                 >
                   {opt.label}
@@ -73,9 +76,11 @@ export default function MarketPicker({
               key={opt.id}
               type="button"
               aria-pressed={active}
+              disabled={disabled}
               onClick={() => onSelect(opt.id)}
               className={
                 (hasOdds ? "flex-1 rounded-xl px-1.5 py-2.5 text-center " : "flex-1 rounded-xl py-3 text-center ") +
+                (disabled ? "cursor-not-allowed opacity-50 " : "") +
                 (active
                   ? "bg-ink text-neon shadow-[0_0_0_3px_rgba(212,255,63,0.35)]"
                   : "border border-[#e2e8f0] bg-white text-ink transition-colors hover:border-slate-300")

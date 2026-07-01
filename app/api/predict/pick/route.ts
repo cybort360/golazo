@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
 import { ensureUser, currentUserId } from "@/lib/predict/session";
 import { isMarketId, isPickOpen } from "@/lib/predict/pick-rules";
+import type { MatchState } from "@/lib/predict/types";
 
 // Make / change / read a free pick. Lock is enforced server-side (reject after
 // lock). Ghost mode: an anonymous user is created on first pick. Node runtime.
@@ -17,11 +18,11 @@ export async function POST(req: Request) {
 
     const match = await prisma.match.findUnique({
       where: { id: matchId },
-      select: { lockAt: true },
+      select: { lockAt: true, status: true },
     });
     if (!match) return NextResponse.json({ ok: false, error: "unknown match" }, { status: 404 });
 
-    if (!isPickOpen(match.lockAt?.getTime() ?? null, Date.now())) {
+    if (!isPickOpen(match.lockAt?.getTime() ?? null, Date.now(), match.status as MatchState)) {
       return NextResponse.json({ ok: false, error: "picks are locked" }, { status: 409 });
     }
 
