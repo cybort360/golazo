@@ -2,27 +2,46 @@ import "server-only";
 import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/db/client";
+import { verifySession } from "@/lib/auth/session";
 
-// Ghost-mode identity (PRD §6.3): play with no signup. A ghost user is keyed by a
-// cookie; it can later convert to a real account, keeping its pick history (same
-// row, isGhost flipped). The first user action is a PICK, never a wallet connect.
+// Golazo identity resolution. Two cookies:
+//   - glz_session — a SIGNED token for a real account (email + password). Cannot
+//     be forged, so it's authoritative when present and valid.
+//   - glz_uid     — a raw ghost id (PRD §6.3 guest play, low stakes). A ghost can
+//     later create an account, carrying its pick history over.
+// Accounts take precedence over any lingering ghost cookie.
 
 const COOKIE = "glz_uid";
+const SESSION_COOKIE = "glz_session";
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
-/** The current user id from the cookie, if any (no creation). */
+/** The account user id from a valid signed session, if any. No ghost fallback. */
+export async function accountUserId(): Promise<string | null> {
+  return verifySession(cookies().get(SESSION_COOKIE)?.value);
+}
+
+/** The current user id: account session first, then ghost cookie. No creation. */
 export async function currentUserId(): Promise<string | null> {
+  const account = verifySession(cookies().get(SESSION_COOKIE)?.value);
+  if (account) return account;
   return cookies().get(COOKIE)?.value ?? null;
 }
 
 /** Resolve the current user, creating a ghost (and setting the cookie) if needed. */
 export async function ensureUser(): Promise<{ id: string; isGhost: boolean }> {
+  // A valid account session wins — never mint a ghost for a signed-in account.
+  const account = verifySession(cookies().get(SESSION_COOKIE)?.value);
+  if (account) {
+    const u = await prisma.user.findUnique({ where: { id: account }, select: { id: true, isGhost: true } });
+    if (u) return u;
+    // Session references a deleted account — fall through to ghost minting.
+  }
+
   const cookieId = cookies().get(COOKIE)?.value;
 
-  // Normal path: middleware already set glz_uid on the document load, so every
-  // tab shares one id. Upsert keyed on it is idempotent — concurrent requests
-  // from the same browser converge on a single ghost instead of racing to make
-  // one each. Existing accounts (cookie = their user.id) are found unchanged.
+  // Normal path: middleware/guest-start already set glz_uid, so every tab shares
+  // one id. Upsert keyed on it is idempotent — concurrent requests from the same
+  // browser converge on a single ghost instead of racing to make one each.
   if (cookieId) {
     // Atomic, idempotent create keyed on the stable cookie id. ON CONFLICT DO
     // NOTHING means concurrent tabs from one browser converge on a single ghost

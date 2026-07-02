@@ -8,38 +8,38 @@ kick-off; every result is sourced and verified through **[TxLINE](https://txline
 "trust the house." Built for the 2026 FIFA World Cup.
 
 - **Live:** https://golazo.fans
-- **Network:** Solana **devnet** — no mainnet, no real money
+- **Network:** Solana **devnet** (no mainnet, no real money)
 
 ---
 
 ## Two ways to play
 
-**🎮 Free Picks** — a free-to-play social prediction game. Pick the Winner,
+**🎮 Free Picks** is a free-to-play social prediction game. Pick the Winner,
 Over/Under, Both Teams To Score, and the signature **Chaos Pick** (_"goal after
-the 80th minute?"_ — 2× points). Picks settle automatically against verified
+the 80th minute?"_, worth 2× points). Picks settle automatically against verified
 TxLINE finals, and every settled pick becomes a **shareable proof receipt**.
 Create private leagues, climb the global leaderboard, build a public profile.
 
-**🔗 Market Mode** _(devnet)_ — YES/NO markets where you stake demo GOLAZO into an
+**🔗 Market Mode** _(devnet)_ offers YES/NO markets where you stake demo GOLAZO into an
 on-chain escrow. Settlement happens via a **Cross-Program Invocation into a TxLINE
-validation program** — funds release only after a Merkle proof of the result is
+validation program**, so funds release only after a Merkle proof of the result is
 verified on-chain. Winners claim trustlessly.
 
 ---
 
 ## Highlights
 
-- **Verified, not trusted** — results come from TxLINE; settled picks carry a proof
+- **Verified, not trusted:** results come from TxLINE; settled picks carry a proof
   you can inspect.
-- **Independent on-chain verification** — the proof view recomputes the Merkle
+- **Independent on-chain verification:** the proof view recomputes the Merkle
   leaf → root **in your browser** and cross-checks it against the root committed on
   Solana. Don't trust the server; verify the bytes.
-- **Real-time** — live match state is primed from the snapshot and kept current via
-  TxLINE's **SSE stream** (sub-second), which also yields per-goal minutes — the
+- **Real-time:** live match state is primed from the snapshot and kept current via
+  TxLINE's **SSE stream** (sub-second), which also yields per-goal minutes, the
   data behind the Chaos market.
-- **Market consensus** — TxLINE's demargined odds shown as implied probabilities on
+- **Market consensus:** TxLINE's demargined odds shown as implied probabilities on
   each match.
-- **One data seam, two backends** — a single provider-agnostic TxLINE interface
+- **One data seam, two backends:** a single provider-agnostic TxLINE interface
   with a scripted `mock` client and a `live` client; flip with `TXLINE_MODE`.
 
 ---
@@ -61,7 +61,7 @@ IDs, architecture notes, and our TxLINE API feedback.
 - **Next.js 14** (App Router) + **React 18**, **TypeScript** (strict)
 - **Tailwind CSS**, **Phosphor** icons
 - **Postgres** via **Prisma** (append-only TxLINE event log → derived match state)
-- **Anchor / Solana web3.js** — `golazo_predict` (markets/escrow) + `txline_mock`
+- **Anchor / Solana web3.js:** `golazo_predict` (markets/escrow) + `txline_mock`
   (Merkle validation primitive) on devnet
 - **Vitest** for the deterministic resolver/settlement/mapping logic
 - Deployed on **Vercel** with **Neon** Postgres; live data kept fresh by a cron sync

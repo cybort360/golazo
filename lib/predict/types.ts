@@ -110,8 +110,8 @@ export interface League {
 // table plus the current player's own standing (which may sit outside the top).
 export interface GlobalLeaderboard {
   totalPlayers: number;
-  you: LeagueMember;     // your standing, may be outside `top`
-  top: LeagueMember[];   // leading players, sorted by rank asc
+  you: LeagueMember | null; // your standing (null for guests — not ranked)
+  top: LeagueMember[];      // leading players, sorted by rank asc
 }
 
 // Sponsored / creator-run free-to-play pool. Prizes are strictly non-cash

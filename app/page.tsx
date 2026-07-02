@@ -5,6 +5,7 @@ import { usePoll } from "@/components/predict/usePoll";
 import { ScreenSkeleton } from "@/components/predict/Skeleton";
 import HomeDashboard from "@/components/predict/HomeDashboard";
 import HomeDashboardDesktop from "@/components/predict/HomeDashboardDesktop";
+import GuestNudge from "@/components/predict/GuestNudge";
 
 export default function Home() {
   const data = usePoll(async () => {
@@ -20,7 +21,10 @@ export default function Home() {
 
   return (
     <>
-      {/* mobile (<lg) */}
+      {/* mobile (<lg) — persistent guest nudge above the dashboard */}
+      <div className="px-4 pt-4 lg:hidden">
+        <GuestNudge />
+      </div>
       <HomeDashboard matches={data.matches} leagues={data.leagues} receipts={data.receipts} />
       {/* desktop (lg+) */}
       <HomeDashboardDesktop matches={data.matches} leagues={data.leagues} receipts={data.receipts} />

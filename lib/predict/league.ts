@@ -17,8 +17,17 @@ export interface LeagueView {
   members: RankedMember[];
 }
 
+/** Thrown when a guest attempts an account-only action (leagues). */
+export class GuestForbiddenError extends Error {
+  constructor(message = "Create an account to use leagues.") {
+    super(message);
+    this.name = "GuestForbiddenError";
+  }
+}
+
 export async function createLeague(name: string): Promise<{ code: string }> {
   const user = await ensureUser();
+  if (user.isGhost) throw new GuestForbiddenError("Create an account to make a league.");
   // retry a few times in the unlikely event of a code collision
   for (let i = 0; i < 5; i++) {
     const code = generateLeagueCode();
@@ -35,6 +44,7 @@ export async function createLeague(name: string): Promise<{ code: string }> {
 
 export async function joinLeague(code: string): Promise<{ code: string }> {
   const user = await ensureUser();
+  if (user.isGhost) throw new GuestForbiddenError("Create an account to join a league.");
   const league = await prisma.privateLeague.findUnique({ where: { code }, select: { id: true, code: true } });
   if (!league) throw new Error("league not found");
   await prisma.leagueMember.upsert({
@@ -145,7 +155,8 @@ export async function pickLeagueMovement(pickId: string): Promise<LeagueMovement
 
 /** A specific user's rank on the global (all-users) board, or null if unknown. */
 export async function userGlobalRank(userId: string): Promise<number | null> {
-  const ids = (await prisma.user.findMany({ select: { id: true } })).map((u) => u.id);
+  // Only real accounts are ranked globally — guests are excluded (see guestGate).
+  const ids = (await prisma.user.findMany({ where: { isGhost: false }, select: { id: true } })).map((u) => u.id);
   if (ids.length === 0) return null;
   const ranked = rankStandings(await memberStats(ids, null));
   return ranked.find((m) => m.userId === userId)?.rank ?? null;
@@ -187,16 +198,23 @@ export async function leagueUi(code: string): Promise<League | null> {
   return v ? viewToUi(v) : null;
 }
 
-/** Public, all-users global leaderboard ranked by total points. */
+/**
+ * Public global leaderboard ranked by total points. Only real accounts are
+ * ranked — guests can view the board but don't appear on it (guestGate). A guest
+ * viewer therefore has no row: `you` is null so the UI can prompt them to sign up.
+ */
 export async function globalLeaderboardUi(topN = 20): Promise<GlobalLeaderboard | null> {
   const you = await currentUserId();
-  const ids = (await prisma.user.findMany({ select: { id: true } })).map((u) => u.id);
+  const viewer = you
+    ? await prisma.user.findUnique({ where: { id: you }, select: { isGhost: true } })
+    : null;
+  const viewerRanked = viewer ? !viewer.isGhost : false;
+
+  const ids = (await prisma.user.findMany({ where: { isGhost: false }, select: { id: true } })).map((u) => u.id);
   if (ids.length === 0) return null;
-  const ranked = rankStandings(await memberStats(ids, you));
+  const ranked = rankStandings(await memberStats(ids, viewerRanked ? you : null));
   const top = ranked.slice(0, topN).map(rankedToMember);
-  const youRow = ranked.find((m) => m.isYou);
-  const you2: LeagueMember = youRow
-    ? rankedToMember(youRow)
-    : { rank: ranked.length + 1, userId: you ?? "anon", name: "You", initials: "YOU", color: "#1e293b", points: 0, accuracy: 0, streak: 0, isYou: true };
+  const youRow = viewerRanked ? ranked.find((m) => m.isYou) : undefined;
+  const you2: LeagueMember | null = youRow ? rankedToMember(youRow) : null;
   return { totalPlayers: ranked.length, you: you2, top };
 }

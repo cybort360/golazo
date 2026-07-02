@@ -136,7 +136,7 @@ export default function MatchPickDesktop({ match, toggle }: { match: Match; togg
                 </div>
                 <p className="mt-2.5 text-center text-[11px] font-semibold text-slate-500">
                   {finalized
-                    ? "Final — can't be changed. Settles automatically · see Receipts."
+                    ? "Final and can't be changed. Settles automatically · see Receipts."
                     : "This match has kicked off · picks are closed"}
                 </p>
               </>
@@ -154,7 +154,7 @@ export default function MatchPickDesktop({ match, toggle }: { match: Match; togg
                   {status === "error"
                     ? error ?? "Couldn't save, try again"
                     : count > 0
-                    ? "Picks are final once locked — no changes after."
+                    ? "Picks are final once locked, no changes after."
                     : "Playing as guest · no signup needed"}
                 </p>
               </>

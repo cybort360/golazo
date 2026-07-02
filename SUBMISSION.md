@@ -1,4 +1,4 @@
-# Golazo — TxLINE Hackathon Submission
+# Golazo: TxLINE Hackathon Submission
 
 **Prove you know ball.** A verified football prediction platform powered by the
 TxLINE live data + result-verification layer, settling on Solana devnet.
@@ -12,7 +12,7 @@ TxLINE live data + result-verification layer, settling on Solana devnet.
 ## Core idea
 
 Most prediction apps ask you to *trust the house* on the result. Golazo doesn't.
-Every match outcome is sourced from **TxLINE** and is independently verifiable —
+Every match outcome is sourced from **TxLINE** and is independently verifiable:
 in Free Picks the result carries a TxLINE proof receipt, and in Market Mode an
 on-chain settlement only releases funds after a **Merkle proof of the stat is
 validated on-chain**. The data layer is the source of truth; the UI just makes
@@ -20,12 +20,12 @@ it legible to football fans.
 
 Two modes share one TxLINE data seam:
 
-1. **Free Picks** — a free-to-play social prediction game. Pick Winner, Over/Under,
+1. **Free Picks:** a free-to-play social prediction game. Pick Winner, Over/Under,
    BTTS, and the signature **Chaos Pick** ("goal after the 80th minute?", 2× points).
    Picks settle automatically against verified TxLINE finals; each settled pick
    becomes a shareable, verifiable **proof receipt**. Private leagues + global
    leaderboards drive the social loop.
-2. **Market Mode** (devnet) — YES/NO markets where users stake demo GOLAZO into an
+2. **Market Mode** (devnet): YES/NO markets where users stake demo GOLAZO into an
    on-chain escrow. A keeper settles via a **Cross-Program Invocation into a TxLINE
    validation program**, and winners claim trustlessly.
 
@@ -39,16 +39,16 @@ Two modes share one TxLINE data seam:
   also guarantees a clean demo even after matches end.)
 - **Low-latency live via real SSE.** Live state is primed from the per-action
   snapshot, then kept current by consuming the TxLINE **Server-Sent Events**
-  stream (`/api/scores/updates/{id}`) — sub-second updates instead of polling.
+  stream (`/api/scores/updates/{id}`), giving sub-second updates instead of polling.
 - **Goal-minute extraction unlocks the Chaos market.** The snapshot only carries
   cumulative scores; we derive per-goal **minutes** from the SSE stream (by
   detecting cumulative-tally increases), persist them to an append-only event log,
-  and resolve "goal after 80'" on real data — with an honest VOID if the goal log
+  and resolve "goal after 80'" on real data, with an honest VOID if the goal log
   is incomplete.
 - **Independent on-chain verification.** The proof view **recomputes the Merkle
   leaf → root in the browser** from the raw stats and **cross-checks it against the
   root committed on Solana**, with a link to the on-chain account. Don't trust the
-  server — verify the bytes.
+  server; verify the bytes.
 - **Custom on-chain settlement engine with CPI.** `golazo_predict::settle` does a
   CPI into `txline_mock::validate_stat`; funds release **only** on a verified
   Merkle proof. The TypeScript Merkle implementation is byte-compatible with the
@@ -57,7 +57,7 @@ Two modes share one TxLINE data seam:
   probabilities (1X2 + Over/Under 2.5) as a consensus bar on each match.
 - **Compliance posture.** The internal TxLINE credit token is used **only** for
   data-authorization (the on-chain `subscribe`), never for staking or transfers.
-  Market Mode settles in GOLAZO/SOL on devnet — never the TxL token, never real money.
+  Market Mode settles in GOLAZO/SOL on devnet, never the TxL token, never real money.
 
 **Stack:** Next.js 14 (App Router) · TypeScript · Postgres (Prisma) · Anchor /
 Solana web3.js · deployed on Vercel (Neon Postgres), synced by a cron pinger.
@@ -85,17 +85,17 @@ Host: `https://txline-dev.txodds.com`.
 
 ---
 
-## TxLINE API — feedback
+## TxLINE API feedback
 
 **What we liked most**
 - **One normalized schema across competitions** made it easy to model fixtures,
-  scores, and odds uniformly — scaling from one match to the full tournament was
+  scores, and odds uniformly, so scaling from one match to the full tournament was
   just iterating fixtures.
 - **Frictionless free access** for the World Cup tier, and a **guest JWT** that we
-  could mint on demand and cache — no heavyweight onboarding to start reading data.
+  could mint on demand and cache, with no heavyweight onboarding to start reading data.
 - **The SSE stream** is genuinely low-latency and was the key to per-goal minutes
   (and therefore the Chaos market).
-- **Demargined `Pct`** on the odds feed — getting clean implied probabilities
+- **Demargined `Pct`** on the odds feed: getting clean implied probabilities
   out-of-the-box (summing to 100) saved us the de-vig math.
 - The **on-chain `subscribe` + Merkle validation** model is a great fit for trustless
   settlement; the CPI shape made our custom settlement engine straightforward.
@@ -106,13 +106,13 @@ Host: `https://txline-dev.txodds.com`.
   mid-match (real phase had to be read from the `status` action's `StatusId`), and
   scores lived in a **numerically-keyed `Stats` map** (`"1"`=P1 goals, `"2"`=P2,
   `"7"/"8"`=corners). We had to probe the live devnet responses to map it correctly.
-- **Goal minutes aren't in the snapshot** — only the SSE stream exposes them, so
+- **Goal minutes aren't in the snapshot:** only the SSE stream exposes them, so
   any historical/after-the-fact goal-time market needs the live stream captured.
 - **Devnet specifics took trial and error:** the TxL mint is **Token-2022** (ATAs
   needed the Token-2022 program id), the devnet pricing matrix exposed a single
   service-level row, and `/api/token/activate` returns the token as a **bare string**
   rather than an object.
-- **Empty bodies for not-started fixtures** (snapshot returns `[]` / empty) — fine
+- **Empty bodies for not-started fixtures** (snapshot returns `[]` / empty): fine
   once handled, but worth documenting so clients tolerate it.
 
 Net: once the real-vs-spec field mapping was understood, the data was reliable and
@@ -130,4 +130,4 @@ npm run dev                  # http://localhost:3000
 ```
 
 Set `TXLINE_MODE=live` with `TXLINE_API_BASE` + `TXLINE_API_TOKEN` to consume the
-real feed. Devnet only — no mainnet, no real-money wagering.
+real feed. Devnet only: no mainnet, no real-money wagering.

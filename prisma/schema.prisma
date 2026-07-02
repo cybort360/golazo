@@ -63,6 +63,10 @@ model User {
   isGhost     Boolean  @default(false)
   anonId      String?  @unique
   convertedAt DateTime?
+  // Real account credentials (set when a guest creates an account or a new
+  // account signs up). Absent for ghosts. Enables cross-device login.
+  email        String? @unique
+  passwordHash String?
   createdAt   DateTime @default(now())
 
   wallets        Wallet[]

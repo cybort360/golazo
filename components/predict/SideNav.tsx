@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMe } from "@/components/predict/useMe";
 import ConvertDialog from "@/components/predict/ConvertDialog";
+import LogoutButton from "@/components/predict/LogoutButton";
 import {
   House,
   SoccerBall,
@@ -29,10 +30,16 @@ const ITEMS: { href: string; label: string; Icon: Icon }[] = [
   { href: "/wallet", label: "Wallet", Icon: Wallet },
 ];
 
+const BARE = ["/welcome", "/login", "/signup"];
+
 export default function SideNav() {
   const pathname = usePathname();
-  const me = useMe();
-  if (pathname?.startsWith("/admin") || pathname?.startsWith("/tg")) return null;
+  const hidden =
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/tg") ||
+    BARE.some((p) => pathname === p || pathname?.startsWith(p + "/"));
+  const me = useMe(!hidden);
+  if (hidden) return null;
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname?.startsWith(href);
@@ -61,15 +68,34 @@ export default function SideNav() {
       </nav>
       <div className="mt-auto rounded-[13px] border border-[#262626] bg-[#171717] p-3.5">
         <Link href={me?.profileHref ?? "/leagues"} className="block">
-          <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">Playing as</div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-500">
+            {me?.isGhost === false ? "Playing as" : "Guest"}
+          </div>
           <div className="mt-1 flex items-center justify-between text-sm font-extrabold">
             {me?.name ?? "…"} <span className="text-slate-500">›</span>
           </div>
         </Link>
-        <ConvertDialog
-          className="mt-2.5 w-full rounded-[9px] bg-neon py-2 text-center text-xs font-extrabold text-ink"
-          label={me?.isGhost === false ? "Edit profile" : "Save my picks"}
-        />
+        {me?.isGhost === false ? (
+          <>
+            <ConvertDialog
+              className="mt-2.5 w-full rounded-[9px] bg-neon py-2 text-center text-xs font-extrabold text-ink"
+              label="Edit profile"
+            />
+            <LogoutButton className="mt-2 w-full rounded-[9px] border border-[#333] py-2 text-center text-xs font-bold text-slate-400 transition-colors hover:text-white" />
+          </>
+        ) : (
+          <>
+            <Link
+              href="/signup"
+              className="mt-2.5 block w-full rounded-[9px] bg-neon py-2 text-center text-xs font-extrabold text-ink"
+            >
+              Create account
+            </Link>
+            <p className="mt-2 text-center text-[10px] font-semibold leading-tight text-slate-500">
+              Save your picks across devices
+            </p>
+          </>
+        )}
       </div>
     </aside>
   );

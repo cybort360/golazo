@@ -12,9 +12,13 @@ export interface Me {
   isGhost: boolean;
 }
 
-export function useMe(): Me | null {
+// `enabled` guards the fetch: /api/predict/me calls ensureUser(), which MINTS a
+// ghost. On landing/auth pages identity must stay a deliberate choice, so callers
+// there pass enabled=false to avoid creating a ghost just by rendering the nav.
+export function useMe(enabled = true): Me | null {
   const [me, setMe] = useState<Me | null>(null);
   useEffect(() => {
+    if (!enabled) return;
     let live = true;
     void fetch("/api/predict/me", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
@@ -25,6 +29,6 @@ export function useMe(): Me | null {
     return () => {
       live = false;
     };
-  }, []);
+  }, [enabled]);
   return me;
 }

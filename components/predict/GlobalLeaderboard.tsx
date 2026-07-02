@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { GlobalLeaderboard as GlobalLeaderboardData, LeagueMember } from "@/lib/predict/types";
 import { formatPoints, formatAccuracy } from "@/lib/predict/labels";
 import { Medal, Flame, Globe } from "@phosphor-icons/react/dist/ssr";
@@ -70,10 +71,16 @@ export default function GlobalLeaderboard({ board }: { board: GlobalLeaderboardD
               {formatPoints(board.totalPlayers)} players worldwide
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-neon">Your rank</div>
-            <div className="text-[30px] font-black leading-none tracking-[-0.04em] tabular-nums">#{board.you.rank}</div>
-          </div>
+          {board.you ? (
+            <div className="text-right">
+              <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-neon">Your rank</div>
+              <div className="text-[30px] font-black leading-none tracking-[-0.04em] tabular-nums">#{board.you.rank}</div>
+            </div>
+          ) : (
+            <Link href="/signup" className="rounded-full bg-neon px-3.5 py-2 text-[11px] font-extrabold text-ink">
+              Join the board
+            </Link>
+          )}
         </div>
       </div>
 
@@ -88,10 +95,28 @@ export default function GlobalLeaderboard({ board }: { board: GlobalLeaderboardD
       </div>
 
       {/* pinned "you" row when outside the top */}
-      {!youInTop && (
+      {board.you && !youInTop && (
         <div className="px-4 pb-5 pt-1">
           <div className="mb-1.5 ml-1 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">Your standing</div>
           <Row member={board.you} />
+        </div>
+      )}
+
+      {/* guest prompt — guests can view the board but aren't ranked */}
+      {!board.you && (
+        <div className="px-4 pb-6 pt-1">
+          <Link
+            href="/signup"
+            className="block rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-4 text-center"
+          >
+            <div className="text-sm font-extrabold text-ink">You&apos;re playing as a guest</div>
+            <div className="mt-1 text-xs font-semibold text-slate-500">
+              Create an account to be ranked on the global leaderboard.
+            </div>
+            <span className="mt-3 inline-block rounded-full bg-ink px-4 py-2 text-xs font-extrabold text-neon">
+              Create account
+            </span>
+          </Link>
         </div>
       )}
     </div>

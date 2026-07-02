@@ -96,7 +96,7 @@ export default function MatchPickScreen({ match, toggle }: { match: Match; toggl
             </div>
             <p className="mt-2.5 text-center text-xs font-semibold text-slate-400">
               {finalized
-                ? "Your picks are final — they can't be changed. They settle automatically in Receipts."
+                ? "Your picks are final and can't be changed. They settle automatically in Receipts."
                 : "This match has kicked off. Picks are closed."}
             </p>
           </>
@@ -114,7 +114,7 @@ export default function MatchPickScreen({ match, toggle }: { match: Match; toggl
               {status === "error"
                 ? error ?? "Couldn't save, try again"
                 : count > 0
-                ? "Picks are final once locked — you can't change them after."
+                ? "Picks are final once locked. You can't change them after."
                 : "Playing as guest · no signup needed"}
             </p>
           </>

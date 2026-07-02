@@ -71,7 +71,7 @@ export default function WalletPanel({ wallet }: { wallet: WalletState }) {
             <Globe size={30} weight="fill" className="mx-auto text-slate-400" />
             <div className="mt-2 text-[15px] font-black text-ink">Not available in your region yet</div>
             <p className="mt-1.5 text-[13px] font-medium text-slate-500">
-              Wallet rewards are rolling out to supported jurisdictions only. You can keep playing free — picks and leagues work everywhere.
+              Wallet rewards are rolling out to supported jurisdictions only. You can keep playing free; picks and leagues work everywhere.
             </p>
           </div>
         ) : (
@@ -95,7 +95,7 @@ export default function WalletPanel({ wallet }: { wallet: WalletState }) {
                 <div className="text-center">
                   <div className="text-[15px] font-black text-ink">Connect a wallet to claim rewards</div>
                   <p className="mt-1.5 text-[13px] font-medium text-slate-500">
-                    Wallet mode is optional. The full game is free to play without it — connect only if you want to claim on-chain rewards.
+                    Wallet mode is optional. The full game is free to play without it; connect only if you want to claim on-chain rewards.
                   </p>
                   <button type="button" onClick={() => setConnected(true)} className="mt-3.5 w-full rounded-full bg-neon py-3 text-[14px] font-extrabold text-ink">
                     Connect wallet (preview)

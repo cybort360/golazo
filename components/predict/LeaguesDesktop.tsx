@@ -83,7 +83,7 @@ function Preview({ league }: { league: League }) {
   );
 }
 
-export default function LeaguesDesktop({ leagues }: { leagues: League[] }) {
+export default function LeaguesDesktop({ leagues, isGuest = false }: { leagues: League[]; isGuest?: boolean }) {
   const [selIdx, setSelIdx] = useState(0);
   const selected = leagues[selIdx] ?? null;
 
@@ -92,10 +92,19 @@ export default function LeaguesDesktop({ leagues }: { leagues: League[] }) {
       <div className="mx-auto grid max-w-5xl grid-cols-[360px_minmax(0,1fr)] items-start gap-x-7 px-8 py-8">
         {/* left column, stacked across rows so the preview can align to the list row */}
         <h1 className="col-start-1 row-start-1 mb-4 text-[26px] font-black tracking-[-0.03em]">Your leagues</h1>
-        <LeagueDialog
-          className="col-start-1 row-start-2 w-full rounded-2xl bg-ink px-4 py-3.5 text-center text-sm font-black text-neon transition-transform hover:-translate-y-0.5"
-          label="+ Create or join a league"
-        />
+        {isGuest ? (
+          <Link
+            href="/signup"
+            className="col-start-1 row-start-2 w-full rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3.5 text-center text-sm font-extrabold text-ink transition-colors hover:border-slate-400"
+          >
+            Create an account to make or join leagues
+          </Link>
+        ) : (
+          <LeagueDialog
+            className="col-start-1 row-start-2 w-full rounded-2xl bg-ink px-4 py-3.5 text-center text-sm font-black text-neon transition-transform hover:-translate-y-0.5"
+            label="+ Create or join a league"
+          />
+        )}
         <div className="col-start-1 row-start-3 mt-3 flex flex-col gap-2">
           {leagues.map((l, i) => {
             const active = i === selIdx;

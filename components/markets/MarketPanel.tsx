@@ -92,7 +92,7 @@ export default function MarketPanel({ match }: { match: Match }) {
       setMsg("Airdropped 1 devnet SOL");
       await refresh();
     } catch {
-      setMsg("× Devnet airdrop is rate-limited — grab some at faucet.solana.com, then retry");
+      setMsg("× Devnet airdrop is rate-limited. Grab some at faucet.solana.com, then retry");
     } finally {
       setBusy(null);
     }
@@ -245,7 +245,7 @@ export default function MarketPanel({ match }: { match: Match }) {
         <div className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3.5 py-3">
           <div className="text-[12px] font-bold text-amber-200">This wallet has no devnet SOL</div>
           <p className="mt-0.5 text-[11px] leading-relaxed text-amber-200/80">
-            Solana needs a little SOL to cover network fees. Grab some free (devnet only — not real money), then stake.
+            Solana needs a little SOL to cover network fees. Grab some free (devnet only, not real money), then stake.
           </p>
           <div className="mt-2 flex gap-2">
             <button

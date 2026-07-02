@@ -73,8 +73,12 @@ export default function IntroModal() {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
-  // Suppressed on admin and the Telegram Mini App (their own chrome).
-  const isAdmin = pathname?.startsWith("/admin") || pathname?.startsWith("/tg");
+  // Suppressed on admin, the Telegram Mini App (their own chrome), and the
+  // landing/auth pages (identity choice comes first, before any intro).
+  const bare = ["/welcome", "/login", "/signup"].some(
+    (p) => pathname === p || pathname?.startsWith(p + "/"),
+  );
+  const isAdmin = pathname?.startsWith("/admin") || pathname?.startsWith("/tg") || bare;
 
   // First-visit check (client only). Never block the first paint.
   useEffect(() => {

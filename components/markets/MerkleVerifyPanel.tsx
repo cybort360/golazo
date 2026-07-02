@@ -92,7 +92,7 @@ export default function MerkleVerifyPanel({
       <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
         Recomputed in your browser from the raw stats and checked against{" "}
         <span className="font-mono text-slate-400">txline_mock::validate_stat</span>
-        {data.chain ? " — the same root committed on Solana." : " — the same proof the chain checks at settlement."}
+        {data.chain ? ", the same root committed on Solana." : ", the same proof the chain checks at settlement."}
       </p>
     </div>
   );

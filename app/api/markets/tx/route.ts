@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/client";
+import { accountUserId } from "@/lib/predict/session";
 
 // Mirror an on-chain transaction into Postgres (index only — the devnet program
 // is the source of truth). Node runtime; never edge. Best-effort: if the DB is
@@ -11,6 +12,10 @@ const VALID_KINDS = new Set(["FAUCET", "INIT_MARKET", "STAKE", "POST_ROOT", "SET
 
 export async function POST(req: Request) {
   try {
+    // Market Mode is account-only (guests are gated). Require a signed session.
+    if (!(await accountUserId())) {
+      return NextResponse.json({ ok: false, error: "Create an account to use Market Mode." }, { status: 403 });
+    }
     const body = await req.json();
     const { signature, wallet, matchId, marketId, kind } = body ?? {};
     if (!signature || !wallet) {

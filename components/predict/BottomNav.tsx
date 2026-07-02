@@ -15,9 +15,15 @@ const ITEMS: { href: string; Icon: Icon; label: string }[] = [
   { href: "/receipts", Icon: Receipt, label: "Receipts" },
 ];
 
+const BARE = ["/welcome", "/login", "/signup"];
+
 export default function BottomNav() {
   const pathname = usePathname();
-  if (pathname?.startsWith("/admin")) return null;
+  if (
+    pathname?.startsWith("/admin") ||
+    BARE.some((p) => pathname === p || pathname?.startsWith(p + "/"))
+  )
+    return null;
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname?.startsWith(href);
