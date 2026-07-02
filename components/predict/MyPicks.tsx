@@ -83,8 +83,8 @@ export default function MyPicks({ groups }: { groups: ActivePickGroup[] }) {
   const pickCount = groups.reduce((s, g) => s + g.picks.length, 0);
 
   return (
-    <div className="mx-auto max-w-2xl lg:max-w-4xl">
-      {/* ink banner */}
+    <div>
+      {/* ink banner — full-bleed like Matches/Receipts (spans edge-to-edge) */}
       <div className="relative overflow-hidden bg-ink px-4 py-6 text-white lg:px-8 lg:py-7">
         <ListChecks weight="fill" className="pointer-events-none absolute -bottom-8 right-4 select-none opacity-[0.06]" size={140} />
         <div className="relative flex items-end justify-between gap-6">
