@@ -4,8 +4,9 @@ import { ensureUser, currentUserId } from "@/lib/predict/session";
 import { isMarketId, isPickOpen } from "@/lib/predict/pick-rules";
 import type { MatchState } from "@/lib/predict/types";
 
-// Make / change / read a free pick. Lock is enforced server-side (reject after
-// lock). Ghost mode: an anonymous user is created on first pick. Node runtime.
+// Make / read a free pick. Picks are FINAL: created once and never changed —
+// re-picking an already-locked market is rejected. Lock is also enforced by time
+// (reject after kickoff). Ghost mode: an anonymous user is created on first pick.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -27,20 +28,26 @@ export async function POST(req: Request) {
     }
 
     const user = await ensureUser();
-    const prediction = await prisma.prediction.upsert({
-      where: { userId_matchId_marketId: { userId: user.id, matchId, marketId } },
-      create: {
-        userId: user.id,
-        matchId,
-        marketId,
-        optionId,
-        predictionLabel: predictionLabel ?? `${marketId} · ${optionId}`,
-      },
-      // re-picking before lock replaces the option and resets to PENDING
-      update: { optionId, predictionLabel: predictionLabel ?? `${marketId} · ${optionId}`, status: "PENDING", points: 0 },
-    });
-
-    return NextResponse.json({ ok: true, prediction });
+    // Create-only: picks are final once locked in. The unique (user, match,
+    // market) constraint makes this race-safe — a duplicate create throws P2002,
+    // which we surface as "pick already locked" rather than overwriting.
+    try {
+      const prediction = await prisma.prediction.create({
+        data: {
+          userId: user.id,
+          matchId,
+          marketId,
+          optionId,
+          predictionLabel: predictionLabel ?? `${marketId} · ${optionId}`,
+        },
+      });
+      return NextResponse.json({ ok: true, prediction });
+    } catch (e: any) {
+      if (e?.code === "P2002") {
+        return NextResponse.json({ ok: false, error: "pick already locked" }, { status: 409 });
+      }
+      throw e;
+    }
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: String(e?.message ?? e).slice(0, 200) }, { status: 500 });
   }

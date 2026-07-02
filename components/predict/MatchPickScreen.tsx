@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { Match, MarketId } from "@/lib/predict/types";
 import { buildMarkets } from "@/lib/predict/markets";
-import { isPickOpen, existingPicksToState, MARKET_TITLES } from "@/lib/predict/pick-rules";
+import { isPickOpen, existingPicksToState } from "@/lib/predict/pick-rules";
 import { submitPicks } from "@/lib/predict/submitPicks";
 import { useExistingPicks } from "@/components/predict/useExistingPicks";
 import MarketPicker from "@/components/predict/MarketPicker";
@@ -26,23 +26,28 @@ export default function MatchPickScreen({ match, toggle }: { match: Match; toggl
     return () => clearInterval(id);
   }, [match.lockMs, match.state]);
 
-  // Reflect picks the user already made: pre-select them while still open, list
-  // them once locked. Only seed if the user hasn't started a fresh selection.
+  // Reflect picks the user already made. Picks are final once locked, so an
+  // existing set makes the whole slip read-only (pre-selected, dimmed) — no edits.
   const existing = useExistingPicks(match.id);
   const hasExisting = existing.length > 0;
   useEffect(() => {
     if (hasExisting) setPicks((prev) => (Object.keys(prev).length ? prev : existingPicksToState(existing)));
   }, [existing, hasExisting]);
 
+  // The user has locked-in picks (this session or a prior one).
+  const finalized = hasExisting || status === "done";
+  // No selecting/submitting once locked (kickoff) or already finalized.
+  const readOnly = locked || finalized;
+
   const select = (id: MarketId, optionId: string) => {
-    if (locked) return;
+    if (readOnly) return;
     setStatus("idle");
     setPicks((p) => ({ ...p, [id]: optionId }));
   };
   const count = Object.keys(picks).length;
 
   async function lock() {
-    if (locked || count === 0 || status === "saving") return;
+    if (readOnly || count === 0 || status === "saving") return;
     setStatus("saving");
     setError(null);
     const res = await submitPicks(match, markets, picks);
@@ -52,15 +57,6 @@ export default function MatchPickScreen({ match, toggle }: { match: Match; toggl
       setStatus("error");
     }
   }
-
-  const label =
-    status === "saving"
-      ? "Locking…"
-      : status === "done"
-      ? hasExisting
-        ? "Picks updated"
-        : "Picks locked"
-      : `${hasExisting ? "Update" : "Lock"} my picks · ${count} selected`;
 
   return (
     <div>
@@ -80,36 +76,28 @@ export default function MatchPickScreen({ match, toggle }: { match: Match; toggl
             market={m}
             selected={picks[m.id] ?? null}
             onSelect={(opt) => select(m.id, opt)}
-            disabled={locked}
+            disabled={readOnly}
           />
         ))}
       </div>
 
       {/* lock cta */}
       <div className="px-4 pb-6 pt-1">
-        {locked ? (
+        {readOnly ? (
           <>
-            {hasExisting ? (
-              <div className="rounded-2xl bg-ink px-4 py-4 text-white">
-                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.12em] text-neon">
-                  <Lock weight="fill" size={13} /> Your locked picks
-                </div>
-                <div className="mt-3 flex flex-col gap-2">
-                  {existing.map((p) => (
-                    <div key={p.marketId} className="flex items-center justify-between rounded-xl bg-[#171717] px-3 py-2.5">
-                      <span className="text-[11px] font-semibold text-slate-400">{MARKET_TITLES[p.marketId]}</span>
-                      <span className="text-[13px] font-extrabold text-neon">{p.optionLabel}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="flex w-full items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-4 text-center text-base font-black tracking-[-0.01em] text-slate-400">
-                <Lock weight="fill" size={18} /> Picks locked
-              </div>
-            )}
+            <div
+              className={
+                "flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-4 text-center text-base font-black tracking-[-0.01em] " +
+                (status === "done" ? "bg-green-600 text-white" : "bg-ink text-slate-300")
+              }
+            >
+              {status === "done" ? <CheckCircle weight="fill" size={18} /> : <Lock weight="fill" size={18} />}
+              {finalized ? "Picks locked in" : "Picks locked"}
+            </div>
             <p className="mt-2.5 text-center text-xs font-semibold text-slate-400">
-              This match has kicked off. Picks are closed.
+              {finalized
+                ? "Your picks are final — they can't be changed. They settle automatically in Receipts."
+                : "This match has kicked off. Picks are closed."}
             </p>
           </>
         ) : (
@@ -117,20 +105,16 @@ export default function MatchPickScreen({ match, toggle }: { match: Match; toggl
             <button
               type="button"
               onClick={lock}
-              disabled={count === 0 || status === "saving" || status === "done"}
-              className={
-                "flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-4 text-center text-base font-black tracking-[-0.01em] transition-colors disabled:cursor-not-allowed " +
-                (status === "done" ? "bg-green-600 text-white" : "bg-neon text-ink disabled:opacity-50")
-              }
+              disabled={count === 0 || status === "saving"}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-neon px-4 py-4 text-center text-base font-black tracking-[-0.01em] text-ink transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {status === "done" && <CheckCircle weight="fill" size={18} />}
-              {label}
+              {status === "saving" ? "Locking…" : `Lock my picks · ${count} selected`}
             </button>
             <p className="mt-2.5 text-center text-xs font-semibold text-slate-400">
               {status === "error"
                 ? error ?? "Couldn't save, try again"
-                : status === "done"
-                ? "Verified results settle automatically. Track them in Receipts."
+                : count > 0
+                ? "Picks are final once locked — you can't change them after."
                 : "Playing as guest · no signup needed"}
             </p>
           </>
