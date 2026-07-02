@@ -59,7 +59,9 @@ export default function GlobalLeaderboardDesktop({ board }: { board: GlobalLeade
       {/* toggle + column headers */}
       <div className="flex items-center justify-between px-8 pb-2 pt-6">
         <SegTabs tabs={["This week", "All time"]} />
-        <div className="flex items-center text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+        {/* gap-4 + pr-5 mirror the row's `gap-4 px-5`, so these labels sit
+            directly above their column values. */}
+        <div className="flex items-center gap-4 pr-5 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
           <span className="w-24 text-right">Accuracy</span>
           <span className="w-20 text-right">Streak</span>
           <span className="w-24 text-right">Points</span>
