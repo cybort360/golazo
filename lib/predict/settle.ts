@@ -84,14 +84,26 @@ export async function settleMatch(
   return counts;
 }
 
-/** Settle every fixture that has reached a final state. */
+/**
+ * Settle every match that still has PENDING predictions.
+ *
+ * Keyed off the DB (matches with open picks), NOT the live fixtures snapshot:
+ * TxLINE drops finished matches from `fixtures()` once they're done, so iterating
+ * that list silently skips exactly the matches we need to settle. `settleMatch`
+ * fetches the per-fixture final (which stays available after a match leaves the
+ * list) and leaves not-yet-final matches PENDING, so this stays idempotent.
+ */
 export async function settleFinished(
   client: TxlineClient = getTxlineClient(),
 ): Promise<SettleCounts> {
-  const fixtures = await client.fixtures();
+  const open = await prisma.prediction.findMany({
+    where: { status: "PENDING" },
+    select: { matchId: true },
+    distinct: ["matchId"],
+  });
   const totals: SettleCounts = { ...ZERO };
-  for (const f of fixtures) {
-    const r = await settleMatch(f.id, client);
+  for (const { matchId } of open) {
+    const r = await settleMatch(matchId, client);
     totals.settled += r.settled;
     totals.won += r.won;
     totals.lost += r.lost;
